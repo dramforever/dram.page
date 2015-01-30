@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>减数分裂和配子结合模拟 -- by dramforever</title>
+    <link rel="stylesheet" href="meiosis.css" />
+    <meta charset="utf-8" />
+    <script>var h = location.hash;
+    window.onload = function(){
+    function G(x) { return document.getElementById(x); }
+	    G("imsa1").src = "im/A" + (h[1] == "A") + ".png";
+	    G("imsa2").src = "im/A" + (h[2] == "A") + ".png";
+	    G("imta1").src = "im/B" + (h[3] == "B") + ".png";
+	    G("imta2").src = "im/B" + (h[4] == "B") + ".png";
+	    G("xew").innerHTML = h.slice(1);
+    }
+    </script>
+  </head>
+  <body>
+    <div class="introwhite"></div>
+    <div class="bigGreen">
+      结合成为受精卵，基因型：<span id="xew"></span>
+    </div>
+    <div class="midwhite"></div>
+    
+    <div>
+     <img class="imt" id="imsa1" />
+     <img class="imt" id="imsa2" />
+   </div>
+      
+   <div>
+     <img class="imt" id="imta1" />
+     <img class="imt" id="imta2" />
+   </div>
+    
+   <a href="index.html" class="bigGreen">再来一次</a>
+  </body>
+</html>

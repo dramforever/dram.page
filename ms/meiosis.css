@@ -5,8 +5,13 @@ a {
 .imt {
     padding: 0px;
     margin: 0px;
-    width: 49%;
+    width: 46vw;
     display: inline-block;
+    border: 1vw solid white;
+}
+
+.imt.act {
+    border-color: blue;
 }
 
 .smallGreen {
