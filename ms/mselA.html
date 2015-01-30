@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>减数分裂和配子结合模拟 -- by dramforever</title>
+    <script src="http://libs.useso.com/js/jquery/1.6.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="meiosis.css" />
+    <meta charset="utf-8" />
+    <script>
+      var es1, es2, et1, et2, enext, eshow, etx;
+      function G(x) { return document.getElementById(x); }
+
+      var s1, s2, t1, t2;
+
+      function u() {
+          var sA = "", sB = "";
+          sA += es1.innerHTML = s1 ? "A" : "a";
+          sA += es2.innerHTML = s2 ? "A" : "a";
+          sB += et1.innerHTML = t1 ? "B" : "b";
+          sB += et2.innerHTML = t2 ? "B" : "b";
+          var str = sA.split("").sort().join("")
+                  + sB.split("").sort().join("");
+      
+          eshow.innerHTML = str;
+          if(location.hash)
+              enext.href = "fselA.html"
+              + location.hash.split("!")[0]
+              + "," + str + "!";
+          else enext.href = "mselA.html#" + str + "!";
+      }
+
+      window.onload = function() {
+          s1 = s2 = t1 = t2 = true;
+          es1 = G("es1");
+          es2 = G("es2");
+          et1 = G("et1");
+          et2 = G("et2");
+
+          etx = G("etx");
+          enext = G("next");
+          eshow = G("type");
+          u();
+          etx.innerHTML = location.hash ? "母本" : "父本";
+      };
+
+      window.onhashchange = function() { location.reload(); };
+    </script>
+  </head>
+  <body>
+    <div class="bigGreen">
+      选择<span id="etx"></span>基因型
+    </div>
+    <div class="introwhite"></div>
+    <div class="bbco">
+      <div class="bigB" id="es1" onclick="s1 = !s1; u();">A</div>
+      <div class="bigB" id="es2" onclick="s2 = !s2; u();">A</div>
+    </div>
+    <div class="bbco">
+      <div class="bigB" id="et1" onclick="t1 = !t1; u();">B</div>
+      <div class="bigB" id="et2" onclick="t2 = !t2; u();">B</div>
+    </div>
+    <div class="bigGreen">
+      基因型是<span id="type"></span>
+    </div>
+    <div class="midwhite"></div>
+    <a class="bigGreen" id="next" href="mselA.html#AABB!">下一步 ></a>
+  </body>
+</html>
