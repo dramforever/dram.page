@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>ooo.c</title>
+<link rel="stylesheet" type="text/css" href="highlight.css">
+</head>
+<body class="hl">
+<pre class="hl"><span class="hl ppc">#include &lt;stdio.h&gt;</span>
+<span class="hl ppc">#include &lt;stdlib.h&gt;</span>
+<span class="hl ppc">#include &lt;math.h&gt;</span>
+<span class="hl ppc">#include &lt;stdint.h&gt;</span>
+<span class="hl ppc">#define out(x) fputc((x),f);</span>
+
+<span class="hl ppc">#define BLANK_SIZE 312</span>
+<span class="hl ppc">#define SOUND_SIZE 2188</span>
+
+<span class="hl kwb">char</span> header<span class="hl opt">[] = {</span><span class="hl num">87</span><span class="hl opt">,</span> <span class="hl num">65</span><span class="hl opt">,</span> <span class="hl num">86</span><span class="hl opt">,</span> <span class="hl num">69</span><span class="hl opt">,</span> <span class="hl num">102</span><span class="hl opt">,</span> <span class="hl num">109</span><span class="hl opt">,</span> <span class="hl num">116</span><span class="hl opt">,</span> <span class="hl num">32</span><span class="hl opt">,</span><span class="hl num">16</span><span class="hl opt">,</span> <span class="hl num">0</span><span class="hl opt">,</span> <span class="hl num">0</span><span class="hl opt">,</span> <span class="hl num">0</span><span class="hl opt">,</span> <span class="hl num">1</span><span class="hl opt">,</span> <span class="hl num">0</span><span class="hl opt">,</span> <span class="hl num">1</span><span class="hl opt">,</span> <span class="hl num">0</span><span class="hl opt">,</span> <span class="hl num">16</span><span class="hl opt">,</span> <span class="hl num">39</span><span class="hl opt">,</span> <span class="hl num">0</span><span class="hl opt">,</span> <span class="hl num">0</span><span class="hl opt">,</span> <span class="hl num">32</span><span class="hl opt">,</span> <span class="hl num">78</span><span class="hl opt">,</span> <span class="hl num">0</span><span class="hl opt">,</span> <span class="hl num">0</span> <span class="hl opt">,</span><span class="hl num">2</span><span class="hl opt">,</span><span class="hl num">0</span><span class="hl opt">,</span><span class="hl num">16</span><span class="hl opt">,</span><span class="hl num">0</span> <span class="hl opt">};</span>
+
+<span class="hl kwb">double</span> table<span class="hl opt">[</span><span class="hl num">255</span><span class="hl opt">];</span>
+
+<span class="hl kwb">char</span> score<span class="hl opt">[]=</span><span class="hl str">&quot;d-e-f-g-aa--D-C-aa--dd--a-g-f-e-d-e-f-g-aa--g-f-e-d-e-f-e-d-x-e-d-e-f-g-aa--D-C-aa--dd--a-g-f-e-d-e-f-g-aa--g-f-ee--ff--gg--aa--d-e-f-g-aa--D-C-aa--dd--a-g-f-e-d-e-f-g-aa--g-f-e-d-e-f-e-d-x-e-d-e-f-g-aa--D-C-aa--dd--a-g-f-e-d-e-f-g-aa--g-f-ee--ff--gg--aa--C-D-a-g-aa--g-a-C-D-a-g-aa--g-a-g-f-e-c-dd--c-d-e-f-g-a-dd--g-a-C-D-a-g-aa--g-a-C-D-a-g-aa--g-a-g-f-e-c-dd--c-d-e-f-g-a-dd--g-a-C-D-a-g-aa--g-a-C-D-a-g-aa--g-a-g-f-e-c-dd--c-d-e-f-g-a-dd--g-a-C-D-a-g-aa--g-a-C-D-a-g-aa--D-E-F-E-D-C-aa--g-a-g-f-e-c-dd--&quot;</span><span class="hl opt">;</span>
+
+<span class="hl kwb">FILE</span> <span class="hl opt">*</span>f<span class="hl opt">;</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">out_16_le</span><span class="hl opt">(</span><span class="hl kwb">int16_t</span> i<span class="hl opt">) {</span>
+	<span class="hl kwd">out</span><span class="hl opt">(</span>  i<span class="hl opt">&amp;</span><span class="hl num">0x00ff</span>        <span class="hl opt">);</span>
+	<span class="hl kwd">out</span><span class="hl opt">( (</span>i<span class="hl opt">&amp;</span><span class="hl num">0xff00</span><span class="hl opt">) &gt;&gt;</span> <span class="hl num">8</span> <span class="hl opt">);</span>
+<span class="hl opt">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">out_32_le</span><span class="hl opt">(</span><span class="hl kwb">int32_t</span> i<span class="hl opt">) {</span>
+	<span class="hl kwd">out</span><span class="hl opt">(</span>  i<span class="hl opt">&amp;</span><span class="hl num">0x000000ff</span>        <span class="hl opt">);</span>
+	<span class="hl kwd">out</span><span class="hl opt">( (</span>i<span class="hl opt">&amp;</span><span class="hl num">0x0000ff00</span><span class="hl opt">) &gt;&gt;</span> <span class="hl num">8</span>  <span class="hl opt">);</span>
+	<span class="hl kwd">out</span><span class="hl opt">( (</span>i<span class="hl opt">&amp;</span><span class="hl num">0x00ff0000</span><span class="hl opt">) &gt;&gt;</span> <span class="hl num">16</span> <span class="hl opt">);</span>
+	<span class="hl kwd">out</span><span class="hl opt">( (</span>i<span class="hl opt">&amp;</span><span class="hl num">0xff000000</span><span class="hl opt">) &gt;&gt;</span> <span class="hl num">24</span> <span class="hl opt">);</span>
+<span class="hl opt">}</span>
+
+
+<span class="hl kwb">void</span> <span class="hl kwd">writeBlank</span><span class="hl opt">() {</span>
+	<span class="hl kwb">int</span> i<span class="hl opt">;</span>
+	<span class="hl kwa">for</span><span class="hl opt">(</span>i <span class="hl opt">=</span> <span class="hl num">0</span><span class="hl opt">;</span> i <span class="hl opt">&lt;</span> BLANK_SIZE<span class="hl opt">;</span> i <span class="hl opt">++)</span> <span class="hl kwd">out_16_le</span><span class="hl opt">(</span><span class="hl num">0</span><span class="hl opt">);</span>
+<span class="hl opt">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">writeOmega</span><span class="hl opt">(</span><span class="hl kwb">double</span> omega<span class="hl opt">) {</span>
+	<span class="hl kwb">int</span> i<span class="hl opt">;</span>
+	<span class="hl kwa">for</span><span class="hl opt">(</span>i <span class="hl opt">=</span> <span class="hl num">0</span><span class="hl opt">;</span> i <span class="hl opt">&lt;</span> SOUND_SIZE<span class="hl opt">;</span> i <span class="hl opt">++)</span>
+		<span class="hl kwd">out_16_le</span><span class="hl opt">(</span><span class="hl num">20000.0</span> <span class="hl opt">*</span> <span class="hl kwd">sin</span><span class="hl opt">(</span> omega <span class="hl opt">* (</span><span class="hl kwb">double</span><span class="hl opt">)</span>i <span class="hl opt">));</span>
+<span class="hl opt">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl opt">() {</span>
+	<span class="hl kwb">int32_t</span> size<span class="hl opt">;</span>
+	<span class="hl kwb">int</span> i<span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'c'</span><span class="hl opt">] =</span> <span class="hl num">0.1742</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'x'</span><span class="hl opt">] =</span> <span class="hl num">0.1845</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'d'</span><span class="hl opt">] =</span> <span class="hl num">0.1955</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'e'</span><span class="hl opt">] =</span> <span class="hl num">0.2194</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'f'</span><span class="hl opt">] =</span> <span class="hl num">0.2325</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'g'</span><span class="hl opt">] =</span> <span class="hl num">0.2609</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'a'</span><span class="hl opt">] =</span> <span class="hl num">0.2929</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'C'</span><span class="hl opt">] =</span> <span class="hl num">0.3483</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'D'</span><span class="hl opt">] =</span> <span class="hl num">0.3910</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'E'</span><span class="hl opt">] =</span> <span class="hl num">0.4389</span><span class="hl opt">;</span>
+	table<span class="hl opt">[</span><span class="hl str">'F'</span><span class="hl opt">] =</span> <span class="hl num">0.4647</span><span class="hl opt">;</span>
+
+	size <span class="hl opt">=</span> <span class="hl num">0</span><span class="hl opt">;</span>
+	
+	<span class="hl kwa">for</span><span class="hl opt">(</span>i <span class="hl opt">=</span> <span class="hl num">0</span><span class="hl opt">;</span> score<span class="hl opt">[</span>i<span class="hl opt">] !=</span> <span class="hl str">'\0'</span><span class="hl opt">;</span> i <span class="hl opt">++)</span>
+		<span class="hl kwa">if</span><span class="hl opt">(</span>score<span class="hl opt">[</span>i<span class="hl opt">] ==</span> <span class="hl str">'-'</span><span class="hl opt">)</span> size <span class="hl opt">+=</span> BLANK_SIZE<span class="hl opt">;</span>
+		<span class="hl kwa">else</span>                size <span class="hl opt">+=</span> SOUND_SIZE<span class="hl opt">;</span>
+
+	f<span class="hl opt">=</span><span class="hl kwd">fopen</span><span class="hl opt">(</span><span class="hl str">&quot;out.wav&quot;</span><span class="hl opt">,</span><span class="hl str">&quot;wb&quot;</span><span class="hl opt">);</span>
+	
+	<span class="hl kwd">fwrite</span><span class="hl opt">(</span><span class="hl str">&quot;RIFF&quot;</span><span class="hl opt">,</span> <span class="hl num">4</span><span class="hl opt">,</span> <span class="hl num">1</span><span class="hl opt">,</span> f<span class="hl opt">);</span>
+	<span class="hl kwd">out_32_le</span><span class="hl opt">(</span><span class="hl num">2</span> <span class="hl opt">*</span> size <span class="hl opt">+</span> <span class="hl num">32</span><span class="hl opt">);</span>
+	<span class="hl kwd">fwrite</span><span class="hl opt">(</span>header<span class="hl opt">,</span> <span class="hl kwa">sizeof</span><span class="hl opt">(</span>header<span class="hl opt">),</span> <span class="hl num">1</span><span class="hl opt">,</span> f<span class="hl opt">);</span>
+	
+	<span class="hl kwd">fwrite</span><span class="hl opt">(</span><span class="hl str">&quot;data&quot;</span><span class="hl opt">,</span> <span class="hl num">4</span><span class="hl opt">,</span> <span class="hl num">1</span><span class="hl opt">,</span> f<span class="hl opt">);</span>	
+	<span class="hl kwd">out_32_le</span><span class="hl opt">(</span><span class="hl num">2</span> <span class="hl opt">*</span> size<span class="hl opt">);</span>
+	
+	<span class="hl kwa">for</span><span class="hl opt">(</span>i <span class="hl opt">=</span> <span class="hl num">0</span><span class="hl opt">;</span> score<span class="hl opt">[</span>i<span class="hl opt">] !=</span> <span class="hl str">'\0'</span><span class="hl opt">;</span> i <span class="hl opt">++)</span>
+		<span class="hl kwa">if</span><span class="hl opt">(</span>score<span class="hl opt">[</span>i<span class="hl opt">] ==</span> <span class="hl str">'-'</span><span class="hl opt">)</span> <span class="hl kwd">writeBlank</span><span class="hl opt">();</span>
+		<span class="hl kwa">else</span> <span class="hl kwd">writeOmega</span><span class="hl opt">(</span>table<span class="hl opt">[(</span><span class="hl kwb">int</span><span class="hl opt">)</span>score<span class="hl opt">[</span>i<span class="hl opt">]]);</span>
+	<span class="hl kwd">fclose</span><span class="hl opt">(</span>f<span class="hl opt">);</span>
+	<span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl opt">;</span>
+<span class="hl opt">}</span>
+</pre>
+</body>
+</html>
+<!--HTML generated by highlight 3.18, http://www.andre-simon.de/-->
