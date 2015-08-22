@@ -1,0 +1,39 @@
+#bad-apple-quote {
+    border-left: 3px solid black;
+    padding-left: 10%;
+    margin: 20px 0;
+}
+
+#index-title {
+    font-size: 30px;
+    border-bottom: 2px solid black;
+    padding-left: 5px;
+}
+
+#index {
+    list-style-position: outside;
+    margin: 0;
+    padding: 0;
+}
+
+#index > li {
+    display: block;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed gray;
+    padding-left: 5px;
+}
+
+.index-post-link {
+    text-decoration: none;
+}
+
+.index-post-date {
+    float: right;
+}
+
+.index-fill {
+    width: auto;
+    background-color: black;
+    height: 1ex;
+}

@@ -1,60 +1,39 @@
 <html>
-    <head>
-        <title>dramforever (dram.cf)</title>
-    </head>
 
-    <body>
-    <h1>dramforever</h1>
-    I'm a weird student. Period.
+<head>
+    <title>dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="styles/default.css">
+    <link rel="stylesheet" href="styles/index.css">
+</head>
 
-    <h2>My projects</h2>
-    <p>I started a lot of projects, but often dropped them soon after I have a
-    working version. Maybe I just have <em>too</em> many ideas.
+<body>
 
-    <h3>Web projects</h3>
-    <ul>
-        <li><a href="http://p.dram.cf">illupaste</a></li>
-        <p>Easy, quick (if it was not password-protected) pure text pastebin
-        <p><b>Credentials</b> for those who care about me:
-        <p><code>illupaste:verysecure</code>
-        <p>Just don't spam, <em>please</em>
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
 
-        <li><a href="http://utils.dram.cf">dram-utils</a>
-        <a href="https://github.com/dramforever/dram_utils">(Source code)</a>
-        <p>Quickly do DNS lookup, http ping and whois
-        <p>(Actually, the function I use most is whois)
+<main>
+    <div id="bad-apple-quote" class="clear">
+        If I make another move <br />
+        If I take another step <br />
+        Then it all will fall apart <br />
+        There'll be nothing of me left <br />
+        <span style="float: right;">-- Bad Apple</span>
+    </div>
 
-        <li><a href="http://dramforever.herokuapp.com/jsmine/">jsmine</a>
-        <a href="https://github.com/dramforever/jsmine">(Source code)</a>
-        <p>A small, hacky minesweeper
-        <p>(Hint: there's a hidden level)
+    <div id="index-title">Index</div>
+    <ul id="index">
+        <li>
+            <a class="index-post-link" href="p/hello-world">Hello World</a>
+            <span class="index-post-date">2015-08-22</span>
+        </li>
     </ul>
+</main>
 
-    <h3>Other projects</h3>
-    <ul>
-        <li><a href="https://github.com/dramforever/kspl">kspl</a></li>
-        <p>A macro language that is influenced by combinatory calculus
-        <p>Sample:</p>
-        <pre><code>\Define\#{\K{}} \#{The comment combinator!}
+</body>
 
-\#{
-First we build the SKI system
-S and K are already built in, so we define I
-}
-\#{S x y z = x z {y z} (built in)}
-\#{K x y = x           (built in)}
-
-\#{I x = x}           \Define\I{}
-
-\#{That's it!}
-        </pre></code>
-        <p><a href="kspl.html">
-                Want to see what S and K can do? Read more about it!
-        </a></p>
-
-        <li>hrevoice</li>
-        <p>Reverse your wave file <em>really</em>quickly</p>
-        <p><a href="hrevoice.exe">Download here</a></p>
-        <p>(No source code available yet)</p>
-    </body>
 </html>
