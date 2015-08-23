@@ -1,19 +1,17 @@
 #post-title {
     margin-top: 20px;
-    border-bottom: 2px solid black;
 }
 
 #post-title-main {
-    display: inline;
+    display: block;
     margin: 0;
     font-weight: normal;
     font-size: 30px;
+    border-bottom: 2px solid black;
 }
 #post-title-sub {
     display: inline;
     color: gray;
     float: right;
-    top:10px;
     font-size: 20px;
-    position: relative;
 }
