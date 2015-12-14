@@ -175,12 +175,15 @@ void access1(int x)
     {
       int w = -x[parent];</code></pre>
 
-<p>找到下一个需要连的节点 w 了，干什么呢？当然是像上面一样，把它的偏好子断开，把自己接上去。
+<p>找到下一个需要连的节点 w 了，干什么呢？当然是像上面一样，先把它的偏好子断开：
 
 <pre><code>      splay(w);
       if(w[c][1])
-	w[c][1][parent] = -w;
-      w[c][1] = x;
+	w[c][1][parent] = -w;</code></pre>
+
+<p>然后，把 x 接上去作为偏好子。因为我立刻改了 <code>w[c][1]</code>，所以我上面没有 <code>w[c][1] = 0</code>
+
+<pre><code>      w[c][1] = x;
       x[parent] = w;</code></pre>
 
 <p>然后下一个该连哪个点了？哦对，就是这个 w。
