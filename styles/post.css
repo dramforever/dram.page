@@ -19,3 +19,8 @@
     float: right;
     font-size: 20px;
 }
+
+pre
+{
+    background-color: #f0f0f0;
+}
