@@ -27,6 +27,7 @@ body {
     margin-top: 20px;
     margin-right: auto;
     margin-left: auto;
+    padding-bottom: 100px;
 }
 
 @media only screen and (max-width: 767px) {
