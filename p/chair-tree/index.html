@@ -74,7 +74,7 @@ import Control.Monad.IO.Class</code></pre>
 <p>Where:
 
   <ul>
-    <li> If \(i = j\), then the value at the node is the count of \(i\) in \(S)\, and its children are <i>undefined</i>, meaning that they must not be accessed. Such a node is called a <b>leaf</b>
+    <li> If \(i = j\), then the value at the node is the count of \(i\) in \(S\), and its children are <i>undefined</i>, meaning that they must not be accessed. Such a node is called a <b>leaf</b>
     <li> Otherwise, let \(m = \lfloor (i + j) / 2 \rfloor\). It can be shown trivially that \([i \dots m]\) and \([m + 1 \dots j]\) are valid subranges of \([i \dots j]\). The value at this node is the count of numbers in \(S\) within the range \([i \dots j\), and its left and right child describes the subranges \([i \dots m]\) and \([m+1 \dots j]\), respectively.
   </ul>
   
