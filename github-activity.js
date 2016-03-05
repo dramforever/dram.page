@@ -7,12 +7,14 @@ function showGithubActivity(data) {
     for(var i = 0; i < data.length; i ++) {
         var evt = data[i];
         if(evt.type == "PushEvent") {
-            for(var j = 0; j < evt.payload.commits.length; j ++) {
-                events.push([
-                    evt.repo.name,
-                    evt.payload.commits[j].message,
-                    evt.payload.commits[j].sha
-                ]);
+            for (var j = 0; j < evt.payload.commits.length; j++) {
+                if (evt.payload.commits[j].author.name == "dramforever") {
+                    events.push([
+                        evt.repo.name,
+                        evt.payload.commits[j].message,
+                        evt.payload.commits[j].sha
+                    ]);
+                }
             }
         }
         if(events.length > MAX_EVENTS) break;
