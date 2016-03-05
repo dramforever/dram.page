@@ -31,3 +31,44 @@
     background-color: black;
     height: 1ex;
 }
+
+#github-activity-title {
+    font-size: 30px;
+    border-bottom: 2px solid black;
+    padding-left: 5px;
+    margin-top: 50px;
+}
+
+#github-activity-title a {
+    font-size: initial;
+}
+
+.github-activity-element {
+    display: block;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed gray;
+    padding-left: 5px;
+}
+
+.github-activity-commit-repo {
+    display: block;
+    float: right;
+    top: 0;
+    background-color: white;
+    margin-left: 10px;
+}
+
+.github-activity-commit-message:before {
+    display: inline-block;
+    padding-right: 10px;
+    content: "(commit)";
+    color: gray;
+    text-decoration: none;
+}
+
+.github-activity-commit-message {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
