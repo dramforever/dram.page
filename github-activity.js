@@ -65,7 +65,7 @@ function getData(callback) {
             localStorage.etag = xhr.getResponseHeader("ETag");
             localStorage.cached = xhr.response;
             callback(JSON.parse(xhr.response));
-        } else if(xhr.status = 304) { // OK, Cached data
+        } else if(xhr.status == 304) { // OK, Cached data
             callback(JSON.parse(localStorage.cached));
         } else {
             errored();
