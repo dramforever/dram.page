@@ -64,8 +64,11 @@
 
 .github-activity-commit-message:before {
     display: inline-block;
+    height: 14px;
+    width: 14px;
+    content: "";
+    background-size: cover;
     padding-right: 10px;
-    content: "(commit)";
     color: gray;
     text-decoration: none;
 }
@@ -74,4 +77,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
+}
+
+/* Github Octicons */
+.github-activity-commit-message:before {
+    background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iCiAgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIxMDI0IiB2aWV3UG9ydD0iMCAwIDEwMjQgMTAyNCI+CiAgICA8cGF0aCBkPSJNNjk1IDM4NGMtMjkgMTEwLTEyOCAxOTItMjQ3IDE5MnMtMjE4LTgyLTI0Ny0xOTJIMHYtMTI4aDIwMWMyOS0xMTAgMTI4LTE5MiAyNDctMTkyczIxOCA4MiAyNDcgMTkyaDIwMVYzODRINjk1ek00NDggMTc5Yy03OCAwLTE0MSA2My0xNDEgMTQxczYzIDE0MSAxNDEgMTQxIDE0MS02MyAxNDEtMTQxLTYzLTE0MS0xNDEtMTQxeiIgZmlsbD0iZ3JheSIgc3Ryb2tlPSJncmF5IiAvPgo8L3N2Zz4KCg==");
 }
