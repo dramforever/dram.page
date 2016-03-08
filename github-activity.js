@@ -3,48 +3,55 @@ var MAX_EVENTS = 5;
 var gh = document.getElementById("github-activity");
 
 function showGithubActivity(data) {
-    var events = [];
-    for(var i = 0; i < data.length; i ++) {
-        var evt = data[i];
-        if(evt.type == "PushEvent") {
-            for (var j = 0; j < evt.payload.commits.length; j++) {
-                if (evt.payload.commits[j].author.name == "dramforever") {
-                    events.push([
-                        evt.repo.name,
-                        evt.payload.commits[j].message,
-                        evt.payload.commits[j].sha
-                    ]);
+    try {
+        var events = [];
+        for (var i = 0; i < data.length; i++) {
+            var evt = data[i];
+            if (evt.type == "PushEvent") {
+                for (var j = 0; j < evt.payload.commits.length; j++) {
+                    if (evt.payload.commits[j].author.name == "dramforever") {
+                        events.push([
+                            evt.repo.name,
+                            evt.payload.commits[j].message,
+                            evt.payload.commits[j].sha
+                        ]);
+                    }
                 }
             }
+            if (events.length > MAX_EVENTS) break;
         }
-        if(events.length > MAX_EVENTS) break;
-    }
-    for(var i = 0; i < MAX_EVENTS && i < events.length; i ++) {
-        var repoName = events[i][0], message = events[i][1], sha = events[i][2];
+        for (var i = 0; i < MAX_EVENTS && i < events.length; i++) {
+            var repoName = events[i][0], message = events[i][1], sha = events[i][2];
 
-        var elt = document.createElement("div");
-        elt.className = "github-activity-element github-activity-commit clear";
+            var elt = document.createElement("div");
+            elt.className = "github-activity-element github-activity-commit clear";
 
-        var link = document.createElement("a");
-        link.className = "github-activity-commit-repo";
-        link.href = "https://github.com/" + repoName;
-        link.textContent = repoName.split("/")[1];
+            var link = document.createElement("a");
+            link.className = "github-activity-commit-repo";
+            link.href = "https://github.com/" + repoName;
+            link.textContent = repoName.split("/")[1];
 
-        var msg = document.createElement("a");
-        msg.className = "github-activity-commit-message";
+            var msg = document.createElement("a");
+            msg.className = "github-activity-commit-message";
 
-        if(message.split("\n").length < 2) {
-            msg.textContent = message;
-        } else {
-            msg.textContent = message.split("\n")[0] + " ...";
+            if (message.split("\n").length < 2) {
+                msg.textContent = message;
+            } else {
+                msg.textContent = message.split("\n")[0] + " ...";
+            }
+
+            msg.href = "https://github.com/" + repoName + "/commit/" + sha;
+
+            elt.appendChild(msg);
+            elt.appendChild(link);
+            gh.appendChild(elt);
         }
-
-        msg.href = "https://github.com/" + repoName + "/commit/" + sha;
-
-        elt.appendChild(msg);
-        elt.appendChild(link);
-        gh.appendChild(elt);
+    } catch(e) {
+        gh.dataset["state"] = "error";
+        gh.dataset["error"] = e.toString();
+        return;
     }
+    gh.dataset["state"] = "loaded"
 }
 
 function getData(callback) {
@@ -57,7 +64,8 @@ function getData(callback) {
     }
 
     function errored() {
-        gh.textContent = "Error loading github activity";
+        gh.dataset["state"] = "error";
+        gh.dataset["error"] = "Network error";
     }
 
     xhr.onload =function() {

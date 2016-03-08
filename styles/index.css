@@ -43,6 +43,26 @@
     font-size: initial;
 }
 
+#github-activity[data-state=loading]:before {
+    padding-left: 5px;
+    display: block;
+    content: "Loading...";
+    color: gray;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed gray;
+}
+
+#github-activity[data-state=error]:before {
+    padding-left: 5px;
+    display: block;
+    content: "Error: " attr(data-error);
+    color: red;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed gray;
+}
+
 .github-activity-element {
     display: block;
     padding-top: 10px;
