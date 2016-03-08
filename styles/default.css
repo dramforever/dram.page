@@ -38,7 +38,6 @@ body {
 
 #site-title {
     padding-bottom: 15px;
-    position: relative;
 }
 
 #site-title-main {
@@ -54,8 +53,7 @@ body {
 }
 
 #site-title-sub {
-    position: absolute;
-    right: 0;
+    float: right;
     margin-right: 3%;
 }
 
