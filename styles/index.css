@@ -12,14 +12,19 @@
 
 #index > li {
     display: block;
-    padding-top: 10px;
-    padding-bottom: 10px;
     border-bottom: 1px dashed gray;
     padding-left: 5px;
 }
 
+#index>li:hover {
+    background-color: #eeeeee;
+}
+
 .index-post-link {
     text-decoration: none;
+    display: block;
+    width: 100%;
+    padding: 10px 0px;
 }
 
 .index-post-date {
@@ -28,10 +33,9 @@
 
 .index-fill {
     width: auto;
-    background-color: black;
+    padding-color: black;
     height: 1ex;
 }
-
 #github-activity-title {
     font-size: 30px;
     border-bottom: 2px solid black;
