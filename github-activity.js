@@ -4,6 +4,7 @@ var gh = document.getElementById("github-activity");
 
 function showGithubActivity(data) {
     try {
+        gh.innerHTML = ""; // Clear the contents first
         var events = [];
         for (var i = 0; i < data.length; i++) {
             var evt = data[i];
@@ -23,16 +24,16 @@ function showGithubActivity(data) {
         for (var i = 0; i < MAX_EVENTS && i < events.length; i++) {
             var repoName = events[i][0], message = events[i][1], sha = events[i][2];
 
-            var elt = document.createElement("div");
-            elt.className = "github-activity-element github-activity-commit clear";
+            var elt = document.createElement("li");
+            elt.className = "clear";
 
             var link = document.createElement("a");
-            link.className = "github-activity-commit-repo";
-            link.href = "https://github.com/" + repoName;
-            link.textContent = repoName.split("/")[1];
+            link.className = "index-post-link";
+            link.href = "https://github.com/" + repoName + "/commit/" + sha;
 
-            var msg = document.createElement("a");
-            msg.className = "github-activity-commit-message";
+
+            var msg = document.createElement("span");
+            msg.className = "octicon-commit";
 
             if (message.split("\n").length < 2) {
                 msg.textContent = message;
@@ -40,21 +41,27 @@ function showGithubActivity(data) {
                 msg.textContent = message.split("\n")[0] + " ...";
             }
 
-            msg.href = "https://github.com/" + repoName + "/commit/" + sha;
+            link.appendChild(msg);
+            
+            var repo = document.createElement("span");
+            repo.className = "index-post-info";
+            repo.textContent = repoName.split("/")[1];
 
-            elt.appendChild(msg);
+            link.appendChild(repo);
             elt.appendChild(link);
             gh.appendChild(elt);
         }
     } catch(e) {
         gh.dataset["state"] = "error";
         gh.dataset["error"] = e.toString();
-        return;
     }
-    gh.dataset["state"] = "loaded"
 }
 
 function getData(callback) {
+    if(localStorage.hasOwnProperty("cached")) {
+        callback(JSON.parse(localStorage.cached));
+    }
+
     var xhr = new XMLHttpRequest();
 
     xhr.open("GET", "https://api.github.com/users/dramforever/events");
@@ -73,8 +80,10 @@ function getData(callback) {
             localStorage.etag = xhr.getResponseHeader("ETag");
             localStorage.cached = xhr.response;
             callback(JSON.parse(xhr.response));
+            gh.dataset["state"] = "loaded"
         } else if(xhr.status == 304) { // OK, Cached data
             callback(JSON.parse(localStorage.cached));
+            gh.dataset["state"] = "loaded"
         } else {
             errored();
         }

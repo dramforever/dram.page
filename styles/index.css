@@ -4,19 +4,19 @@
     padding-left: 5px;
 }
 
-#index {
+.index {
     list-style-position: outside;
     margin: 0;
     padding: 0;
 }
 
-#index > li {
+.index li {
     display: block;
     border-bottom: 1px dashed gray;
     padding-left: 5px;
 }
 
-#index>li:hover {
+.index li:hover {
     background-color: #eeeeee;
 }
 
@@ -27,15 +27,11 @@
     padding: 10px 0px;
 }
 
-.index-post-date {
+.index-post-info {
     float: right;
 }
 
-.index-fill {
-    width: auto;
-    padding-color: black;
-    height: 1ex;
-}
+
 #github-activity-title {
     font-size: 30px;
     border-bottom: 2px solid black;
@@ -75,15 +71,7 @@
     padding-left: 5px;
 }
 
-.github-activity-commit-repo {
-    display: block;
-    float: right;
-    top: 0;
-    background-color: white;
-    margin-left: 10px;
-}
-
-.github-activity-commit-message:before {
+.octicon-commit:before {
     display: inline-block;
     height: 14px;
     width: 14px;
@@ -101,6 +89,6 @@
 }
 
 /* Github Octicons */
-.github-activity-commit-message:before {
+.octicon-commit:before {
     background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iCiAgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIxMDI0IiB2aWV3UG9ydD0iMCAwIDEwMjQgMTAyNCI+CiAgICA8cGF0aCBkPSJNNjk1IDM4NGMtMjkgMTEwLTEyOCAxOTItMjQ3IDE5MnMtMjE4LTgyLTI0Ny0xOTJIMHYtMTI4aDIwMWMyOS0xMTAgMTI4LTE5MiAyNDctMTkyczIxOCA4MiAyNDcgMTkyaDIwMVYzODRINjk1ek00NDggMTc5Yy03OCAwLTE0MSA2My0xNDEgMTQxczYzIDE0MSAxNDEgMTQxIDE0MS02MyAxNDEtMTQxLTYzLTE0MS0xNDEtMTQxeiIgZmlsbD0iZ3JheSIgc3Ryb2tlPSJncmF5IiAvPgo8L3N2Zz4KCg==");
 }
