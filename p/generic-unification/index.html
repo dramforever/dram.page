@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>表达式归一化和 Traversable, Generics -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+</head>
+
+<body>
+
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<div id="post-title" class="clear">
+    <h2 id="post-title-main">表达式归一化和 Traversable, Generics</h2>
+    <span id="post-title-sub">2016-06-02</span>
+</div>
+
+<p><a href="../unification">上回说到</a>，我们可以使用 Free Monad 做表达式的归一化。既然这样，脑洞过大的 dramforever 很自然地想到，我们能不能把用于生成 Monad 的 Functor 也泛化呢？答案显然是可以的，否则就不会有这篇 blog 了……
+
+<h3>可匹配结构的 Functor</h3>
+
+<pre><code>class ExactZip f where
+  exactZip :: f a -> f b -> Maybe (f (a, b))</code></pre>
+
+<p>其定义为，<code>exactZip u v</code>，若两个参数结构匹配（不管里面具体存的值），就返回一个结构对应位置的两个值被 zip 到一起，否则返回 <code>Nothing</code>。举例：
+
+<pre><code>> exactZip "hello" "world"
+Just [('h','w'),('e','o'),('l','r'),('l','l'),('o','d')]
+> exactZip "hello" "dram"
+Nothing</code></pre>
+
+<p>注意到一个列表的结构就是它的长度。另外，注意到这个不像 <code>zip</code>，它不会砍掉较长的列表。
+
+<h3>使用 <code>ExactZip</code> 实现的 <code>unify</code> 等函数</h3>
+
+<p>这是原版的 <code>unify</code>
+
+<pre><code>unify :: (MonadError UnificationError m, MonadUFS m) => Var -> Var -> m ()
+unify u1 v1 = do
+  (xu, eu) <- find u1
+  (xv, ev) <- find v1
+  when (xu /= xv) $ case (eu, ev) of
+    (Nothing, _) -> ufsMap . at xu .= Just (Parent xv)
+    (Just _, Nothing) -> ufsMap . at xv .= Just (Parent xu)
+    (Just p, Just q) -> go p q where
+      go (Atom x) (Atom y)
+        | getIdentifier x == getIdentifier y = pure ()
+        | otherwise = throwError (AtomMismatch x y)
+      go (Atom x) (Cons y ys) = throwError (AtomNotCons x y ys)
+      go m@Cons{} n@Atom{} = go n m
+      go m@(Cons x xs) n@(Cons y ys)
+        | length xs == length ys = do
+          unify x y
+          zipWithM_ unify xs ys
+          ufsMap . at xu .= Just (Parent xv)
+        | otherwise = throwError (ConsLengthMismatch m n)</code></pre>
+
+<p>很不幸的是，我们的新的 <code>ExactZip</code> 无法再提供失配的具体信息，所以我们不妨换成 <code>Alternative</code>。里面的 <code>go</code> 函数是依赖 <code>ExprF</code> 具体实现的重灾区，我们要消灭它。另外，储存的状态也依赖于 <code>ExprF</code>，也得改掉，但是比较简单所以在此略去，有兴趣可以参见完整代码。
+
+<p>这样考虑：两个 Functor 首先先要结构匹配才能归一化。如果结构匹配的话，就需要把每个对应位置的变量归一化。比如
+
+<pre><code>#A[#B, #C]
+#D[#E, #F]</code></pre>
+
+<p>就需要分别归一化 <code>#A = #D, #B = #E, #C = #F</code>。只需要遍历 <code>exactZip</code> 后的结构就可以了。写出来也不难：
+
+<pre><code>unify :: (Foldable f, ExactZip f, Alternative m, MonadUFS f m) => Var -> Var -> m ()
+unify u1 v1 = do
+  (xu, eu) <- find u1
+  (xv, ev) <- find v1
+  when (xu /= xv) $ case (eu, ev) of
+    (Nothing, _) -> ufsMap . at xu .= Just (Parent xv)
+    (Just _, Nothing) -> ufsMap . at xv .= Just (Parent xu)
+    (Just p, Just q) -> case exactZip p q of
+      Nothing -> empty
+      Just ex -> do
+        <strong>for_ ex (uncurry unify)</strong>
+        ufsMap . at xu .= Just (Parent xv)</code></pre>
+
+<p>这才想到，要对一个结构里对应位置的每对变量进行归一化（代码中加粗部分），需要这个结构支持 <code>Foldable</code>。不过这都不是事，因为 GHC 支持自动 <code>deriving (Foldable)</code>。
+
+<p><code>record</code> 和 <code>report</code> 的代码，因为本身就已经支持任意 <code>Traversable</code>，改动很小。<code>run</code> 只要把 <code>Except</code> 换成 <code>Maybe</code> 就好了。
+
+<h3>Generics 上场</h3>
+
+<p>调查一下，你觉得你想自己写 <code>instance ExactZip ExprF</code> 么？奇葩的 dramforever 表示，宁可写 Generics 也不手动写那个……
+
+<p>实现 Generics，需要我们来对事先提供的一些 Functor 实现我们的 <code>ExactZip</code> 类型类。这些 Functor，我们不在这里深入讨论，有兴趣请参见文档：<a href="http://hackage.haskell.org/package/base-4.8.2.0/docs/GHC-Generics.html">http://hackage.haskell.org/package/base-4.8.2.0/docs/GHC-Generics.html</a>。我们在这里给出一个比较不太明显的 instance（说白了就是我被卡了一段时间的），其余比较无聊，还是一样，请参见完整代码。
+
+<p>（如果你要自己写的话，给点建议：可以尝试观察出这个 Functor 与自己之前见过的哪个 Functor 类似，而不是进入各种 Generics 具体实现的奇葩弯路。）
+
+<pre><code>instance Eq c => ExactZip (K1 i c) where
+  exactZip (K1 a) (K1 b)
+    | a == b = Just (K1 a)
+    | otherwise = Nothing</code></pre>
+
+<p><code>K1</code> 大致相当于 <code>Const</code>。这里两个值结构匹配，就是对应的值匹配，所以我们直接调用 <code>Eq</code>。
+
+<p>然后，给 <code>ExactZip</code> 加上一个默认方法：
+
+<pre><code>class ExactZip f where
+  exactZip :: f a -> f b -> Maybe (f (a, b))
+  default exactZip :: (Generic1 f, ExactZip (Rep1 f)) => f a -> f b -> Maybe (f (a, b))
+  exactZip x y = to1 <$> exactZip (from1 x) (from1 y)</code></pre>
+
+<p>这样要给 <code>ExprF</code> 实现支持归一化，只要这样：
+
+<pre><code>data ExprF a
+  = Atom Identifier
+  | Cons a [a]
+  deriving (Functor, Foldable, Traversable, Generic1)
+
+instance ExactZip ExprF</code></pre>
+
+<p>就可以享受 Generics 了。等等，What? 还得给列表加 instance？不慌：
+
+<pre><code>instance ExactZip []</code></pre>
+
+<p>看来默认方法奏效了。
+
+<h4>练习</h4>
+
+<p>dramforever 实在懒到一定程度了，需要你的帮助！
+
+<ul>
+  <li>给落下的 <code>(:.:)</code> 实现 <code>ExactZip</code>
+  <li>实现一个更高效的 <code>instance ExactZip []</code>
+  <li>为 <code>ExactZip</code> 加上失配信息，并用 GHC Generics 实现失配信息的自动生成
+</ul>
+<h3>附：完整实现代码</h3>
+
+<style>
+  #boring-code { display: none }
+  input:checked + label + #boring-code { display: block }
+</style>
+
+<input type="checkbox" name="show-code">
+<label for="show-code">展开代码</label>
+
+<div id="boring-code">
+Play.hs
+<pre><code>{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DefaultSignatures #-}
+
+module Play
+  ( ExactZip(..), MonadUFS, Var
+  , fresh, record, report, unify
+  , run
+  ) where
+
+import qualified Data.Text as T
+import Control.Monad.Free
+import qualified Data.Map as M
+import Lens.Micro
+import Lens.Micro.Mtl
+import Lens.Micro.GHC () -- Instances only
+import Control.Monad.State
+import Control.Applicative
+import Data.Foldable hiding (find)
+import GHC.Generics
+
+class ExactZip f where
+  exactZip :: f a -> f b -> Maybe (f (a, b))
+  default exactZip :: (Generic1 f, ExactZip (Rep1 f)) => f a -> f b -> Maybe (f (a, b))
+  exactZip x y = to1 <$> exactZip (from1 x) (from1 y)
+
+instance ExactZip V1 where
+  exactZip _ _ = error "exactZip on void type?"
+
+instance ExactZip U1 where
+  exactZip U1 U1 = Just U1
+
+instance (ExactZip f, ExactZip g) => ExactZip (f :+: g) where
+  exactZip (L1 x) (L1 y) = L1 <$> exactZip x y
+  exactZip (R1 x) (R1 y) = R1 <$> exactZip x y
+  exactZip _ _ = Nothing
+
+instance (ExactZip f, ExactZip g) => ExactZip (f :*: g) where
+  exactZip (x1 :*: y1) (x2 :*: y2)
+    = liftA2 (:*:) (exactZip x1 x2) (exactZip y1 y2)
+
+instance Eq c => ExactZip (K1 i c) where
+  exactZip (K1 a) (K1 b)
+    | a == b = Just (K1 a)
+    | otherwise = Nothing
+
+instance ExactZip f => ExactZip (M1 i c f) where
+  exactZip (M1 u) (M1 v) = M1 <$> exactZip u v
+
+instance ExactZip Par1 where
+  exactZip (Par1 u) (Par1 v) = Just (Par1 (u, v))
+
+instance ExactZip f => ExactZip (Rec1 f) where
+  exactZip (Rec1 u) (Rec1 v) = Rec1 <$> exactZip u v
+
+instance ExactZip []
+
+newtype Var
+  = Var T.Text
+  deriving (Eq, Ord)
+
+instance Show Var where
+  show (Var v) = "#" ++ T.unpack v
+
+data UnionFindPointer f
+  = Parent Var
+  | Linked (f Var)
+
+data UnionFindState f
+  = UnionFindState
+    { _ufsSupply :: [Var]
+    , _ufsMap :: M.Map Var (UnionFindPointer f)
+    }
+
+ufsMap :: Lens' (UnionFindState f) (M.Map Var (UnionFindPointer f))
+ufsMap f_aj0N (UnionFindState x_aj0O x_aj0P)
+  = fmap (\ y_aj0Q -> UnionFindState x_aj0O y_aj0Q) (f_aj0N x_aj0P)
+{-# INLINE ufsMap #-}
+
+ufsSupply :: Lens' (UnionFindState f) [Var]
+ufsSupply f_aj0R (UnionFindState x_aj0S x_aj0T)
+  = fmap (\ y_aj0U -> UnionFindState y_aj0U x_aj0T) (f_aj0R x_aj0S)
+{-# INLINE ufsSupply #-}
+
+type MonadUFS f m = MonadState (UnionFindState f) m
+
+fresh :: MonadUFS f m => m Var
+fresh = do
+  ufsSupply %= tail
+  head <$> use ufsSupply
+
+find :: MonadUFS f m => Var -> m (Var, Maybe (f Var))
+find u = locateRoot u >>= \(x, e) -> (x, e) <$ compressPath u x where
+  locateRoot t =
+    use (ufsMap . at t) >>= \case
+      Just (Parent v) -> locateRoot v
+      Just (Linked ex) -> pure (t, Just ex)
+      Nothing -> pure (t, Nothing)
+  compressPath t x = go t where
+    go m
+      | m == x = pure ()
+      | otherwise = use (ufsMap . at m) >>= \case
+          Just (Parent par) -> do
+            ufsMap . at m .= Just (Parent x)
+            go par
+          _ -> error "Internal error: find: Can't happen!"
+
+unify :: (Foldable f, ExactZip f, Alternative m, MonadUFS f m) => Var -> Var -> m ()
+unify u1 v1 = do
+  (xu, eu) <- find u1
+  (xv, ev) <- find v1
+  when (xu /= xv) $ case (eu, ev) of
+    (Nothing, _) -> ufsMap . at xu .= Just (Parent xv)
+    (Just _, Nothing) -> ufsMap . at xv .= Just (Parent xu)
+    (Just p, Just q) -> case exactZip p q of
+      Nothing -> empty
+      Just ex -> do
+        for_ ex (uncurry unify)
+        ufsMap . at xu .= Just (Parent xv)
+
+record :: (Traversable f, MonadUFS f m) => Free f Var -> m Var
+record = iterA go where
+  go f = do
+    u <- sequence f
+    v <- fresh
+    ufsMap . at v .= Just (Linked u)
+    pure v
+
+report :: (Traversable f, MonadUFS f m) => Var -> m (Free f Var)
+report = unfoldM go where
+  go v = find v >>= \case
+    (u, Nothing) -> pure (Left u)
+    (_, Just t) -> pure (Right t)
+
+run :: StateT (UnionFindState f) Maybe a
+    -> Maybe a
+run s = evalStateT s (UnionFindState vars M.empty) where
+  vars =
+    let u = "" : liftA2 (flip (:)) u ['A'..'Z']
+    in map (Var . T.pack) u</code></pre>
+Expr.hs
+<pre><code>{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
+
+module Expr where
+
+import Data.String
+import Control.Monad.Free
+import Data.List
+import qualified Data.Text as T
+import GHC.Generics
+
+import Control.Applicative
+import Play
+
+newtype Identifier
+  = Identifier { getIdentifier :: T.Text }
+  deriving (IsString, Eq)
+
+instance Show Identifier where
+  show (Identifier u) = T.unpack u
+
+data ExprF a
+  = Atom Identifier
+  | Cons a [a]
+  deriving (Functor, Foldable, Traversable, Generic1)
+
+instance ExactZip ExprF
+
+type PartialExpr = Free ExprF Var
+type UnionFindExpr = ExprF Var
+
+printPartial :: PartialExpr -> String
+printPartial = iter go . fmap show where
+  go (Atom d) = show d
+  go (Cons x xs) = x ++ "[" ++ intercalate "," xs ++ "]"
+
+instance Show u => Show (ExprF u) where
+  show (Atom (Identifier u)) = T.unpack u
+  show (Cons x xs) = show x ++ "[" ++ intercalate "," (show <$> xs) ++ "]"
+
+atom :: Identifier -> PartialExpr
+atom = Free . Atom
+
+cons :: PartialExpr -> [PartialExpr] -> PartialExpr
+cons u v = Free (Cons u v)
+
+instance IsString PartialExpr where
+  fromString = atom . fromString
+
+a1, a2 :: MonadUFS f m => m PartialExpr
+
+-- f[#A, u[#B], #C]
+a1 = do
+  a <- fresh
+  b <- fresh
+  c <- fresh
+  pure $ cons "f" [pure a, cons "u" [pure b], pure c]
+
+-- #D[#E, #F, #G[v]]
+a2 = do
+  d <- fresh
+  e <- fresh
+  f <- fresh
+  g <- fresh
+  pure $ cons (pure d) [pure e, pure f, cons (pure g) ["v"]]
+
+test :: (Alternative m, MonadUFS ExprF m) => m PartialExpr
+test = do
+  e1 <- a1
+  e2 <- a2
+  x <- record e1
+  y <- record e2
+  unify x y
+  report x
+
+-- ghci> let Right u = run (printPartial <$> test) in putStrLn u
+-- f[#E,u[#B],#G[v]]
+--
+-- Note: The variable names are generated automatically. As you can see
+-- the definitions of a1 and a2 do not specify names.
+</code></pre>
+</div>
+</body>
+</html>
