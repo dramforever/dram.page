@@ -10,21 +10,25 @@
 
 <body>
 
-<div id="site-title" class="clear">
+<header id="site-title" class="clear">
     <h1 id="site-title-main"><a href="/">
         dramforever
     </a></h1>
     <div id="site-title-sub">coding, thoughts and stuff irl</div>
-</div>
+</header>
 
+<article>
 <div id="post-title" class="clear">
-    <h2 id="post-title-main">表达式归一化和 Traversable, Generics</h2>
+    <h1 id="post-title-main">表达式归一化和 Traversable, Generics</h1>
     <span id="post-title-sub">2016-06-02</span>
 </div>
 
 <p><a href="../unification">上回说到</a>，我们可以使用 Free Monad 做表达式的归一化。既然这样，脑洞过大的 dramforever 很自然地想到，我们能不能把用于生成 Monad 的 Functor 也泛化呢？答案显然是可以的，否则就不会有这篇 blog 了……
 
-<h3>可匹配结构的 Functor</h3>
+<section>
+<header>
+  <h1>可匹配结构的 Functor</h1>
+</header>
 
 <pre><code>class ExactZip f where
   exactZip :: f a -> f b -> Maybe (f (a, b))</code></pre>
@@ -37,8 +41,12 @@ Just [('h','w'),('e','o'),('l','r'),('l','l'),('o','d')]
 Nothing</code></pre>
 
 <p>注意到一个列表的结构就是它的长度。另外，注意到这个不像 <code>zip</code>，它不会砍掉较长的列表。
+</section>
 
-<h3>使用 <code>ExactZip</code> 实现的 <code>unify</code> 等函数</h3>
+<section>
+<header>
+  <h1>使用 <code>ExactZip</code> 实现的 <code>unify</code> 等函数</h1>
+</header>
 
 <p>这是原版的 <code>unify</code>
 
@@ -87,8 +95,12 @@ unify u1 v1 = do
 <p>这才想到，要对一个结构里对应位置的每对变量进行归一化（代码中加粗部分），需要这个结构支持 <code>Foldable</code>。不过这都不是事，因为 GHC 支持自动 <code>deriving (Foldable)</code>。
 
 <p><code>record</code> 和 <code>report</code> 的代码，因为本身就已经支持任意 <code>Traversable</code>，改动很小。<code>run</code> 只要把 <code>Except</code> 换成 <code>Maybe</code> 就好了。
+</section>
 
-<h3>Generics 上场</h3>
+<section>
+<header>
+  <h1>Generics 上场</h1>
+</header>
 
 <p>调查一下，你觉得你想自己写 <code>instance ExactZip ExprF</code> 么？奇葩的 dramforever 表示，宁可写 Generics 也不手动写那个……
 
@@ -124,8 +136,12 @@ instance ExactZip ExprF</code></pre>
 <pre><code>instance ExactZip []</code></pre>
 
 <p>看来默认方法奏效了。
+</section>
 
-<h4>练习</h4>
+<section>
+<header>
+  <h1>练习</h1>
+</header>
 
 <p>dramforever 实在懒到一定程度了，需要你的帮助！
 
@@ -134,7 +150,12 @@ instance ExactZip ExprF</code></pre>
   <li>实现一个更高效的 <code>instance ExactZip []</code>
   <li>为 <code>ExactZip</code> 加上失配信息，并用 GHC Generics 实现失配信息的自动生成
 </ul>
-<h3>附：完整实现代码</h3>
+</section>
+
+<section>
+<header>
+  <h1>附：完整实现代码</h1>
+</header>
 
 <style>
   #boring-code { display: none }
@@ -377,5 +398,7 @@ test = do
 -- the definitions of a1 and a2 do not specify names.
 </code></pre>
 </div>
+</section>
+</article>
 </body>
 </html>

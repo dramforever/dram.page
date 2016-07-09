@@ -10,21 +10,26 @@
 
 <body>
 
-<div id="site-title" class="clear">
+<header id="site-title" class="clear">
     <h1 id="site-title-main"><a href="/">
         dramforever
     </a></h1>
     <div id="site-title-sub">coding, thoughts and stuff irl</div>
-</div>
+</header>
 
-<div id="post-title" class="clear">
-    <h2 id="post-title-main">表达式归一化与 Free Monad</h2>
+<article>
+
+<header id="post-title" class="clear">
+    <h1 id="post-title-main">表达式归一化与 Free Monad</h1>
     <span id="post-title-sub">2016-05-22</span>
-</div>
+</header>
 
 <p>（注：正文部分代码里的下划线是链接，指向 Haddocks）</p>
 
-<h3>各种定义</h3>
+<section>
+<header>
+  <h1>各种定义</h1>
+</header>
 
 <ul>
   <li>
@@ -57,8 +62,12 @@
 </ul>
 
 <p>如通过 <code>fresh</code> 获得变量，构造两个表达式 <code>f[#A, u[#B], #C]</code> 和 <code>#D[#E, #F, #G[v]]</code> 并 <code>record</code>，之后 <code>unify</code> 两个 <code>record</code> 得到的变量，再 <code>report</code> 其中一个，应该得到 <code>f[#E,u[#B],#G[v]]</code>。</p>
+</section>
 
-<h3>表达式的代码实现</h3>
+<section>
+<header>
+  <h1>表达式的代码实现</h1>
+</header>
 
 <p>我昨天晚上想到，其实三个表达式可以用相同的一个结构实现</p>
 
@@ -80,9 +89,12 @@ cons u v = Free (Cons u v)
 
 instance IsString PartialExpr where
   fromString = atom . fromString</code></pre>
+</section>
 
-
-<h3>信息维护 Monad 的实现</h3>
+<section>
+<header>
+  <h1>信息维护 Monad 的实现</h1>
+</header>
 
 <pre><code>data UnionFindState
 type MonadUFS m = MonadState UnionFindState m
@@ -100,8 +112,12 @@ unify :: (MonadError UnificationError m, MonadUFS m)
       => Var -> Var -> m ()</code></pre>
 
 <p>具体内容略去，可以参见结尾完整代码。这里多了一个内部使用的函数 <code>find</code>，其作用是找到与给定变量相等的一个变量，而这个变量具有性质：它不是被指定等于另一个变量，也就是顺着 <code>Parent</code> 走到顶端。另外，它还返回这个变量被指定等于的 <code>UnionFindExpr</code>（如果有的话）。</p>
+</section>
 
-<h3><code>record</code> 和 <code>report</code> 的实现</h3>
+<section>
+<header>
+  <h1><code>record</code> 和 <code>report</code> 的实现</h1>
+</header>
 
 <pre><code>record :: MonadUFS m => PartialExpr -> m Var
 record = <a href="http://hackage.haskell.org/package/free-4.12.4/docs/Control-Monad-Free.html#v:iterA">iterA</a> go where
@@ -135,12 +151,20 @@ report = <a href="http://hackage.haskell.org/package/free-4.12.4/docs/Control-Mo
     (_, Just t) -> pure (Right t)</code></pre>
 
 <p>至此，一个简易的表达式归一化程序就完成了。</p>
+</section>
 
-<h3>总结</h3>
+<section>
+<header>
+  <h1>总结</h1>
+</header>
 
 <p>在这个归一化程序中，我们很明显地发现，Free monad 的使用简化了表达式的定义和一些琐碎的功能的实现，有效避免了乏味而易错的代码重复。</p>
+</section>
 
-<h3>附：完整实现代码</h3>
+<section>
+<header>
+  <h1>附：完整实现代码</h1>
+</header>
 
 <style>
   #boring-code { display: none }
@@ -333,6 +357,7 @@ test = do
 -- Note: The variable names are generated automatically. As you can see
 -- the definitions of a1 and a2 do not specify names.</code></pre>
 </div>
-
-</html>
+</section>
+</article>
 </body>
+</html>
