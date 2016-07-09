@@ -1,94 +1,80 @@
-#index-title {
-    font-size: 30px;
-    border-bottom: 2px solid black;
-    padding-left: 5px;
+.widget-header {
+  font-size: 30px;
+  border-bottom: 2px solid black;
+  padding-left: 5px;
+  margin-top: 30px;
 }
 
-.index {
-    list-style-position: outside;
-    margin: 0;
-    padding: 0;
+.widget-list {
+  list-style-position: outside;
+  padding: 0;
+  margin-top: -2px;
 }
 
-.index li {
-    display: block;
-    border-bottom: 1px dashed gray;
-    padding-left: 5px;
+.widget-list li {
+  display: block;
+  border-bottom: 1px dashed gray;
+  padding-left: 5px;
 }
 
-.index li:hover {
-    background-color: #eeeeee;
+.widget-list li:hover {
+  background-color: #eeeeee;
 }
 
-.index-post-link {
-    text-decoration: none;
-    display: block;
-    width: 100%;
-    padding: 10px 0px;
+.widget-item {
+  text-decoration: none;
+  display: block;
+  padding: 14px 18px 2px 2px;
+  position: relative;
+  font-size: 18px;
+  height: 22px;
 }
 
-.index-post-info {
-    float: right;
+.widget-item-main {
+  left: 0;
+  vertical-align: bottom;
 }
 
-
-#github-activity-title {
-    font-size: 30px;
-    border-bottom: 2px solid black;
-    padding-left: 5px;
-    margin-top: 50px;
-}
-
-#github-activity-title a {
-    font-size: initial;
+.widget-item-aux {
+  position: absolute;
+  right: 2px;
+  vertical-align: bottom;
 }
 
 #github-activity[data-state=loading]:before {
-    padding-left: 5px;
-    display: block;
-    content: "Loading...";
-    color: gray;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed gray;
+  padding-left: 5px;
+  display: block;
+  content: "Loading...";
+  color: gray;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed gray;
 }
 
 #github-activity[data-state=error]:before {
-    padding-left: 5px;
-    display: block;
-    content: "Error: " attr(data-error);
-    color: red;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed gray;
-}
-
-.github-activity-element {
-    display: block;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed gray;
-    padding-left: 5px;
+  padding-left: 5px;
+  display: block;
+  content: "Error: " attr(data-error);
+  color: red;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed gray;
 }
 
 .octicon-commit:before {
-    display: inline-block;
-    height: 14px;
-    width: 14px;
-    content: "";
-    background-size: cover;
-    padding-right: 10px;
-    color: gray;
-    text-decoration: none;
+  display: inline-block;
+  height: 14px;
+  width: 14px;
+  content: "";
+  background-size: cover;
+  padding-right: 10px;
+  color: gray;
+  text-decoration: none;
 }
 
-.github-activity-commit-message {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 100%;
-}
-
-/* Github Octicons */
+/* WARNING: Long data line ahead
+* Github Octicons
+*/
 .octicon-commit:before {
-    background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iCiAgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIxMDI0IiB2aWV3UG9ydD0iMCAwIDEwMjQgMTAyNCI+CiAgICA8cGF0aCBkPSJNNjk1IDM4NGMtMjkgMTEwLTEyOCAxOTItMjQ3IDE5MnMtMjE4LTgyLTI0Ny0xOTJIMHYtMTI4aDIwMWMyOS0xMTAgMTI4LTE5MiAyNDctMTkyczIxOCA4MiAyNDcgMTkyaDIwMVYzODRINjk1ek00NDggMTc5Yy03OCAwLTE0MSA2My0xNDEgMTQxczYzIDE0MSAxNDEgMTQxIDE0MS02MyAxNDEtMTQxLTYzLTE0MS0xNDEtMTQxeiIgZmlsbD0iZ3JheSIgc3Ryb2tlPSJncmF5IiAvPgo8L3N2Zz4KCg==");
+  background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iCiAgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIxMDI0IiB2aWV3UG9ydD0iMCAwIDEwMjQgMTAyNCI+CiAgICA8cGF0aCBkPSJNNjk1IDM4NGMtMjkgMTEwLTEyOCAxOTItMjQ3IDE5MnMtMjE4LTgyLTI0Ny0xOTJIMHYtMTI4aDIwMWMyOS0xMTAgMTI4LTE5MiAyNDctMTkyczIxOCA4MiAyNDcgMTkyaDIwMVYzODRINjk1ek00NDggMTc5Yy03OCAwLTE0MSA2My0xNDEgMTQxczYzIDE0MSAxNDEgMTQxIDE0MS02MyAxNDEtMTQxLTYzLTE0MS0xNDEtMTQxeiIgZmlsbD0iZ3JheSIgc3Ryb2tlPSJncmF5IiAvPgo8L3N2Zz4KCg==");
 }

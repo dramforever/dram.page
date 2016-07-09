@@ -28,7 +28,7 @@ function showGithubActivity(data) {
             elt.className = "clear";
 
             var link = document.createElement("a");
-            link.className = "index-post-link";
+            link.className = "widget-item";
             link.href = "https://github.com/" + repoName + "/commit/" + sha;
 
 
@@ -42,9 +42,9 @@ function showGithubActivity(data) {
             }
 
             link.appendChild(msg);
-            
+
             var repo = document.createElement("span");
-            repo.className = "index-post-info";
+            repo.className = "widget-item-aux";
             repo.textContent = repoName.split("/")[1];
 
             link.appendChild(repo);

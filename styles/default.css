@@ -46,6 +46,7 @@ body {
     font-weight: normal;
     display: block;
     margin: 0;
+    margin-bottom: 3px;
 }
 
 #site-title-main > a {
@@ -56,4 +57,3 @@ body {
     float: right;
     margin-right: 3%;
 }
-
