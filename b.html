@@ -181,16 +181,19 @@
   var list = document.getElementById("list");
   var src, nick, last_ping_time, errored = false;
 
-  var questions = document.querySelector("script").textContent.split("\n");
-  questions.pop(); questions.pop();
-  questions.shift(); questions.shift();
+  var questions;
+  function make_questions() {
+    questions = document.querySelector("script").textContent.split("\n");
+    questions.pop(); questions.pop();
+    questions.shift(); questions.shift();
 
-  for (var i = questions.length; i; i--) {
-    var j = Math.floor(Math.random() * i);
-    var x = questions[i - 1];
-    questions[i - 1] = questions[j];
-    questions[j] = x;
-  } 
+    for (var i = questions.length; i; i--) {
+      var j = Math.floor(Math.random() * i);
+      var x = questions[i - 1];
+      questions[i - 1] = questions[j];
+      questions[j] = x;
+    } 
+  }
 
   function say(msg) {
     var shouldScroll =
@@ -220,12 +223,19 @@
         t.value = "";
         t.focus();
       } else if(!done) {
-        say("你已经答完啦！");
+        say("你已经答完啦！输入任意非空回复再次答题");
         done = true;
+      } else if(t.value != "") {
+        done = false;
+        make_questions();
+        show_question();
+        t.value = "";
+        t.focus();
       }
     }
   }
 
   say("请在网页底部的输入框内填写回答");
+  make_questions();
   show_question();
 </script>
