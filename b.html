@@ -198,7 +198,7 @@
       == document.body.scrollHeight;
 
     var li = document.createElement("div");
-    li.textContent = msg;
+    li.innerHTML = msg.replace(/@/g, "<br>");
     list.appendChild(li);
 
     if(shouldScroll) li.scrollIntoView();
@@ -208,14 +208,21 @@
     say(questions[0].replace(/{.+}/, "_____"));
   }
 
+  var done = false;
+
   function keydown(t, e) {
     if(e.key == "Enter" || e.keyIdentifier == "Enter") {
-      say("选手答案：" + t.value);
-      say("参考答案：" + /{(.+)}/.exec(questions[0])[1]);
-      questions.shift();
-      show_question();
-      t.value = "";
-      t.focus();
+      if(questions.length) {
+        say("选手答案：" + t.value);
+        say("参考答案：" + /{(.+)}/.exec(questions[0])[1]);
+        questions.shift();
+        show_question();
+        t.value = "";
+        t.focus();
+      } else if(!done) {
+        say("你已经答完啦！");
+        done = true;
+      }
     }
   }
 
