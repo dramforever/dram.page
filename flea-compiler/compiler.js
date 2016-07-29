@@ -147,7 +147,7 @@ function ShiftByNonConstant() {
 
 function genConst(c, seq) {
     var u = seq.length;
-    seq[u] = [">>", 1, "500"];
+    seq[u] = [">>", 1, "10000"];
     var v = seq.length;
     seq[v] = ["C", u, c];
     return v;
