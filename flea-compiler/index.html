@@ -1,0 +1,45 @@
+<script src="vendor/decimal.min.js"></script>
+<script src="parser.js"></script>
+<script src="compiler.js"></script>
+
+<style>
+    body {
+        -webkit-column-count: 2;
+        -moz-column-count: 2;
+        column-count: 2;
+    }
+    #input {
+        width: 100%;
+        height: 90%;
+    }
+</style>
+
+<button id="compile">Compile!</button>
+<textarea id="input"></textarea>
+<pre id="output"></pre>
+
+<script>
+    var button = document.getElementById("compile");
+    var input = document.getElementById("input");
+    var output = document.getElementById("output");
+
+    function update() {
+        var str = input.value;
+        try {
+            output.textContent = compile(str).join("\n");
+        } catch(e) {
+            output.textContent =
+                "Error:\n" +
+                e.toString() +
+                (e.line ? "\nAt line " + e.line.toString() +
+                 (e.column ? ", column " + e.line.toString() : "") : "") +
+                (e.id ? "At command " + e.id.toString() : "");
+        }
+    }
+
+    setInterval(update, 1000);
+</script>
+
+<!-- vim: sw=4 ts=4 et si
+-->
+
