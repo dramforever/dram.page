@@ -314,11 +314,53 @@ function codeGen(prims) {
 }
 // }}}
 
-function compile(str) {
-    return codeGen(
-              toPrimitives(
-                  removeShadowing(
-                      parse.parse(str))));
+// {{{ WIP Common sub-expression elimination
+
+var nodeOperands = {
+    "I": 0, "O": 1,
+    "+": 2, "C": 1, "neg": 1,
+    "<<": 1, ">>": 1,
+    "sigmoid": 1,
+    "?": 2, "^": 2, "*": 2
+};
+
+function opt_CSE(prog) {
+    var back_link = {}, expr_link = {}, res = [ null ];
+    for (var i = 1; i < prog.length; i ++)
+        if (prog[i][0] == "I") {
+            res[i] = ["I"];
+        } else {
+            var p = [ prog[i][0] ];
+            for (var j = 1; j <= nodeOperands[ prog[i][0] ]; j ++)
+                p[j] =
+                    back_link[ prog[i][j] ]
+                    ? back_link[ prog[i][j] ]
+                    : prog[i][j];
+            for (var j = 1 + nodeOperands[ prog[i][0] ];
+                    j < prog[i].length; j ++)
+                p[j] = prog[i][j];
+            var str = JSON.stringify(p);
+            if (expr_link[str]) {
+                back_link[i] = expr_link[str];
+            } else {
+                var u = res.length;
+                expr_link[str] = u;
+                res[u] = p;
+            }
+        }
+    return res;
+}
+
+// }}}
+
+function compile(x) {
+    x = parse.parse(x);
+    x = removeShadowing(x);
+    x = toPrimitives(x);
+    x = opt_CSE(x);
+    x = codeGen(x);
+
+    return x;
 }
 
 // vim: sw=4 ts=4 et
