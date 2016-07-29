@@ -31,8 +31,7 @@
 <textarea id="input">{expr test}
 
 x = in(1)
-eps = 0.000000000000000000000000000001 {Sorry 1e-30 not supported yet}
-p = s((x + eps) &lt;&lt; 500) &lt;&lt; 152 
+p = s((x + 1e-30) &lt;&lt; 500) &lt;&lt; 152 
 y = s((x &gt;&gt; 150) + p)
 r  = x + ((-y + 0.5) &lt;&lt; 153) + p
 out(r)

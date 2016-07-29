@@ -48,7 +48,7 @@ Expr5
     / x:Number { return ["const", x];}
 
 Number "number"
-    = _ digits:$([0-9.]+) { return digits; }
+    = _ digits:$([0-9]+ ("." [0-9]*)? ("e" ("-")? [0-9]+)?) { return digits; }
 
 Integer "integer"
     = _ digits:$([0-9]+) { return parseInt(digits); }
