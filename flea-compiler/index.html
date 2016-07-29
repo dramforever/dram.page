@@ -22,6 +22,14 @@
         margin-top: 10px;
         overflow: auto;
     }
+
+    a:visited {
+        color: black;
+    }
+
+    a {
+        color: black;
+    }
 </style>
 
 <textarea id="input">
@@ -42,8 +50,9 @@ Expressions:
 <b>a ^ b</b> Max
 <b>a * b</b> Multiply
 
-<b>Warning: the precision is not very good.</b></pre>
-
+Decimal arith using <a href="http://mikemcl.github.io/decimal.js/">decimal.js</a>
+Parsed using <a href="http://pegjs.org">pegjs</a>
+</pre>
 
 <pre id="output"></pre>
 
