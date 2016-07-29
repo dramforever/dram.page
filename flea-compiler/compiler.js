@@ -137,7 +137,7 @@ function evaluate(node) {
 
 // }}}
 
-// {{{ TODO Simplify to primitives
+// {{{ Simplify to primitives
 
 function ShiftByNonConstant() {
     this.toString = function() {
@@ -289,7 +289,7 @@ function toPrimitives(prog) {
 }
 // }}}
 
-// {{{ TODO: Codegen
+// {{{ Codegen
 
 var primTranslate = {
     "I": "I", "O": "O",
