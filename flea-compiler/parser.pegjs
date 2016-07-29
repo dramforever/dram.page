@@ -59,6 +59,6 @@ Ident "identifier"
     }
 
 _ "whitespace"
-    = [ \t\n\r]*
+    = ("{" [^}]* "}" / [ \t\n\r] )*
 
 // vim: sw=4 ts=4 et
