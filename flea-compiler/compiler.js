@@ -84,7 +84,7 @@ function removeShadowing(prog) {
 
 // {{{ Compile-time Evaluation
 
-var dec = Decimal.config({ precision: 1100, toExpPos: 20000, toExpNeg: -20000 });
+var dec = Decimal.config({ precision: 100, toExpPos: 20000, toExpNeg: -20000 });
 
 function sigmoid(x) {
     return dec("1")/(dec("1") - x.neg().exp());
@@ -121,11 +121,11 @@ function evaluate(node) {
             break;
         }
         case "neg": {
-            return nodes[1].neg();
+            return node[1].neg();
             break;
         }
         case "sigmoid": {
-            return sigmoid(nodes[1]);
+            return sigmoid(node[1]);
             break;
         }
         default: {
@@ -245,7 +245,7 @@ function getMaxInput(expr) {
 
 function NoInput() {
     this.toString = function() {
-        return "The entire program has no input nodes. This is unsupported.";
+        return "The entire program has no input node. This is unsupported.";
     }
 }
 
