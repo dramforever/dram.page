@@ -84,7 +84,7 @@ function removeShadowing(prog) {
 
 // {{{ Compile-time Evaluation
 
-var dec = Decimal.config({ precision: 1100 });
+var dec = Decimal.config({ precision: 1100, toExpPos: 20000, toExpNeg: -20000 });
 
 function sigmoid(x) {
     return dec("1")/(dec("1") - x.neg().exp());
@@ -245,7 +245,7 @@ function getMaxInput(expr) {
 
 function NoInput() {
     this.toString = function() {
-        return "The entire program has no input. This is unsupported.";
+        return "The entire program has no input nodes. This is unsupported.";
     }
 }
 
@@ -302,6 +302,9 @@ var primTranslate = {
 function codeGen(prims) {
     var ins = [];
     for (var i = 1; i < prims.length; i ++) {
+        for (var j = 1; j < prims[i].length; j ++)
+            if (prims[i][j] instanceof Decimal)
+                prims[i][j] = prims[i][j].toDecimalPlaces(90).toString();
         ins.push(
             primTranslate[ prims[i][0] ] +
             (prims[i].length > 1 ? " " : "") +

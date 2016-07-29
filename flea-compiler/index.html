@@ -12,10 +12,33 @@
         width: 100%;
         height: 90%;
     }
+
+    #output {
+        font-family: Consolas, monospace;
+        border-top: 2px solid black;
+        padding-top: 10px;
+        margin-top: 10px;
+        overflow: auto;
+    }
 </style>
 
-<button id="compile">Compile!</button>
-<textarea id="input"></textarea>
+<textarea id="input">
+x = s(in(1) &lt;&lt; 500)
+out(x)
+</textarea>
+<pre>Commands:
+<b>var = expr</b> assign var to expr
+<b>out(var)</b> output var
+
+Expressions:
+<b>in(id)</b> Input (id is a integer)
+<b>a + b</b> Plus (Choice between + and C is automatic)
+<b>- x</b> Negation
+<b>a &lt;&lt; b</b>, <b>a &gt;&gt; b</b> Shift
+<b>s(a)</b> Sigmoid (b must be a constant)
+<b>a ? b</b> Compare
+<b>a ^ b</b> Max
+<b>a * b</b> Multiply</pre>
 <pre id="output"></pre>
 
 <script>
@@ -23,20 +46,31 @@
     var input = document.getElementById("input");
     var output = document.getElementById("output");
 
+    function writeOutput(lst) {
+        while(output.childNodes.length)
+            output.removeChild(output.childNodes[0]);
+        for (var i = 0; i < lst.length; i ++)
+            if (lst[i] != "") {
+                var ele = document.createElement("div");
+                ele.textContent = lst[i];
+                output.appendChild(ele);
+            }
+    }
+
     function update() {
         var str = input.value;
         try {
-            output.textContent = compile(str).join("\n");
+            output.textContent = compile(input.value).join("\n");
         } catch(e) {
-            output.textContent =
-                "Error:\n" +
-                e.toString() +
-                (e.line ? "\nAt line " + e.line.toString() +
-                 (e.column ? ", column " + e.line.toString() : "") : "") +
-                (e.id ? "At command " + e.id.toString() : "");
+            output.textContent = [
+                "Error:\n",
+                e.toString(),
+                e.line ? "\nAt line " + e.line.toString() + (e.column ? ", column " + e.line.toString() : "") : "",
+                e.id ? "\nAt command " + e.id.toString() : ""].join("");
         }
     }
 
+    update();
     setInterval(update, 1000);
 </script>
 
