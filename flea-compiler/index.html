@@ -28,9 +28,39 @@
     }
 </style>
 
-<textarea id="input">
-x = s(in(1) &lt;&lt; 500)
+<textarea id="input">{expr test}
+
+x = in(1)
+eps = 0.000000000000000000000000000001 {Sorry 1e-30 not supported yet}
+p = s((x + eps) &lt;&lt; 500) &lt;&lt; 152 
+y = s((x &gt;&gt; 150) + p)
+r  = x + ((-y + 0.5) &lt;&lt; 153) + p
+out(r)
+
+{cse test}
+
+x = s(in(1))
 out(x)
+
+u = in(1) + in(1)
+out(u)
+
+v = s(in(1) + in(1))
+out(v)
+
+k = 1 + 4
+p = 2 + 3
+out(k)
+out(p)
+
+m_1 = in(1) ? 5
+m_2 = in(1) ? 6
+m_3 = in(1) ? 7
+m_4 = s(in(1)) ? (in(1) + in(1))
+
+out(m_1)
+out(m_2)
+out(m_3)
 </textarea>
 
 <style>
