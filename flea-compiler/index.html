@@ -6,13 +6,16 @@
 
 <style>
     body {
-        -webkit-column-count: 2;
-        -moz-column-count: 2;
-        column-count: 2;
+        padding-left: 52%;
     }
+
     #input {
-        width: 100%;
-        height: 90%;
+        position: fixed;
+        left: 0px;
+        top: 0px;
+        width: 50%;
+        height: 100%;
+        padding: 15px;
     }
 
     #output {
@@ -36,9 +39,7 @@
 x = s(in(1) &lt;&lt; 500)
 out(x)
 </textarea>
-<pre><a id="link" href="#">[Share your fleas]</a>
-
-Commands:
+<pre>Commands:
 <b>var = expr</b> assign var to expr
 <b>out(var)</b> output var
 
@@ -54,7 +55,11 @@ Expressions (precedence tight to loose):
 Decimal arith using <a href="http://mikemcl.github.io/decimal.js/">decimal.js</a>
 Parsed using <a href="http://pegjs.org">pegjs</a>
 
-<b>Warning: precision is not very good with sigmoid</b></pre>
+<b>Warning: precision is not very good with sigmoid</b>
+
+<a id="link" href="#">[Share your fleas]</a>
+</pre>
+
 
 <pre id="output"></pre>
 
