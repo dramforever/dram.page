@@ -36,7 +36,9 @@
 x = s(in(1) &lt;&lt; 500)
 out(x)
 </textarea>
-<pre>Commands:
+<pre><a id="link" href="#">[Share your fleas]</a>
+
+Commands:
 <b>var = expr</b> assign var to expr
 <b>out(var)</b> output var
 
@@ -61,6 +63,7 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
     var button = document.getElementById("compile");
     var input = document.getElementById("input");
     var output = document.getElementById("output");
+    var link = document.getElementById("link");
 
     function writeOutput(lst) {
         while(output.childNodes.length)
@@ -75,6 +78,7 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
 
     function update() {
         var str = input.value;
+        link.href = "#" + encodeURIComponent(input.value);
         try {
             output.textContent = compile(input.value).join("\n");
         } catch(e) {
@@ -84,6 +88,10 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
                 e.line ? "\nAt line " + e.line.toString() + (e.column ? ", column " + e.line.toString() : "") : "",
                 e.id ? "\nAt command " + e.id.toString() : ""].join("");
         }
+    }
+
+    if (location.hash.length > 1) {
+        input.value = decodeURIComponent(location.hash.slice(1));
     }
 
     update();
