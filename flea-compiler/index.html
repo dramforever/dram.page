@@ -42,15 +42,14 @@ Commands:
 <b>var = expr</b> assign var to expr
 <b>out(var)</b> output var
 
-Expressions:
+Expressions (precedence tight to loose):
 <b>in(id)</b> Input (id is a integer)
-<b>a + b</b> Plus (Choice between + and C is automatic)
+<b>s(a)</b> Sigmoid (b must be a constant)
 <b>- x</b> Negation
 <b>a &lt;&lt; b</b>, <b>a &gt;&gt; b</b> Shift
-<b>s(a)</b> Sigmoid (b must be a constant)
-<b>a ? b</b> Compare
-<b>a ^ b</b> Max
 <b>a * b</b> Multiply
+<b>a + b</b> Plus (Choice between + and C is automatic)
+<b>a ? b</b> Compare, <b>a ^ b</b> Max
 
 Decimal arith using <a href="http://mikemcl.github.io/decimal.js/">decimal.js</a>
 Parsed using <a href="http://pegjs.org">pegjs</a>
@@ -85,7 +84,7 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
             output.textContent = [
                 "Error:\n",
                 e.toString(),
-                e.line ? "\nAt line " + e.line.toString() + (e.column ? ", column " + e.line.toString() : "") : "",
+                e.line ? "\nAt line " + e.line.toString() + (e.column ? ", column " + e.column.toString() : "") : "",
                 e.id ? "\nAt command " + e.id.toString() : ""].join("");
         }
     }
