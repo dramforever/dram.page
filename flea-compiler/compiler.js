@@ -35,7 +35,7 @@ function substitute(expr, occur) {
         }
         case "ref": {
             if (occur[expr[1]])
-                return ["ref", occur[expr[1]]];
+                return ["ref", occur[expr[1]][0]];
             else
                 throw new NoSuchIdentifier(expr[1]);
             break;
@@ -59,7 +59,7 @@ function removeShadowing(prog) {
             switch (prog[i][0]) {
                 case "out": {
                     if (occur[prog[i][1]])
-                        res[i] = ["out", occur[prog[i][1]]];
+                        res[i] = ["out", occur[prog[i][1]][0]];
                     else
                         throw new NoSuchIdentifier(prog[i][1]);
                     break;
@@ -67,7 +67,10 @@ function removeShadowing(prog) {
                 case "set": {
                     var v = fresh("x");
                     res[i] = ["set", v, substitute(prog[i][2], occur)];
-                    occur[prog[i][1]] = v;
+                    if (! occur[prog[i][1]])
+                        occur[prog[i][1]] = [];
+
+                    occur[prog[i][1]].unshift(v);
                     break;
                 }
                 default: {
@@ -78,7 +81,7 @@ function removeShadowing(prog) {
             e.id = i + 1;
             throw e;
         }
-    return res;
+    return [res, occur];
 }
 // }}}
 
@@ -285,7 +288,7 @@ function toPrimitives(prog) {
             throw e;
         }
 
-    return seq;
+    return [seq, occur];
 }
 // }}}
 
@@ -353,19 +356,31 @@ function opt_CSE(prog) {
                 res[u] = p;
             }
         }
-    return res;
+    return [res, back_link];
 }
 
 // }}}
 
 function compile(x) {
     x = parse.parse(x);
-    x = removeShadowing(x);
-    x = toPrimitives(x);
-    x = opt_CSE(x);
+    var rs = removeShadowing(x);
+    x = rs[0];
+    var ps = toPrimitives(x);
+    x = ps[0];
+    var ocse = opt_CSE(x);
+    x = ocse[0];
     x = codeGen(x);
 
-    return x;
+    var smap = [];
+
+    for (v in rs[1])
+        for (var j = 0; j < rs[1][v].length; j ++) {
+            var r = ps[1][ rs[1][v][j] ];
+            if (r[0] == "node")
+                smap.push( [v, ocse[1][ r[1] ]] );
+        }
+
+    return [x, smap];
 }
 
 // vim: sw=4 ts=4 et

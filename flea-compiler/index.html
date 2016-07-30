@@ -21,32 +21,41 @@
 
     #output {
         font-family: Consolas, monospace;
-        padding: 10px 0px;
+        padding: 0px 0px;
         margin-top: 10px;
         overflow: auto;
         counter-reset: lineno;
+        background-color: #f7f7f7;
     }
 
     .line {
-        padding: 0px 10px;
+        margin: 0px 5px;
+        padding: 0px 0px;
+    }
+    .line::after {
+        display: inline-block;
+        margin-left: 10px;
+        color: #a0a0a0;
+        content: attr(data-ref);
+    }
+    .line .line-lineno {
+        padding-right: 3px;
+        margin-right: 3px;
     }
 
-    .line::before {
+    .line .line-lineno::before {
         counter-increment: lineno;
         content: counter(lineno);
         color: #aaaaaa;
-        display: inline-block;
         text-align: right;
+        display: inline-block;
         width: 35px;
-        padding-right: 3px;
-        margin-right: 3px ;
     }
-
-    .line {
-        background-color: #f7f7f7;
+    .lineno-hl {
+        background-color: #a0ffa0
     }
     .line.line-hl {
-        background-color: #ffffa0;
+        background-color: #ffffa0 !important;
     }
     .line .line-head {
         font-weight: bold;
@@ -58,6 +67,9 @@
         color: blue;
         text-decoration: underline;
         cursor: pointer;
+    }
+    .line .ref-hl {
+        background-color: #a0ffa0;
     }
 </style>
 
@@ -158,6 +170,9 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
             output.removeChild(output.childNodes[0]);
         for (var i = 0; i < lst.length; i ++) {
             var ele = document.createElement("div");
+            var lineno = document.createElement("span");
+            lineno.className = "line-lineno";
+            ele.appendChild(lineno);
             var head = document.createElement("span");
             head.className = "line-head"
             head.textContent = lst[i][0];
@@ -174,7 +189,7 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
                 } else {
                     var part = document.createElement("a");
                     part.textContent = lst[i][j][1];
-                    part.className = "line-ref";
+                    part.className = "line-ref ref-" + lst[i][j][1];
 
                     (function (u) {
                         part.onclick = function() {
@@ -195,11 +210,18 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
         }
     }
 
+    function writeAnnotation(vs) {
+        for (var i = 0; i < vs.length; i ++)
+            document.getElementById("line-" + vs[i][1]).dataset["ref"] = "= " + vs[i][0];
+    }
+
     function update() {
         var str = input.value;
         link.href = "#" + encodeURIComponent(input.value);
         try {
-            writeOutput( compile(input.value) );
+            compileRes = compile(str);
+            writeOutput( compileRes[0] );
+            writeAnnotation( compileRes[1] );
         } catch(e) {
             output.textContent = [
                 "Error:\n",
@@ -228,6 +250,32 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
                 codeChanged = false;
             }
         }, 500);
+
+    var hlref = function (num, on) {
+        return function (event) {
+            var links = document.getElementsByClassName('ref-' + num);
+            if (on) {
+                for (var i = 0; i < links.length; i++) 
+                    links[i].classList.add("ref-hl");
+            } else {
+                for (var i = 0; i < links.length; i++) 
+                    links[i].classList.remove("ref-hl");
+            }
+            document.getElementById("line-"+num).firstChild.classList[on ? "add" : "remove"]("lineno-hl");
+            event.stopPropagation();
+        }
+    };
+
+    var links = document.getElementsByClassName('line-ref');
+    for (var i = 0; i < links.length; i++) {
+        links[i].onmouseover = hlref(links[i].textContent, true);
+        links[i].onmouseout = hlref(links[i].textContent, false);
+    }
+    links = document.getElementsByClassName('line');
+    for (var i = 0; i < links.length; i++) {
+        links[i].firstChild.onmouseover = hlref(i + 1,  true);
+        links[i].firstChild.onmouseout = hlref(i + 1, false);
+    }
 </script>
 
 <!-- vim: sw=4 ts=4 et si
