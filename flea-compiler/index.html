@@ -212,8 +212,13 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
     }
 
     function writeAnnotation(vs) {
-        for (var i = 0; i < vs.length; i ++)
-            document.getElementById("line-" + vs[i][1]).dataset["ref"] = "\u2192 " + vs[i][0];
+        for (var i = 0; i < vs.length; i ++) {
+            var e = document.getElementById("line-" + vs[i][1]);
+            if (e.dataset["ref"])
+                e.dataset["ref"] += " " + vs[i][0];
+            else
+                e.dataset["ref"] = "\u2192 " + vs[i][0];
+        }
     }
 
     function update() {
