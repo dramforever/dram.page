@@ -299,29 +299,32 @@ var primTranslate = {
     "?": "P", "^": "M", "*": "*"
 };
 
+var nodeOperands = {
+    "I": 0, "O": 1,
+    "+": 2, "C": 1, "neg": 1,
+    "<<": 1, ">>": 1,
+    "sigmoid": 1,
+    "?": 2, "^": 2, "*": 2
+};
+
 function codeGen(prims) {
     var ins = [];
     for (var i = 1; i < prims.length; i ++) {
+        var pr = [ primTranslate[ prims[i][0] ] ];
         for (var j = 1; j < prims[i].length; j ++)
             if (prims[i][j] instanceof Decimal)
-                prims[i][j] = prims[i][j].toDecimalPlaces(90).toString();
-        ins.push(
-            primTranslate[ prims[i][0] ] +
-            (prims[i].length > 1 ? " " : "") +
-            prims[i].slice(1).join(" "));
+                pr[j] = ["const", prims[i][j].toDecimalPlaces(90).toString()];
+            else if (j <= nodeOperands[ prims[i][0] ])
+                pr[j] = ["ref", prims[i][j]];
+            else
+                pr[j] = ["const", prims[i][j]];
+        ins.push(pr);
     }
     return ins;
 }
 // }}}
 
 // {{{ Common sub-expression elimination
-
-var nodeOperands = {
-    "+": 2, "C": 1, "neg": 1,
-    "<<": 1, ">>": 1,
-    "sigmoid": 1,
-    "?": 2, "^": 2, "*": 2
-};
 
 function opt_CSE(prog) {
     var back_link = {}, expr_link = {}, res = [ null ];

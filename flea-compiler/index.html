@@ -21,10 +21,43 @@
 
     #output {
         font-family: Consolas, monospace;
-        border: 2px solid black;
-        padding: 10px;
+        padding: 10px 0px;
         margin-top: 10px;
         overflow: auto;
+        counter-reset: lineno;
+    }
+
+    .line {
+        padding: 0px 10px;
+    }
+
+    .line::before {
+        counter-increment: lineno;
+        content: counter(lineno);
+        color: #aaaaaa;
+        display: inline-block;
+        text-align: right;
+        width: 35px;
+        padding-right: 3px;
+        margin-right: 3px ;
+    }
+
+    .line {
+        background-color: #f7f7f7;
+    }
+    .line.line-hl {
+        background-color: #ffffa0;
+    }
+    .line .line-head {
+        font-weight: bold;
+    }
+    .line .line-const {
+        color: #a900a9;
+    }
+    .line .line-ref {
+        color: blue;
+        text-decoration: underline;
+        cursor: pointer;
     }
 </style>
 
@@ -107,22 +140,66 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
     var output = document.getElementById("output");
     var link = document.getElementById("link");
 
+    var hl = null;
+
+    function unHighlight() {
+        if (hl) document.getElementById("line-" + hl).className = "line";
+        hl = null;
+    }
+
+    function highlight(x) {
+        document.getElementById("line-" + x).className = "line line-hl";
+        hl = x;
+    }
+
     function writeOutput(lst) {
+        unHighlight();
         while(output.childNodes.length)
             output.removeChild(output.childNodes[0]);
-        for (var i = 0; i < lst.length; i ++)
-            if (lst[i] != "") {
-                var ele = document.createElement("div");
-                ele.textContent = lst[i];
-                output.appendChild(ele);
+        for (var i = 0; i < lst.length; i ++) {
+            var ele = document.createElement("div");
+            var head = document.createElement("span");
+            head.className = "line-head"
+            head.textContent = lst[i][0];
+            ele.appendChild(head);
+
+            for (var j = 1; j < lst[i].length; j ++) {
+                ele.appendChild( document.createTextNode(" ") );
+
+                if (lst[i][j][0] == "const") {
+                    var part = document.createElement("span");
+                    part.textContent = lst[i][j][1];
+                    part.className = "line-const";
+                    ele.appendChild(part);
+                } else {
+                    var part = document.createElement("a");
+                    part.textContent = lst[i][j][1];
+                    part.className = "line-ref";
+
+                    (function (u) {
+                        part.onclick = function() {
+                            document.getElementById(
+                                "line-" + u
+                            ).scrollIntoView();
+                            unHighlight();
+                            highlight(u);
+                        }
+                    })(lst[i][j][1]);
+
+                    ele.appendChild(part);
+                }
             }
+            ele.id = "line-" + (i + 1);
+            ele.className = "line";
+            output.appendChild(ele);
+        }
     }
 
     function update() {
         var str = input.value;
         link.href = "#" + encodeURIComponent(input.value);
         try {
-            output.textContent = compile(input.value).join("\n");
+            writeOutput( compile(input.value) );
         } catch(e) {
             output.textContent = [
                 "Error:\n",
@@ -137,7 +214,20 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
     }
 
     update();
-    setInterval(update, 1000);
+
+    var codeChanged = false;
+
+    input.onkeydown = function() {
+        codeChanged = true;
+    }
+
+    setInterval(
+        function() {
+            if (codeChanged) {
+                update();
+                codeChanged = false;
+            }
+        }, 500);
 </script>
 
 <!-- vim: sw=4 ts=4 et si
