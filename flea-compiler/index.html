@@ -235,10 +235,36 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
                 e.line ? "\nAt line " + e.line.toString() + (e.column ? ", column " + e.column.toString() : "") : "",
                 e.id ? "\nAt command " + e.id.toString() : ""].join("");
         }
-    }
 
-    if (location.hash.length > 1) {
-        input.value = decodeURIComponent(location.hash.slice(1));
+        var hlref = function (num, on) {
+            return function (event) {
+                var links = document.getElementsByClassName('ref-' + num);
+                if (on) {
+                    for (var i = 0; i < links.length; i++) 
+                        links[i].classList.add("ref-hl");
+                } else {
+                    for (var i = 0; i < links.length; i++) 
+                        links[i].classList.remove("ref-hl");
+                }
+                document.getElementById("line-"+num).firstChild.classList[on ? "add" : "remove"]("lineno-hl");
+                event.stopPropagation();
+            }
+        };
+
+        var links = document.getElementsByClassName('line-ref');
+        for (var i = 0; i < links.length; i++) {
+            links[i].onmouseover = hlref(links[i].textContent, true);
+            links[i].onmouseout = hlref(links[i].textContent, false);
+        }
+        links = document.getElementsByClassName('line');
+        for (var i = 0; i < links.length; i++) {
+            links[i].firstChild.onmouseover = hlref(i + 1,  true);
+            links[i].firstChild.onmouseout = hlref(i + 1, false);
+        }
+        }
+
+        if (location.hash.length > 1) {
+            input.value = decodeURIComponent(location.hash.slice(1));
     }
 
     update();
@@ -256,32 +282,6 @@ Parsed using <a href="http://pegjs.org">pegjs</a>
                 codeChanged = false;
             }
         }, 500);
-
-    var hlref = function (num, on) {
-        return function (event) {
-            var links = document.getElementsByClassName('ref-' + num);
-            if (on) {
-                for (var i = 0; i < links.length; i++) 
-                    links[i].classList.add("ref-hl");
-            } else {
-                for (var i = 0; i < links.length; i++) 
-                    links[i].classList.remove("ref-hl");
-            }
-            document.getElementById("line-"+num).firstChild.classList[on ? "add" : "remove"]("lineno-hl");
-            event.stopPropagation();
-        }
-    };
-
-    var links = document.getElementsByClassName('line-ref');
-    for (var i = 0; i < links.length; i++) {
-        links[i].onmouseover = hlref(links[i].textContent, true);
-        links[i].onmouseout = hlref(links[i].textContent, false);
-    }
-    links = document.getElementsByClassName('line');
-    for (var i = 0; i < links.length; i++) {
-        links[i].firstChild.onmouseover = hlref(i + 1,  true);
-        links[i].firstChild.onmouseout = hlref(i + 1, false);
-    }
 </script>
 
 <!-- vim: sw=4 ts=4 et si
