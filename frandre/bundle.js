@@ -40255,7 +40255,7 @@ class Float extends Model {
 
     handleEvents ({in: evs}) {
         for (let e of evs)
-            this.position (e[0] - 75, e[1] - 150);
+            this.position (e[0] - 75, e[1] - 25);
     }
 }
 
@@ -40363,7 +40363,7 @@ class Dt extends Model {
         this.setLabel ('δt');
         this.currentTime = 0;
         const handler = (newTime) => {
-            this.causeEvent ('out', newTime - this.currentTime);
+            this.causeEvent ('out', (newTime - this.currentTime) / 1000);
             this.currentTime = newTime;
             window.requestAnimationFrame (handler);
         };
@@ -40378,7 +40378,7 @@ class Time extends Model {
         this.addOutPort ('out');
         this.setLabel ('t');
         const handler = (newTime) => {
-            this.causeEvent ('out', newTime);
+            this.causeEvent ('out', newTime / 1000);
             window.requestAnimationFrame (handler);
         };
         window.requestAnimationFrame (handler);
@@ -40467,12 +40467,13 @@ class Plus extends BinaryFunction {
 }
 
 class UnaryFunction extends Model {
-    constructor (frandre) {
+    constructor (frandre, fn, label) {
         super (frandre);
         this.resize (150, 50);
-
+        this.fn = fn;
         this.addInPort ('in');
         this.addOutPort ('out');
+        this.setLabel (label);
     }
 
     getStrongDeps (label) {
@@ -40480,19 +40481,47 @@ class UnaryFunction extends Model {
     }
 
     handleEvents ({in: evs}) {
-        return { out: _.map (evs, this.calculate.bind(this)) };
+        return { out: _.map (evs, this.fn) };
     }
-
-    calculate (x) {}
 }
 
-class Sin extends UnaryFunction {
+class Scale extends UnaryFunction {
+    constructor (frandre, sc) {
+        super (frandre, (u) => {
+            if (_.isArray (u))
+                return _.map (u, (t) => sc * t);
+            else
+                return sc * u;
+        }, `${sc}x`);
+    }
+}
+
+class MakeVector extends Model {
     constructor (frandre) {
         super (frandre);
-        this.setLabel ('sin');
+        this.resize (150, 50);
+
+        this.addInPort ('x');
+        this.addInPort ('y');
+        this.addOutPort ('out');
+
+        this.last_x = 0;
+        this.last_y = 0;
+
+        this.setLabel ('vec');
     }
 
-    calculate (x) { return Math.sin(x / 1000) * 100; }
+    getStrongDeps (label) {
+        return ['out']
+    }
+
+    handleEvents ({x: x_evs, y: y_evs}) {
+        if (x_evs) for (let ev of x_evs) this.last_x = ev;
+        if (y_evs) for (let ev of y_evs) this.last_y = ev;
+        if (x_evs && x_evs.length
+            || y_evs && y_evs.length)
+            return { out: [[this.last_x, this.last_y]] };
+    }
 }
 
 module.exports = {
@@ -40500,7 +40529,8 @@ module.exports = {
     Plus: Plus,
     Mult: Mult,
     UnaryFunction: UnaryFunction,
-    Sin: Sin
+    Scale: Scale,
+    MakeVector: MakeVector
 };
 
 },{"../model":58,"lodash":55}],67:[function(require,module,exports){
@@ -40523,7 +40553,7 @@ const models = {
     Mouse: require ('./models/mouse'),
     Float: require ('./models/float'),
     Gate: require ('./models/gate'),
-    weakArith: require ('./models/weak-arith')
+    weakArith: require ('./models/weak-arith'),
 };
 
 class Frandre {
@@ -40649,8 +40679,11 @@ class Frandre {
         window._time = new models.time.Time (this);
         window._time.position (600, 50);
 
-        window._sin = new models.weakArith.Sin (this);
+        window._sin = new models.weakArith.UnaryFunction (this, Math.sin, 'sin');
         window._sin.position (500, 150);
+
+        window._sin = new models.weakArith.UnaryFunction (this, Math.cos, 'cos');
+        window._sin.position (200, 450);
 
         window._mouse = new models.Mouse (this);
         window._mouse.position (400, 550);
@@ -40672,6 +40705,12 @@ class Frandre {
 
         window._gate3 = new models.Gate (this);
         window._gate3.position (600, 450);
+
+        window._vec = new models.weakArith.MakeVector (this);
+        window._vec.position (600, 550);
+
+        window._h = new models.weakArith.Scale (this, 200);
+        window._h.position (200, 550);
     }
 
     processEvents () {
