@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>有关 monad 的一些想法 (2) -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+</head>
+
+<body>
+
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<div id="post-title" class="clear">
+    <h2 id="post-title-main">有关 monad 的一些想法 (2)</h2>
+    <span id="post-title-sub">2016-12-26</span>
+</div>
+
+
+<h3>没有副作用</h3>
+
+<pre><code>print 2 :: IO ()
+</code></pre>
+
+<p>这个表达式有副作用 (side effect) 么？没有。就是这么简单。无论在哪里，<code>print 2</code> 都是指的“输出 2 这个数”。</p>
+
+<p>但是这个不叫副作用叫什么？我们不妨把它叫做“<strong>作用 (effect)</strong>”。一个 <code>IO a</code> 描述了一个和 <code>a</code> 相关的作用。</p>
+
+<ul>
+<li><code>print 2 = 输出 2</code></li>
+<li><code>getLine = 输入 x，返回 x</code></li>
+</ul>
+
+<p>这么说起来好像怪怪的，咱还是想想别的办法。</p>
+
+<h3>IO</h3>
+
+<pre><code>newtype IO a = IO (State# RealWorld -&gt; (# State# RealWorld, a #))
+</code></pre>
+
+<p>这里的 unboxed tuple <code>(# a, b #)</code> 类似于元组 <code>(a, b)</code>，不必太在意。</p>
+
+<p>现实世界有几个？</p>
+
+<p>只有一个。</p>
+
+<p>GHC 把现实世界封装起来，使它只有一个。这样，<code>State# RealWorld</code> 有如下性质：</p>
+
+<ul>
+<li>任意 <code>x = IO f :: IO a</code> 和 <code>rw :: State# RealWorld</code>，当调用 <code>f rw</code> 后，<code>rw</code> 就相当于<strong>送给</strong> <code>f</code> 了，你就不能再去碰它了。不过你可以用它返回的那个新的 <code>State# RealWorld</code>。</li>
+</ul>
+
+<p>对于 <code>x = IO f :: IO a</code>，这里的 f 可以包含任意的副作用，但是只要你好好地用封装好的 <code>print</code> 和 <code>instance Monad IO</code> 之类的东西的话，它也是<strong>引用透明 (referential transparent)</strong> 的。</p>
+
+<p>为什么？因为</p>
+
+<ol>
+<li>用相同的参数调用它，你会得到相同的结果。<code>State# RealWorld</code> 只有一个，所以你不能用相同的参数调用它，所以这个性质成立。</li>
+<li>用不同的求值顺序计算两个调用，不影响结果。<code>State# RealWorld</code> 只有一个，你不能用不同的顺序计算两个调用，所以这个性质成立。</li>
+</ol>
+
+<p>仔细想想这两件事。</p>
+
+<h3>有没有副作用都没关系的 IO</h3>
+
+<p>那么，我们就可以说</p>
+
+<ul>
+<li><code>IO f = print 2, f 接受一个世界 rw，返回 (#  (stdout 多出了一行 2 的世界 rw'), () #)</code></li>
+<li><code>IO f = getLine，f 接受一个世界 rw，返回 (# (stdin 里面被读了一行的世界 rw'), (读的那行) #)</code></li>
+</ul>
+
+<p>但是在 <code>IO f :: IO a</code> 的执行过程当中，可能还会有别的变化，对吧？比如我敲了一行字，sxysxy 吃了一口饭之类的。这个怎么办？</p>
+
+<p>我们把它当成 <code>f</code> 的副作用一部分就行了。</p>
+
+<h3>说晕了？</h3>
+
+<ul>
+<li><code>IO a</code> 没有副作用</li>
+<li><code>State# RealWorld -&gt; (# State# RealWorld, a #)</code> 有副作用，不过管他呢，不影响引用透明。</li>
+</ul>
+
+<h3><code>instance Monad IO</code></h3>
+
+<p>来看看 GHC 的封装是否真的符合前面说的性质</p>
+
+<pre><code>instance  Monad IO  where
+    return x = IO (\ s -&gt; (# s, x #))
+</code></pre>
+
+<p>当然，送来的 <code>State# RealWorld</code> 可以原样奉还。</p>
+
+<pre><code>    IO m &gt;&gt;= k = IO (\ s -&gt; case m s of (# new_s, a #) -&gt; unIO (k a) new_s)
+</code></pre>
+
+<p><code>s</code> 没有了，我们把 <code>new_s</code> 送回去。</p>
+
+<p>看，这样封装的不错吧？</p>
+
+<h3><code>State# RealWorld</code> 的真面目</h3>
+
+<p>说了这么多，真实世界是什么？</p>
+
+<p>没有。</p>
+
+<blockquote>
+  <p>[<code>State#</code>] is represented by nothing at all. <a href="http://hackage.haskell.org/package/ghc-prim-0.5.0.0/docs/GHC-Prim.html#t:State-35-">(Hackage)</a></p>
+</blockquote>
+
+<p>直接去改这个世界就行了，不用去记下什么。</p>
+
+<p>前面遇到的 unboxed tuple 也是类似的效果。<code>(# a, b #)</code> 在内存里的表示真的就是 a 和一个 b，没有任何更多的装饰。这样 <code>(# State# RealWorld, a #)</code> 在内存里的表示就是 a。</p>
+
+<p>用 C 写出来，就是：</p>
+
+<pre><code>a something(void);
+</code></pre>
+
+</body>
+</html>
