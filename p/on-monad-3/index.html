@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>有关 monad 的一些想法 (3) -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+</head>
+
+<body>
+
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<div id="post-title" class="clear">
+    <h2 id="post-title-main">有关 monad 的一些想法 (3)</h2>
+    <span id="post-title-sub">2017-01-23</span>
+</div>
+
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE DeriveFunctor #-}</span>
+<span class="kw">import </span><span class="dt">Control.Monad</span></code></pre>
+<h3>
+Monad 的树型结构
+</h3>
+<p>我们来看一个二叉树</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">F</span> a <span class="fu">=</span> <span class="dt">E</span> a <span class="fu">|</span> <span class="dt">Fork</span> (<span class="dt">F</span> a) (<span class="dt">F</span> a)
+         <span class="kw">deriving</span> (<span class="dt">Functor</span>)</code></pre>
+<p>它肯定是个 <code>Functor</code>。<code>Applicative</code> 的 <code>pure</code> 也好办。</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">F</span> <span class="kw">where</span>
+    pure <span class="fu">=</span> <span class="dt">E</span>
+    (<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span> ap</code></pre>
+<p>我们 claim，<code>F</code> 也是个 <code>Monad</code>。<code>(&gt;&gt;=)</code> 要做什么呢？先随便写写吧。</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">F</span> <span class="kw">where</span></code></pre>
+<p><code>E</code> 好像是别无选择的</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell">    <span class="dt">E</span> a <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> f a</code></pre>
+<p><code>Fork</code> 的话随便写写，一下就想到了这个</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell">    <span class="dt">Fork</span> u v <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> <span class="dt">Fork</span> (u <span class="fu">&gt;&gt;=</span> f) (v <span class="fu">&gt;&gt;=</span> f)</code></pre>
+<p>写完了？但是这个靠谱么？</p>
+<h3>
+Monad 定律
+</h3>
+<ul>
+<li><code>return a &gt;&gt;= f = f a</code></li>
+<li><code>m &gt;&gt;= return = m</code></li>
+<li><code>(m &gt;&gt;= f) &gt;&gt;= g = m &gt;&gt;= (\x -&gt; f x &gt;&gt;= g)</code></li>
+</ul>
+<p>如果用 <code>do</code> 写出来，看得更清楚</p>
+<ul>
+<li><code>do { res &lt;- return x; f res } = f x</code></li>
+<li><code>do { res &lt;- m; return res } = m</code></li>
+<li><code>do { res &lt;- do { x &lt;- m; f x }; g res } = do { x &lt;- m; res &lt;- f x; g res }</code></li>
+</ul>
+<p>在命令式编程里面，你可能已经习惯于对程序做这种变换了。</p>
+<p>在 Haskell 里，这种变换是可以<strong>算</strong>出来的。就用 Monad 定律。</p>
+<p>我们来验证一下 F 符合 Monad 定律</p>
+<h3>
+第一条：
+</h3>
+<pre><code>return a &gt;&gt;= f
+= E a &gt;&gt;= f
+= f a</code></pre>
+<h3>
+第二条：
+</h3>
+<pre><code>m &gt;&gt;= return = m</code></pre>
+<p>对 m 用归纳法</p>
+<pre><code>E a &gt;&gt;= return = return a = E a</code></pre>
+<p>给定 <code>u &gt;&gt;= return = u</code> 和 <code>v &gt;&gt;= return = v</code>，我们有</p>
+<pre><code>Fork u v &gt;&gt;= return
+= Fork (u &gt;&gt;= return) (v &gt;&gt;= return)
+= Fork u v</code></pre>
+<h3>
+第三条
+</h3>
+<pre><code>(m &gt;&gt;= f) &gt;&gt;= g</code></pre>
+<p>对 m 用归纳法</p>
+<pre><code>(E a &gt;&gt;= f) &gt;&gt;= g
+= f a &gt;&gt;= g （由 &gt;&gt;= 定义）
+= E a &gt;&gt;= (\x -&gt; f x &gt;&gt;= g) （由 &gt;&gt;= 定义反推）</code></pre>
+<p>给定 <code>u</code> 和 <code>v</code> 符合条件，我们有</p>
+<pre><code>(Fork u v &gt;&gt;= f) &gt;&gt;= g
+= Fork (u &gt;&gt;= f) (v &gt;&gt;= f) &gt;&gt;= g （由 &gt;&gt;= 定义）
+= Fork ((u &gt;&gt;= f) &gt;&gt;= g) ((v &gt;&gt;= f) &gt;&gt;= g) （由 &gt;&gt;= 定义）
+= Fork (u &gt;&gt;= (\x -&gt; f x &gt;&gt;= g)) (v &gt;&gt;= (\x -&gt; f x &gt;&gt;= g)) （由归纳假设）
+= Fork u v &gt;&gt;= (\x -&gt; f x &gt;&gt;= g) （由 &gt;&gt;= 定义反推）</code></pre>
+<p>感觉好像重复写了好多东西啊。有没有更一般的结构？</p>
+<h3>
+Free monad
+</h3>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Free</span> f a
+    <span class="fu">=</span> <span class="dt">W</span> (f (<span class="dt">Free</span> f a))
+    <span class="fu">|</span> <span class="dt">Z</span> a
+    <span class="kw">deriving</span> (<span class="dt">Functor</span>)</code></pre>
+<p>如果我们定义</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Pair</span> a <span class="fu">=</span> <span class="dt">Pair</span> a a
+            <span class="kw">deriving</span> (<span class="dt">Functor</span>)</code></pre>
+<p>那么 <code>Free Pair</code> 就和 <code>F</code> 是等效的了</p>
+<pre><code>Fork (Fork (E 2) (E 3)) (E 5)</code></pre>
+<p>对应</p>
+<pre><code>W (Bin (W (Bin (Z 2) (Z 3))) (Z 5))</code></pre>
+<p>之前的这么一步</p>
+<pre><code>Fork u v &gt;&gt;= f = Fork (u &gt;&gt;= f) (v &gt;&gt;= f)</code></pre>
+<p><code>u</code> <code>v</code> 包在一个 <code>Pair</code> 里之后，后面的那个 <code>u &gt;&gt;= f</code> 和 <code>v &gt;&gt;= f</code> 就可以变成 <code>fmap (&gt;&gt;= f)</code> 了</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Free</span> f) <span class="kw">where</span>
+    pure <span class="fu">=</span> <span class="dt">Z</span>
+    (<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span> ap</code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Monad</span> (<span class="dt">Free</span> f) <span class="kw">where</span>
+    <span class="dt">Z</span> a <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> f a
+    <span class="dt">W</span> fa <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> <span class="dt">W</span> (fmap (<span class="fu">&gt;&gt;=</span> f) fa)</code></pre>
+<h3>
+练习
+</h3>
+<ul>
+<li>证明 Free 是符合 Monad 定律的</li>
+</ul>
+
+<a href="index.lhs">代码在此</a>
+
+</body>
+</html>
