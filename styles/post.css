@@ -27,3 +27,9 @@ pre
     overflow-x: auto;
     padding: 5px;
 }
+
+p > code
+{
+    background-color: #f8f8f8;
+    padding: 4px 10px;
+}
