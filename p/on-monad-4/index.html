@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>有关 monad 的一些想法 (4) -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+</head>
+
+<body>
+
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<div id="post-title" class="clear">
+    <h2 id="post-title-main">有关 monad 的一些想法 (4)</h2>
+    <span id="post-title-sub">2017-01-25</span>
+</div>
+
+
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE DeriveFunctor #-}</span>
+<span class="kw">import </span><span class="dt">Control.Monad</span></code></pre>
+<p>显然，<a href="https://hackage.haskell.org/package/free">有个 free monad 的库</a>。对，又是 Edward Kmett。</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Control.Monad.Free</span>
+<span class="kw">import </span><span class="dt">Prelude.Extras</span> (<span class="dt">Show1</span>)</code></pre>
+<p>这是我们的二叉树</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">B</span> a <span class="fu">=</span> <span class="dt">B</span> a a
+               <span class="kw">deriving</span> (<span class="dt">Functor</span>, <span class="dt">Show</span>)</code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Show1</span> <span class="dt">B</span></code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Tree</span> <span class="fu">=</span> <span class="dt">Free</span> <span class="dt">B</span></code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">leaf ::</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a
+leaf <span class="fu">=</span> <span class="dt">Pure</span></code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">fork ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a
+fork a b <span class="fu">=</span> <span class="dt">Free</span> (<span class="dt">B</span> a b)</code></pre>
+<p>看起来不错。</p>
+<pre><code>ghci&gt; fork (leaf 2) (leaf 3)
+Free (B (Pure 2) (Pure 3))</code></pre>
+<p>我们随便用一下子 <code>(&gt;&gt;=)</code></p>
+<pre><code>ghci&gt; fork (leaf 2) (leaf 3) &gt;&gt;= (\x -&gt; fork (leaf $ 5 * x) (leaf $ 6 * x))
+Free (B (Free (B (Pure 10) (Pure 12))) (Free (B (Pure 15) (Pure 18))))</code></pre>
+<p>发生了什么？</p>
+<h3>
+Monads for substitution
+</h3>
+<blockquote>
+Monads provide substitution (fmap) and renormalization (join) — Edward Kmett
+</blockquote>
+<p>观察表明，<code>(&gt;&gt;=)</code> 将每个 <code>leaf x</code> 替换成了 <code>fork (leaf $ 5 * x) (leaf $ 6 * x)</code>。替换成什么，显然是 <code>(&gt;&gt;=)</code> 的第二个参数决定的。所以我们得出，在 free monad 中，<code>(&gt;&gt;=)</code> 的作用是：将每个 <code>Pure x</code> 替换成 <code>f x</code>。</p>
+<pre><code>instance Functor f =&gt; Monad (Free f) where
+  return = Pure
+  Pure a &gt;&gt;= f = f a
+  Free m &gt;&gt;= f = Free ((&gt;&gt;= f) &lt;$&gt; m)</code></pre>
+<p>将 <code>&gt;&gt;=</code> 读作“替换”之后，这就变得非常显然了。</p>
+<h3>
+Monad 的定律
+</h3>
+<pre><code>return a &gt;&gt;= f = f a</code></pre>
+<p>这不废话么，<code>Pure a</code> 替换成 <code>f a</code></p>
+<pre><code>m &gt;&gt;= return = m</code></pre>
+<p><code>Pure a</code> 替换成 <code>Pure a</code>。也挺对的。</p>
+<pre><code>(m &gt;&gt;= f) &gt;&gt;= g = m &gt;&gt;= (\x -&gt; f x &gt;&gt;= g)</code></pre>
+<p>这里其实就是进行了两个变换 <code>f</code> 和 <code>g</code>。这两个变换至于是先在 m 里替换一次 f，再替换一次 <code>g</code>，还是直接把 <code>m</code> 里的每个 <code>Pure</code> 都替换成了 <code>f</code> <code>g</code> 的组合，是没有关系的，因为第一次替换完后的所有 <code>Pure</code> 都是从 <code>f</code> 里面来的。</p>
+<h3>
+变量的替换
+</h3>
+<p>考虑一件事：我们用一个 monad <code>AST</code> 来存一个表达式，<code>AST a</code> 的 <code>a</code> 存的是所有未被绑定的变量。</p>
+<p>它还有可能会在一个子表达式里面绑定一个变量。考虑:</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Var</span> a <span class="fu">=</span> <span class="dt">X</span> <span class="fu">|</span> <span class="dt">U</span> a
+           <span class="kw">deriving</span> (<span class="dt">Show</span>, <span class="dt">Functor</span>)</code></pre>
+<pre><code>AST a
+AST (Var a)</code></pre>
+<p>之间的关系。后者的未被绑定的变量，有 <code>X</code> 和 <code>U a</code> 两种。我们完全可以假装<code>AST (Var a)</code> 是 <code>AST a</code> 被绑定了一个变量的版本。其中，这个所谓的未绑定的变量 <code>X</code> 在这里被绑定，剩余的未绑定的变量变成 <code>U a</code>。</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">AST</span> a
+  <span class="fu">=</span> <span class="dt">FV</span> a
+  <span class="fu">|</span> <span class="dt">AST</span> a <span class="fu">:@</span> <span class="dt">AST</span> a
+  <span class="fu">|</span> <span class="dt">Lam</span> (<span class="dt">AST</span> (<span class="dt">Var</span> a))
+  <span class="kw">deriving</span> (<span class="dt">Functor</span>, <span class="dt">Show</span>)</code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">AST</span> <span class="kw">where</span>
+    pure <span class="fu">=</span> <span class="dt">FV</span>
+    (<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span> ap</code></pre>
+<p>AST 如何是个 monad 呢？</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">AST</span> <span class="kw">where</span>
+    <span class="dt">FV</span> a <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> f a
+    <span class="dt">Lam</span> m <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> <span class="dt">Lam</span> (m <span class="fu">&gt;&gt;=</span> go)
+      <span class="kw">where</span> go <span class="dt">X</span> <span class="fu">=</span> return <span class="dt">X</span>
+            go (<span class="dt">U</span> r) <span class="fu">=</span> <span class="dt">U</span> <span class="fu">&lt;$&gt;</span> (f r)</code></pre>
+<p><code>AST a</code> 中的 <code>a</code> 是所有未被绑定的变量，所以在 <code>(&gt;&gt;=)</code> 中我们把绑定了的变量单独考虑就好了。</p>
+<p>还差一个：</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell">    (m <span class="fu">:@</span> n) <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> (m <span class="fu">&gt;&gt;=</span> f) <span class="fu">:@</span> (n <span class="fu">&gt;&gt;=</span> f)</code></pre>
+<p>这样，比如我们想绑定一个变量</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">abstract ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">AST</span> a <span class="ot">-&gt;</span> <span class="dt">AST</span> (<span class="dt">Var</span> a)
+abstract v e <span class="fu">=</span> go <span class="fu">&lt;$&gt;</span> e
+  <span class="kw">where</span> go x <span class="fu">=</span> <span class="kw">if</span> x <span class="fu">==</span> v <span class="kw">then</span> <span class="dt">X</span> <span class="kw">else</span> <span class="dt">U</span> x</code></pre>
+<p>或者把当前绑定的变量替换成一个表达式？</p>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">instantiate ::</span> <span class="dt">AST</span> a <span class="ot">-&gt;</span> <span class="dt">AST</span> (<span class="dt">Var</span> a) <span class="ot">-&gt;</span> <span class="dt">AST</span> a
+instantiate m e <span class="fu">=</span> e <span class="fu">&gt;&gt;=</span> go
+  <span class="kw">where</span> go <span class="dt">X</span> <span class="fu">=</span> m
+        go (<span class="dt">U</span> x) <span class="fu">=</span> return x</code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">lam ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">AST</span> a <span class="ot">-&gt;</span> <span class="dt">AST</span> a
+lam v e <span class="fu">=</span> <span class="dt">Lam</span> (abstract v e)</code></pre>
+<pre><code>ghci&gt; abstract &quot;a&quot; (FV &quot;a&quot; :@ FV &quot;b&quot;)
+FV X :@ FV (U &quot;b&quot;)
+ghci&gt; instantiate (FV &quot;x&quot; :@ FV &quot;y&quot;) it      -- it 指的是上一个表达式的值哦
+(FV &quot;x&quot; :@ FV &quot;y&quot;) :@ FV &quot;b&quot;
+ghci&gt; lam &quot;x&quot; it
+Lam ((FV X :@ FV (U &quot;y&quot;)) :@ FV (U &quot;b&quot;))
+it :: AST [Char]
+(0.01 secs, 175,712 bytes)
+ghci&gt; lam &quot;y&quot; it
+Lam (Lam ((FV X :@ FV (U X)) :@ FV (U (U &quot;b&quot;))))
+it :: AST [Char]
+(0.01 secs, 184,816 bytes)
+ghci&gt; lam &quot;b&quot; it
+Lam (Lam (Lam ((FV X :@ FV (U X)) :@ FV (U (U X)))))</code></pre>
+<p>对于一个变量啊，<code>X</code> 表示它在当前层被绑定，<code>U</code> 表示它在当前层没被绑定。比如你看最后那个 <code>(U (U X))</code> 是不是在最后一层绑定的？</p>
+<p>monad 原来还能干这事啊</p>
+<p>这叫 <a href="https://hackage.haskell.org/package/bound">bound</a>。又是 Edward Kmett 写的。不过他写的有一个 abstract 的懒标记功能，提高了性能。</p>
+<p><a href="index.lhs">代码在此</a></p>
+
+</body>
+</html>
