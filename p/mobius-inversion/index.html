@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Möbius 反演 -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+    <script type="text/javascript" async src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+
+<body>
+
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<div id="post-title" class="clear">
+    <h2 id="post-title-main">Möbius 反演</h2>
+    <span id="post-title-sub">2017-03-18</span>
+</div>
+
+<p>本文使用 MathJax 渲染公式。如果过了好久以下这行还是不能正常显示那个优美而著名的公式的话，尝试进浏览器调试控制台 Network 栏看看咋回事吧</p>
+
+\[\sum_{d|n} \mu(d) = [n = 1]\]
+
+<h3>这是啥？</h3>
+
+<p>一堆 \(O(n)\) &mdash; \(O(\sqrt n)\) 数论题。</p>
+
+<p>号称是莫比乌斯反演，<del>同学都说是容斥是什么情况啊</del></p>
+
+<h3>为什么我的眼里常含泪水</h3>
+
+<ul>
+    <li> 因为我过敏
+    <li> 因为 MathJax 一点都不好写
+</ul>
+
+<h3>Möbius 函数</h3>
+
+\[\mu(d) = \begin{cases}
+0&n \text{有非} 1 \text{的平方因子}\\\
+(-1)^\alpha&n \text{没有非} 1 \text{的平方因子，有} \alpha \text{个质因子}
+\end{cases} \]
+
+<p>当然有些性质</p>
+
+\[\mu(1) = 1\]
+\[\mu(p) = -1 \quad (p \in \mathbb P)\]
+
+<p>那个是“p是质数”的意思</p>
+
+\[\mu(uv) = \mu(u)\mu(v) \quad (gcd(u, v) = 1)\]
+
+<p>然后就可以线性筛了对吧</p>
+
+<ul>
+<li>\(\mu[1] = 1\)
+<li>For prime \(p\): \(\mu[p] = 1\)
+<li>For composite \(pu\):
+    <ul>
+        <li> if \(p | u\) then: \(\mu[p * u] = 0\)
+        <li> else: \(\mu[p * u] = - \mu[u]\)
+    </ul>
+</ul>
+
+<p>好了，知道能算就行了</p>
+
+<p>下面是最重要的那个式子啦</p>
+
+\[\sum_{d|n} \mu(d) = [n = 1]\]
+
+<p>\([P]\) 表示 \(P\) 这个 <code>bool</code> 当 <code>int</code> 使的值</p>
+
+<h3>其它的一些基础内容</h3>
+
+<hr>
+
+<h4>一般积性函数的线性筛</h4>
+
+<p>如果你知道 \(F(1)\)，和如何比较方便地在 \(p\!\! \not|\ u\) 时算出 \(F(p^\alpha u)\)，那么就可以线性筛啦！</p>
+
+<p>方法是，对每个数 \(p^\alpha u\) 维护这个数的最小质因子 \(p\) 是什么（线性筛 ftw），和这个质因子出现了多少次 \(\alpha\)（发现（质数 \(z\)） \(z | m\) 就 \(count[zm] = count[m] + 1\) 就好了），还有除下这么多质数剩下的数 \(u\)。显然还是线性的，而且我们也确实维护出了需要的信息。</p>
+
+<hr>
+
+\[\sum_{i=1} \left\lfloor {n \over i} \right\rfloor\]
+
+<p>（没有上界。因为除着除着就没了）</p>
+
+<p>对于任意一个 \(i\)，从 \(i\) 一直到 \(\left\lfloor {n \over \lfloor n / i \rfloor} \right\rfloor\)，\(\left\lfloor {n \over i} \right\rfloor\) 都是一样的。所以我们可以这么着分块算</p>
+
+<ul>
+    <li> <code>for (i = 1; i <= n; i = last + 1)</code>
+    <ul>
+        <li> <code>last = n / (n / i)</code>
+        <li> <code>ans += ...</code>
+    </ul>
+</ul>
+
+<hr>
+
+\[\sum_{i=1} \left\lfloor {n \over i} \right\rfloor \left\lfloor {m \over i} \right\rfloor\]
+
+<p>可以得出 \(\left\lfloor {n \over i} \right\rfloor\) 和 \(\left\lfloor {m \over i} \right\rfloor\) 总共有 \(O(\sqrt n)\) 个取值（这里假定 \(n\) 和 \(m\) 同阶）</p>
+
+<p>为什么？因为 \(1~n\) 被下取整除法分成 \(O(\sqrt n)\) 段，\(1~m\) 也是。总共被砍了 \(O(\sqrt n)\) 刀，还是 \(O(\sqrt n)\) 块。</p>
+
+<!-- 真 tm 长 -->
+<p>对于一个 \(i\)，既然 \(\left\lfloor {n \over i} \right\rfloor\) 一样的最后一个是 \(\left\lfloor {n \over \lfloor n / i \rfloor} \right\rfloor\)，那俩都一样的肯定到 \(\min(\left\lfloor {n \over \lfloor n / i \rfloor} \right\rfloor, \left\lfloor {m \over \lfloor n / i \rfloor} \right\rfloor)\) 呗</p>
+
+<p>枚举的时候要注意啦，<code>for</code> 那里的 <code>i <= n</code> 得 \(n \leq m\) 才正常。<code>swap</code> 一下就修好了。</p>
+
+<ul>
+    <li> <code>if (n > m) swap (n, m)</code>
+    <li> <code>for (i = 1; i <= n; i = last + 1)</code>
+    <ul>
+        <li> <code>last = min (n / (n / i), m / (m / i));</code>
+        <li> <code>ans += ...</code>
+    </ul>
+</ul>
+
+<hr>
+
+<h3>做题</h3>
+
+<hr>
+
+<h4>互质对</h4>
+
+\[\sum_{i=1}^n \sum_{j=1}^m\ [gcd(i, j) = 1]\]
+
+<p>我们看到了可爱的 \([??? = 1]\)</p>
+
+\[\sum_{i=1}^n \sum_{j=1}^m \sum_{d | gcd(i, j)} \mu(d)\]
+
+<p>\(d|gcd(i, j)\) 就是两个都整除嘛。</p>
+
+\[\sum_{i=1}^n \sum_{j=1}^m \sum_{d | i \wedge d | j} \mu(d)\]
+
+<p>我们考虑枚举 \(d\)</p>
+
+\[\sum_d \mu(d) \sum_{i=1}^n \sum_{j=1}^m\ [d | i \wedge d | j]\]
+
+<p>只有 \(d\) 的倍数的 \(i\) 和 \(j\) 有贡献。我们<del>偷</del>换变量</p>
+
+<ul>
+    <li> \(i \to di\)
+    <li> \(j \to dj\)
+</ul>
+
+
+\[\sum_d \mu(d) \sum_{di=1}^n \sum_{dj=1}^m\ [d | di \wedge d | dj]\]
+
+<p>条件永远为真</p>
+
+\[\sum_d \mu(d) \sum_{di=1}^n \sum_{dj=1}^m\ 1\]
+
+<p>\(1\) 到 \(n\) 有哪些 \(d\) 的倍数。嗯这挺好办的。</p>
+
+\[\sum_d \mu(d)
+\sum_{i=1}^{\lfloor n/d \rfloor}
+\sum_{j=1}^{\lfloor m/d \rfloor}\ 1\]
+
+<p>数数好办</p>
+
+\[\sum_d \mu(d)
+\left\lfloor {n \over d} \right\rfloor
+\left\lfloor {m \over d} \right\rfloor\]
+
+<p>预处理 \(\mu\) 前缀和可 \(O(n)\) 预处理 \(O(\sqrt n)\) 查询。</p>
+
+<hr>
+
+<h4>给定 \(\gcd\) 对</h4>
+
+\[\sum_{i=1}^n \sum_{j=1}^m\ [gcd(i, j) = k]\]
+
+<p>显然 \(i\) 和 \(j\) 都得是 \(k\) 的倍数</p>
+
+\[\sum_{ki=1}^n \sum_{kj=1}^m\ [gcd(ki, kj) = k]\]
+\[\sum_{ki=1}^n \sum_{kj=1}^m\ [gcd(i, j) = 1]\]
+
+<p>\(1\) 到 \(n\) 里 k 的倍数好啊</p>
+
+\[
+\sum_{i=1}^{\left\lfloor {n \over k} \right\rfloor}
+\sum_{j=1}^{\left\lfloor {m \over k} \right\rfloor}
+\ [gcd(i, j) = 1]\]
+
+<p>然后就变成上一道题了。结论是</p>
+
+\[\sum_d \mu(d)
+\left\lfloor {n \over kd} \right\rfloor
+\left\lfloor {m \over kd} \right\rfloor\]
+
+<hr>
+
+<h4>\(\gcd\) 求和</h4>
+
+\[\sum_{i=1}^n \sum_{j=1}^m gcd(i, j) \]
+
+<p>考虑枚举 \(\gcd\) 是啥，数有多少个，乘 \(\gcd\) 再加起来就是求和啊</p>
+
+\[\sum_g g \sum_{i=1}^n \sum_{j=1}^m\ [gcd(i, j) = g]\]
+
+<p>代上一题结论</p>
+
+\[\sum_g g \sum_d \mu(d)
+\left\lfloor {n \over gd} \right\rfloor
+\left\lfloor {m \over gd} \right\rfloor\]
+
+<p>我们枚举 \(gd\) 好不好啊</p>
+
+\[\sum_{gd} (\sum_{d, g} g\ \mu(d))
+\left\lfloor {n \over gd} \right\rfloor
+\left\lfloor {m \over gd} \right\rfloor\]
+
+<p>这里的枚举 \(d, g\) 就是枚举相乘等于 \(dg\) 的数啦</p>
+
+<p>预处理里面那个小求和 \(F(dg)\) 的前缀和可 \(O(n)\) 预处理 \(O(\sqrt n)\) 查询。</p>
+
+<p>注：可以证明 \(F(n) = \varphi(n)\)，其中 \(\varphi\) 是欧拉函数</p>
+
+<hr>
+
+<h4>\(\gcd\) 是质数的对数</h4>
+
+\[\sum_{p \in \mathbb P} \sum_{i=1}^n \sum_{j=1}^m\ [gcd(i, j) = p]\]
+
+<p>可以推出来一个类似上一题的结论</p>
+
+\[\sum_{pd} (\sum_{p \in \mathbb P, d} \mu(d))
+\left\lfloor {n \over pd} \right\rfloor
+\left\lfloor {m \over pd} \right\rfloor\]
+
+<p>（本题中不再赘述 \(p\) 是质数）</p>
+
+<p>我们来考虑一下 \(F(n) = \sum_{p | n} \mu(n/p)\) 的性质。</p>
+
+<p>对于 \(z \in \mathbb P, z\!\! \not|\ u\)</p>
+
+\[\begin{array}{rcl}
+F(zu) &=& \sum_{p | zu} \mu(zu/p)\\
+&=& \mu(u) + \sum_{p | u} \mu(zu/p)\\
+&=& \mu(u) + \sum_{p | u} - \mu(u/p)\\
+&=& \mu(u) - \sum_{p | u} \mu(u/p)\\
+&=& \mu(u) - F(u)
+\end{array} \]
+
+<p>但是如果 \(z | u\)，那么只要 \(p \neq z\)，\(zu/p\) 就有平方因子 \(z^2\)，所以就挂掉了</p>
+
+\[\begin{array}{rcl}
+F(zu) &=& \sum_{p | zu} \mu(zu/p)\\
+&=& \mu(u) + \sum_{p | u} \mu(zu/p)\\
+&=& \mu(u)
+\end{array} \]
+
+<p>预处理 \(F(pd)\) 的前缀和可 \(O(n)\) 预处理 \(O(\sqrt n)\) 查询。</p>
+
+<hr>
+
+<h4>\(\textrm{lcm}\) 求和</h4>
+
+<div style="font-size: 250px">坑</div>
+
+</body>
+</html>
