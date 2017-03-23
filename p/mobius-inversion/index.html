@@ -43,8 +43,8 @@
 <h3>Möbius 函数</h3>
 
 \[\mu(d) = \begin{cases}
-0&n \text{有非} 1 \text{的平方因子}\\\
-(-1)^\alpha&n \text{没有非} 1 \text{的平方因子，有} \alpha \text{个质因子}
+0&amp;n \text{有非} 1 \text{的平方因子}\\\
+(-1)^\alpha&amp;n \text{没有非} 1 \text{的平方因子，有} \alpha \text{个质因子}
 \end{cases} \]
 
 <p>当然有些性质</p>
@@ -245,19 +245,19 @@
 <p>对于 \(z \in \mathbb P, z\!\! \not|\ u\)</p>
 
 \[\begin{array}{rcl}
-F(zu) &=& \sum_{p | zu} \mu(zu/p)\\
-&=& \mu(u) + \sum_{p | u} \mu(zu/p)\\
-&=& \mu(u) + \sum_{p | u} - \mu(u/p)\\
-&=& \mu(u) - \sum_{p | u} \mu(u/p)\\
-&=& \mu(u) - F(u)
+F(zu) &amp;=&amp; \sum_{p | zu} \mu(zu/p)\\
+&amp;=&amp; \mu(u) + \sum_{p | u} \mu(zu/p)\\
+&amp;=&amp; \mu(u) + \sum_{p | u} - \mu(u/p)\\
+&amp;=&amp; \mu(u) - \sum_{p | u} \mu(u/p)\\
+&amp;=&amp; \mu(u) - F(u)
 \end{array} \]
 
 <p>但是如果 \(z | u\)，那么只要 \(p \neq z\)，\(zu/p\) 就有平方因子 \(z^2\)，所以就挂掉了</p>
 
 \[\begin{array}{rcl}
-F(zu) &=& \sum_{p | zu} \mu(zu/p)\\
-&=& \mu(u) + \sum_{p | u} \mu(zu/p)\\
-&=& \mu(u)
+F(zu) &amp;=&amp; \sum_{p | zu} \mu(zu/p)\\
+&amp;=&amp; \mu(u) + \sum_{p | u} \mu(zu/p)\\
+&amp;=&amp; \mu(u)
 \end{array} \]
 
 <p>预处理 \(F(pd)\) 的前缀和可 \(O(n)\) 预处理 \(O(\sqrt n)\) 查询。</p>
@@ -265,8 +265,38 @@ F(zu) &=& \sum_{p | zu} \mu(zu/p)\\
 <hr>
 
 <h4>\(\textrm{lcm}\) 求和</h4>
+#### $\textrm{lcm}$ 求和
 
-<div style="font-size: 250px">坑</div>
+$$
+\sum_{i=1}^n \sum_{j=1}^m lcm(i, j)
+$$
+
+<p>往下推呗</p>
+
+\[r
+\begin{array}{cl}
+&amp;\sum_{i=1}^n \sum_{j=1}^m lcm(i, j)&amp;\\
+=&amp; \sum_d\sum_{i=1}^n \sum_{j=1}^m {ij\over d}[\gcd(i,j)=d]\\
+=&amp; \sum_d\sum_{di=1}^n \sum_{dj=1}^m {d^2ij\over d}[\gcd(di,dj)=d]\\
+=&amp; \sum_d\sum_{i=1}^{\lfloor n/d \rfloor} \sum_{j=1}^{\lfloor m/d\rfloor} {d^2ij\over d}[\gcd(i,j)=1]\\
+=&amp; \sum_d d \sum_{i=1}^{\lfloor n/d \rfloor} \sum_{j=1}^{\lfloor m/d\rfloor} ij \ [\gcd(i,j)=1]\\
+\end{array}
+\]
+
+<p>然后我们像上面那样枚举 \(gcd(i, j)=u\)，\(i\) 偷换成 \(ui\)，\(j\) 偷换成 \(uj\)。</p>
+
+\[
+\begin{array}{cl}
+=&amp; \sum_u \mu(u)\sum_d \sum_{i=1}^{\lfloor n/du \rfloor} \sum_{j=1}^{\lfloor m/du\rfloor} u^2dij\\
+=&amp; \sum_u \mu(u)\sum_d \sum_{i=1}^{\lfloor n/du \rfloor} \sum_{j=1}^{\lfloor m/du\rfloor} u^2dij\\
+=&amp; \sum_u \mu(u)\sum_d \sum_{i=1}^{\lfloor n/du \rfloor} \sum_{j=1}^{\lfloor m/du\rfloor} u^2dij\\
+=&amp; \sum_u \mu(u)\sum_d u^2 \left(\sum_{i=1}^{\lfloor n/du \rfloor} i\right)\left(\sum_{j=1}^{\lfloor m/du\rfloor} j\right)\\
+=&amp; \sum_{du} \left(\sum_{d, u} du^2\mu(u)\right) {\lfloor n/du \rfloor(1+\lfloor n/du \rfloor)\over2}{\lfloor m/du \rfloor(1+\lfloor m/du \rfloor)\over2}\\
+=&amp;amp; \sum_{du} du\ \left(\sum_{d, u} u\ \mu(u)\right) {\lfloor n/du \rfloor(1+\lfloor n/du \rfloor)\over2}{\lfloor m/du \rfloor(1+\lfloor m/du \rfloor)\over2}\\
+\end{array}
+\]
+
+<p>预处理 \(du\ \left(\sum_{d, u} u\ \mu(u)\right)\) 前缀和可 \(O(n)\) 预处理 \(O(\sqrt n)\) 查询。</p>
 
 </body>
 </html>
