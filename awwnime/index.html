@@ -1,0 +1,67 @@
+<html>
+    <head>
+        <title>cdn.awwnime.me viewer</title>
+        <style>img { height: 100%; }</style>
+    </head>
+<body>
+
+<script>
+    const BEGIN = parseInt ('m000', 36), END = parseInt ('wx00', 36);
+    const buf = [], used = new Set ();
+    let inFlight = 0;
+    let current = undefined;
+
+    function setCurrent (next) {
+        console.log (next);
+        if (current !== undefined)
+            current.remove ();
+        document.body.appendChild (next);
+        current = next;
+    }
+
+    function addImage (uri) {
+        const img = new Image();
+        img.src = uri;
+        var loaded = false;
+        img.onload = () => {
+            if (! loaded) {
+                loaded = true;
+                if (current === undefined) setCurrent (img);
+                else buf.push (img);
+                inFlight --;
+            }
+        };
+        img.onerror = () => {
+            inFlight --;
+        };
+        inFlight ++;
+    }
+
+    function refresh () {
+        while (buf.length < 10 && inFlight < 10) {
+            let nextUri;
+            do nextUri = Math.floor (Math.random () * (END - BEGIN) + BEGIN);
+            while (used.has(nextUri));
+            const name = nextUri.toString(36);
+            for (let suffix of ['jpg', 'png']) {
+                addImage (`http://cdn.awwni.me/${name}.${suffix}`);
+                addImage (`http://cdn.awwni.me/${name}.${suffix}`);
+            }
+        }
+
+        if (buf.length) setCurrent (buf.pop ());
+        
+        setTimeout (refresh, 5000);
+    }
+
+    function keydown (event) {
+        if (event.key == 'Enter' && current)
+            window.open (current.src);
+    }
+
+    document.body.onkeydown = keydown;
+
+    if (localStorage['start'] === 'awwnime') refresh ();    
+</script>
+</body>
+</html>
