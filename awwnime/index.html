@@ -23,16 +23,18 @@
     }
 
     function addImage (uri) {
+        console.log ("Create %o", uri);
         const img = new Image();
         img.src = uri;
-        var loaded = false;
         img.onload = () => {
-            if (! loaded) {
-                loaded = true;
-                if (current === undefined) setCurrent (img);
-                else buf.push (img);
-                inFlight --;
+            if (current === undefined) {
+                console.log ("Direct set %o", uri);
+                setCurrent (img);
+            } else {
+                console.log ("Push %o", uri);                    
+                buf.push (img);
             }
+            inFlight --;
         };
         img.onerror = () => {
             inFlight --;
@@ -46,10 +48,8 @@
             do nextUri = Math.floor (Math.random () * (END - BEGIN) + BEGIN);
             while (used.has(nextUri));
             const name = nextUri.toString(36);
-            for (let suffix of ['jpg', 'png']) {
+            for (let suffix of ['jpg', 'png'])
                 addImage (`http://cdn.awwni.me/${name}.${suffix}`);
-                addImage (`http://cdn.awwni.me/${name}.${suffix}`);
-            }
         }
 
         if (buf.length) setCurrent (buf.pop ());
