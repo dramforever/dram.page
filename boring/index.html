@@ -3,7 +3,7 @@
         <title>Boring</title>
         <style>
             body {
-                color: white;
+                color: #f0f0f0;
                 background-color: black;
                 margin-bottom: 0;
                 margin-top: 4px;
@@ -49,8 +49,8 @@
         <p>Failures lose 3 points. But if you fail with combo = 0, you lose 5 points</p>
         <p id='accel'><u>Shift</u> to accelerate. Erases combo count.</p>
         <p id='long-bounce'>When the ball has flown for 7 seconds without hitting a circle or the pad,
-            press <u>Space</u> will make the ball fall straight down. Keeps combos.</p>
-        <p id='pause'><u>P</u> to pause. Press any key to continue</p>
+            pressing <u>Space</u> will make the ball fall straight down. Keeps combos.</p>
+        <p id='pause'><u>P</u> or <u>Esc</u> to pause. Press any other key to continue</p>
         <p>The angle in which the ball bounces off the pad depends <b>only on the point of contact</b></p>
     </div>
     <canvas id="main-view" height="600" width="800"><canvas>
@@ -124,7 +124,7 @@
             }
 
             keyDown (event) {
-                if (event.key != 'p') this.setRunning (true);
+                if (event.key != 'p' && event.key != 'Escape') this.setRunning (true);
                 this.keyState[event.key] = true;
             }
 
@@ -164,7 +164,7 @@
             }
 
             handleInput (dt) {
-                if (this.keyState['p'])
+                if (this.keyState['p'] || this.keyState['Escape'])
                     this.setRunning (false);
 
                 if (this.accel != this.keyState['Shift']) {
@@ -265,20 +265,20 @@
                 this.context.fillStyle = 'black';
                 this.context.fillRect (0, 0, SCREEN.x, SCREEN.y);
 
-                this.context.fillStyle = (this.bounceCounter > GRAV_LIM) ? 'red' : 'white';
+                this.context.fillStyle = (this.bounceCounter > GRAV_LIM) ? '#ff2222' : '#22ff22';
                 this.context.beginPath ();
                 this.context.arc (this.ballPos.x, this.ballPos.y, BALL_RADIUS, 0, 2 * Math.PI, false);
                 this.context.fill ();
 
-                this.context.fillStyle = 'white';
+                this.context.fillStyle = '#2222ff';
                 this.context.beginPath ();
                 this.context.arc (this.blockPos.x, this.blockPos.y, BLOCK_RADIUS, 0, 2 * Math.PI, false);
                 this.context.fill ();
 
-                this.context.fillStyle = this.accel ? '#66ccff' : 'white';
+                this.context.fillStyle = this.accel ? 'yellow' : '#66ccff';
                 this.context.fillRect (this.padPos, BOTTOM, PAD.x, PAD.y);
 
-                this.context.fillStyle = '#66ccff';
+                this.context.fillStyle = '#ff77cc';
                 this.context.font = '25px sans-serif';
                 this.context.fillText (`Score: ${this.score}`, 20, 35);
                 this.context.font = '17px sans-serif';
