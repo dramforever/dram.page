@@ -1,0 +1,220 @@
+<html>
+    <head>
+        <style>
+            body {
+                background-color: black;
+                margin-bottom: 0;
+                margin-top: 4px;
+            }
+
+            #main-view {
+                border: 1px solid white;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="main-view" height="600" width="800"><canvas>
+    <script>
+        const SCREEN = { x : 800, y : 600 };
+        const BOTTOM = 570;
+        const SPEED = 0.5, INITIAL_VEL = cscale (SPEED, { x : 0.6, y : - 0.8 });
+        const BALL_RADIUS = 10, BLOCK_RADIUS = 50;
+        const PAD = { x : 80, y : 10 };
+        const GRAV_LIM = 7000;
+
+        function square (a) { return a * a; }
+        function dot (a, b) { return a.x * b.x + a.y * b.y; }
+        function cross (a, b) { return a.x * b.y - b.x * a.y; }
+        function cmul (a, b) {
+            return {
+                x: a.x * b.x - a.y * b.y,
+                y: a.x * b.y + a.y * b.x};
+        }
+        function cscale (k, a) { return { x: k * a.x, y: k * a.y }; }
+        function norm (a) { return a.x * a.x + a.y * a.y; }
+        function cdiv (a, b) {
+            const N = norm (b);
+            return {
+                x: (a.x * b.x + a.y * b.y) / N,
+                y: (a.y * b.x - a.x * b.y) / N};
+        }
+        class Game {
+            constructor (ele) {
+                this.canvas = ele;
+                this.context = this.canvas.getContext ('2d');
+                
+                this.ballPos = { x: SCREEN.x / 2, y : BOTTOM - BALL_RADIUS };
+                this.ballVel = INITIAL_VEL;
+                
+                this.padPos = this.ballPos.x - PAD.x / 2;
+                
+                this.blockPos = { x : SCREEN.x / 2, y : 300 };
+                
+                this.bounceCounter = 0;
+
+                this.combo = 0;
+                this.score = 0;
+                this.maxCombo = localStorage['maxCombo'] ? parseInt (localStorage['maxCombo']) : 0;
+
+                this.prevTime = null;
+                
+                this.moveState = null;
+                this.accel = false;
+                this.keyState = {};
+                
+                requestAnimationFrame (this.method ('update'));
+                window.onkeydown = this.method ('keyDown');
+                window.onkeyup = this.method ('keyUp');
+            }
+
+            method (name) {
+                return this[name].bind(this);
+            }
+
+            keyDown (event) {
+                this.keyState[event.key] = true;
+            }
+
+            keyUp (event) {
+                this.keyState[event.key] = false;
+            }
+
+            update (time) {
+                if (this.prevTime == null)
+                    this.prevTime = time;
+                else {
+                    const dt = time - this.prevTime;
+                    if (dt < 20) {
+                        // If the animation hasn't stopped, then animations will make sense
+                        // Otherwise we just skip this frame and try again
+                        this.handleInput (dt);
+                        this.updatePhysics (dt);
+                        this.draw ();
+                    }
+                    this.prevTime = time;
+                }
+                requestAnimationFrame (this.method ('update'));
+            }
+
+            handleInput (dt) {
+                this.accel = this.keyState['Shift'];
+
+                if (this.keyState['ArrowLeft'] && !this.keyState['ArrowRight'])
+                    this.moveState = 'left';
+                else if (this.keyState['ArrowRight'] && !this.keyState['ArrowLeft'])
+                    this.moveState = 'right';
+                else
+                    this.moveState = null;
+
+                // if (this.accel) this.combo = 0;
+
+                if (this.keyState[' '] && this.bounceCounter > GRAV_LIM) {
+                    this.ballVel = { x: 0, y: SPEED };
+                    this.bounceCounter = 0;
+                }
+
+                const moveAmount = dt * SPEED * (this.accel ? 3.5 : 0.8);
+                if (this.moveState == 'left') {
+                    this.padPos -= moveAmount;
+                    if (this.padPos < - PAD.x / 2) this.padPos = - PAD.x / 2;
+                } else if (this.moveState == 'right') {
+                    this.padPos += moveAmount;
+                    if (this.padPos > SCREEN.x - PAD.x / 2) this.padPos = SCREEN.x - PAD.x / 2;
+                }
+            }
+
+            reflectVel (d) {
+                const v = this.ballVel;
+                return cscale (- norm (v) / norm (d), cmul (d, cdiv (d, v)));
+            }
+            
+            updatePhysics (dt) {
+                let bp = this.ballPos;
+                let bv = this.ballVel;
+                const oldBallPos = { x: bp.x, y: bp.y };
+
+                for (let ax of ['x', 'y'])
+                    bp[ax] += dt * bv[ax];
+
+                if ((bp.x < BALL_RADIUS && bv.x < 0)
+                    || (bp.x >= SCREEN.x && bv.x > 0))
+                    bv.x *= -1;
+                
+                if (bp.y < BALL_RADIUS && bv.y < 0)
+                    bv.y *= -1;
+                
+                if (oldBallPos.y < BOTTOM - BALL_RADIUS && bp.y >= BOTTOM - BALL_RADIUS
+                    && bp.x >= this.padPos && bp.x < this.padPos + PAD.x) {
+                    const vx = (bp.x - this.padPos - PAD.x / 2) / (0.5 * PAD.x);
+                    bv = { x: vx * SPEED, y: (- Math.sqrt (1 - vx * vx)) * SPEED };
+                    this.bounceCounter = 0;
+                }
+
+                if (bp.y > SCREEN.y + BALL_RADIUS) {
+                    bv = INITIAL_VEL;
+                    bp = { x: this.padPos + PAD.x / 2, y : BOTTOM - BALL_RADIUS - 1 };
+                    this.bounceCounter = 0;
+                    if (! this.combo) this.score -= 3;
+                    this.combo = 0;
+                }
+
+                const d = { x: this.blockPos.x - bp.x, y: this.blockPos.y - bp.y };
+                if (norm (d) < square (BALL_RADIUS + BLOCK_RADIUS) /*&& dot (d, bv) > 0*/) {
+                    bv = this.reflectVel (d);
+                    let newPos;
+                    do newPos = {
+                        x: Math.random () * (SCREEN.x - 2 * BLOCK_RADIUS) + BLOCK_RADIUS,
+                        y: Math.random () * (BOTTOM * 0.6 - 3 * BLOCK_RADIUS) + BLOCK_RADIUS};
+                    while (square (newPos.x - this.blockPos.x) + square (newPos.y - this.blockPos.y) <
+                        square (BLOCK_RADIUS) * 8)
+                    this.blockPos = newPos;
+                    this.combo ++;
+                    if (this.combo > this.maxCombo)
+                        localStorage['maxCombo'] = this.maxCombo = this.combo;
+                    this.score += this.combo * 2 - 1;
+                    this.bounceCounter = 0;
+                    console.log (this.blockPos.x, this.blockPos.y);
+                }
+
+                this.bounceCounter += dt;
+                this.ballPos = bp;
+                this.ballVel = bv;
+            }
+
+            draw () {
+                // TODO abstract over drawing
+                this.context.clearRect (0, 0, SCREEN.x, SCREEN.y);
+
+                this.context.fillStyle = 'black';
+                this.context.fillRect (0, 0, SCREEN.x, SCREEN.y);
+
+                this.context.fillStyle = (this.bounceCounter > GRAV_LIM) ? 'red' : 'white';
+                this.context.beginPath ();
+                this.context.arc (this.ballPos.x, this.ballPos.y, BALL_RADIUS, 0, 2 * Math.PI, false);
+                this.context.fill ();
+
+                this.context.fillStyle = 'white';
+                this.context.beginPath ();
+                this.context.arc (this.blockPos.x, this.blockPos.y, BLOCK_RADIUS, 0, 2 * Math.PI, false);
+                this.context.fill ();
+
+                this.context.fillStyle = this.accel ? '#66ccff' : 'white';
+                this.context.fillRect (this.padPos, BOTTOM, PAD.x, PAD.y);
+
+                this.context.fillStyle = '#6666ff';
+                this.context.font = '25px sans-serif';
+                this.context.fillText (`Score: ${this.score}`, 20, 35);
+                this.context.font = '17px sans-serif';
+                this.context.fillText (`Combo: ${this.combo} (Best: ${this.maxCombo})`, 20, 60);
+
+                if (this.bounceCounter > GRAV_LIM) {
+                    this.context.font = '17px sans-serif';
+                    this.context.fillText ('Press Space to make ball fall ', 20, 85);
+                }
+            }
+        }
+
+        const game = new Game (document.getElementById ('main-view'));
+    </script>
+</body>
+</html>
