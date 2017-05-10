@@ -23,7 +23,7 @@
 
             #info p {
                 display: block;
-                border: 2px solid black;
+                border: 2px solid transparent;
                 padding: 2px;
                 margin: 3px;
             }
@@ -45,7 +45,8 @@
         <h1><i>Boring</i> <small>(by dramforever)</small></h1>
         <p><span>http://dram.cf/boring/</span></p>
         <p>Arrow keys to move. Don't let the ball fall below your pad. Hit the circles.</p>
-        <p>Combos are counted between to failures. A combo of n gives n<sup>2</sup> points. But if you fail with combo = 0, you lose 3 points</p>
+        <p>Combos are counted between to failures. A combo of n gives n<sup>2</sup> points.</p>
+        <p>Failures lose 3 points. But if you fail with combo = 0, you lose 5 points</p>
         <p id='accel'><u>Shift</u> to accelerate. Erases combo count.</p>
         <p id='long-bounce'>When the ball has flown for 7 seconds without hitting a circle or the pad,
             press <u>Space</u> will make the ball fall straight down. Keeps combos.</p>
@@ -186,7 +187,7 @@
                     this.clearBounceCounter ();
                 }
 
-                const moveAmount = dt * SPEED * (this.accel ? 3.5 : 0.8);
+                const moveAmount = dt * SPEED * (this.accel ? 3.0 : 0.8);
                 if (this.moveState == 'left') {
                     this.padPos -= moveAmount;
                     if (this.padPos < - PAD.x / 2) this.padPos = - PAD.x / 2;
@@ -227,12 +228,13 @@
                     bv = INITIAL_VEL;
                     bp = { x: this.padPos + PAD.x / 2, y : BOTTOM - BALL_RADIUS - 1 };
                     this.clearBounceCounter ();
-                    if (! this.combo) this.score -= 3;
+                    if (this.combo) this.score -= 3;
+                    else this.score -= 5;
                     this.combo = 0;
                 }
 
                 const d = { x: this.blockPos.x - bp.x, y: this.blockPos.y - bp.y };
-                if (norm (d) < square (BALL_RADIUS + BLOCK_RADIUS) /*&& dot (d, bv) > 0*/) {
+                if (norm (d) < square (BALL_RADIUS + BLOCK_RADIUS) && dot (d, bv) > 0) {
                     bv = this.reflectVel (d);
                     let newPos;
                     do newPos = {
