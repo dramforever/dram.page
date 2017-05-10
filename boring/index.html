@@ -2,17 +2,55 @@
     <head>
         <style>
             body {
+                color: white;
                 background-color: black;
                 margin-bottom: 0;
                 margin-top: 4px;
+                font-size: 17px;
             }
 
             #main-view {
                 border: 1px solid white;
             }
+
+            #info {
+                position: absolute;
+                width: calc(100% - 830px);
+                right: 5px;
+                top: 5px;
+            }
+
+            #info p {
+                display: block;
+                border: 2px solid black;
+                padding: 2px;
+                margin: 3px;
+            }
+
+            @media(max-width: 1000px) {
+                #info {
+                    display: none;
+                }
+            }
+
+            .highlight {
+                color: yellow;
+                border: 2px solid yellow !important;
+            }
         </style>
     </head>
 <body>
+    <div id="info">
+        <h1><i>Boring</i> <small>(by dramforever)</small></h1>
+        <p><span>http://dram.cf/boring/</span></p>
+        <p>Arrow keys to move. Don't let the ball fall below your pad. Hit the circles.</p>
+        <p>Combos are counted between to failures. A combo of n gives n<sup>2</sup> points. But if you fail with combo = 0, you lose 3 points</p>
+        <p id='accel'><u>Shift</u> to accelerate. Erases combo count.</p>
+        <p id='long-bounce'>When the ball has flown for 7 seconds without hitting a circle or the pad,
+            press <u>Space</u> will make the ball fall straight down.</p>
+        <p id='pause'><u>P</u> to pause. Press any key to continue</p>
+        <p>The angle in which the ball bounces off the pad depends <b>only on the point of contact</b></p>
+    </div>
     <canvas id="main-view" height="600" width="800"><canvas>
     <script>
         const SCREEN = { x : 800, y : 600 };
@@ -33,7 +71,7 @@
         function cscale (k, a) { return { x: k * a.x, y: k * a.y }; }
         function norm (a) { return a.x * a.x + a.y * a.y; }
         function cdiv (a, b) {
-            const N = norm (b);
+            const N = norm (b); // TODO Maybe NaN
             return {
                 x: (a.x * b.x + a.y * b.y) / N,
                 y: (a.y * b.x - a.x * b.y) / N};
@@ -59,9 +97,21 @@
                 this.prevTime = null;
                 
                 this.moveState = null;
+
                 this.accel = false;
+
                 this.keyState = {};
                 
+                this.running = true;
+
+                this.hPause = document.getElementById ('pause');
+                this.hAccel = document.getElementById ('accel');
+                this.hLongBounce = document.getElementById ('long-bounce');
+
+                window.onblur = (event) => {
+                    this.setRunning (false);
+                };
+
                 requestAnimationFrame (this.method ('update'));
                 window.onkeydown = this.method ('keyDown');
                 window.onkeyup = this.method ('keyUp');
@@ -72,6 +122,7 @@
             }
 
             keyDown (event) {
+                if (event.key != 'p') this.setRunning (true);
                 this.keyState[event.key] = true;
             }
 
@@ -79,25 +130,46 @@
                 this.keyState[event.key] = false;
             }
 
+            setRunning (st) {
+                if (this.running != st) {
+                    console.log (st);
+                    if (st) this.hPause.classList.remove ('highlight');
+                    else this.hPause.classList.add ('highlight');
+                    this.running = st;
+                }
+            }
+
+            clearBounceCounter () {
+                this.bounceCounter = 0;
+                this.hLongBounce.classList.remove ('highlight');
+            }
+
             update (time) {
                 if (this.prevTime == null)
                     this.prevTime = time;
                 else {
                     const dt = time - this.prevTime;
-                    if (dt < 20) {
+                    if (this.running && dt < 20) {
                         // If the animation hasn't stopped, then animations will make sense
                         // Otherwise we just skip this frame and try again
                         this.handleInput (dt);
                         this.updatePhysics (dt);
-                        this.draw ();
                     }
+                    this.draw ();
                     this.prevTime = time;
                 }
                 requestAnimationFrame (this.method ('update'));
             }
 
             handleInput (dt) {
-                this.accel = this.keyState['Shift'];
+                if (this.keyState['p'])
+                    this.setRunning (false);
+
+                if (this.accel != this.keyState['Shift']) {
+                    if (this.keyState['Shift']) this.hAccel.classList.add ('highlight');
+                    else this.hAccel.classList.remove ('highlight');
+                    this.accel = this.keyState['Shift'];
+                }
 
                 if (this.keyState['ArrowLeft'] && !this.keyState['ArrowRight'])
                     this.moveState = 'left';
@@ -106,11 +178,11 @@
                 else
                     this.moveState = null;
 
-                // if (this.accel) this.combo = 0;
+                if (this.accel) this.combo = 0;
 
                 if (this.keyState[' '] && this.bounceCounter > GRAV_LIM) {
                     this.ballVel = { x: 0, y: SPEED };
-                    this.bounceCounter = 0;
+                    this.clearBounceCounter ();
                 }
 
                 const moveAmount = dt * SPEED * (this.accel ? 3.5 : 0.8);
@@ -144,16 +216,16 @@
                     bv.y *= -1;
                 
                 if (oldBallPos.y < BOTTOM - BALL_RADIUS && bp.y >= BOTTOM - BALL_RADIUS
-                    && bp.x >= this.padPos && bp.x < this.padPos + PAD.x) {
-                    const vx = (bp.x - this.padPos - PAD.x / 2) / (0.5 * PAD.x);
-                    bv = { x: vx * SPEED, y: (- Math.sqrt (1 - vx * vx)) * SPEED };
-                    this.bounceCounter = 0;
+                    && bp.x >= this.padPos - BALL_RADIUS && bp.x < this.padPos + PAD.x + BALL_RADIUS) {
+                    const vx = (bp.x - this.padPos - PAD.x / 2) / (BALL_RADIUS + 0.5 * PAD.x);
+                    bv = { x: vx * SPEED, y: (- Math.sqrt (1 + 1e-7 - vx * vx)) * SPEED };
+                    this.clearBounceCounter ();
                 }
 
                 if (bp.y > SCREEN.y + BALL_RADIUS) {
                     bv = INITIAL_VEL;
                     bp = { x: this.padPos + PAD.x / 2, y : BOTTOM - BALL_RADIUS - 1 };
-                    this.bounceCounter = 0;
+                    this.clearBounceCounter ();
                     if (! this.combo) this.score -= 3;
                     this.combo = 0;
                 }
@@ -172,10 +244,12 @@
                     if (this.combo > this.maxCombo)
                         localStorage['maxCombo'] = this.maxCombo = this.combo;
                     this.score += this.combo * 2 - 1;
-                    this.bounceCounter = 0;
-                    console.log (this.blockPos.x, this.blockPos.y);
+                    this.clearBounceCounter ();
                 }
 
+                if (this.bounceCounter < GRAV_LIM && this.bounceCounter + dt > GRAV_LIM) {
+                    this.hLongBounce.classList.add ('highlight');
+                }
                 this.bounceCounter += dt;
                 this.ballPos = bp;
                 this.ballVel = bv;
@@ -201,15 +275,17 @@
                 this.context.fillStyle = this.accel ? '#66ccff' : 'white';
                 this.context.fillRect (this.padPos, BOTTOM, PAD.x, PAD.y);
 
-                this.context.fillStyle = '#6666ff';
+                this.context.fillStyle = '#66ccff';
                 this.context.font = '25px sans-serif';
                 this.context.fillText (`Score: ${this.score}`, 20, 35);
                 this.context.font = '17px sans-serif';
                 this.context.fillText (`Combo: ${this.combo} (Best: ${this.maxCombo})`, 20, 60);
 
-                if (this.bounceCounter > GRAV_LIM) {
-                    this.context.font = '17px sans-serif';
-                    this.context.fillText ('Press Space to make ball fall ', 20, 85);
+                if (! this.running) {
+                    this.context.fillStyle = '#ff0000'
+                    this.context.font = '70px sans-serif';
+                    const width = this.context.measureText('Pause').width;
+                    this.context.fillText ('Pause', (SCREEN.x - width) / 2, 200);
                 }
             }
         }
