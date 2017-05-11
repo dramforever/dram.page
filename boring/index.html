@@ -48,9 +48,9 @@
         <p>Arrow keys to move. Don't let the ball fall below your pad. Hit the circles.</p>
         <p>Combos are counted between to failures. A combo of n gives n<sup>2</sup> points.</p>
         <p>Failures lose 3 points. But if you fail with combo = 0, you lose 5 points</p>
-        <p id='accel'><u>Shift</u> to accelerate. Erases combo count.</p>
+        <p id='accel'><u>Shift</u> to accelerate.</p>
         <p id='long-bounce'>When the ball has flown for 7 seconds without hitting a circle or the pad,
-            pressing <u>Space</u> will make the ball fall straight down. Keeps combos.</p>
+            pressing <u>Space</u> will make the ball fall straight down.</p>
         <p id='pause'><u>P</u> or <u>Esc</u> to pause. Press any other key to continue</p>
         <p>The angle in which the ball bounces off the pad depends <b>only on the point of contact</b></p>
     </div>
@@ -157,8 +157,6 @@
                         // Otherwise we just skip this frame and try again
                         this.handleInput (dt);
                         this.updatePhysics (dt);
-                    } else {
-                        console.log ('Last frame took %o ms???', dt);
                     }
                     this.draw ();
                     this.prevTime = time;
@@ -183,14 +181,12 @@
                 else
                     this.moveState = null;
 
-                if (this.accel) this.combo = 0;
-
                 if (this.keyState[' '] && this.bounceCounter > GRAV_LIM) {
                     this.ballVel = { x: 0, y: SPEED };
                     this.clearBounceCounter ();
                 }
 
-                const moveAmount = dt * SPEED * (this.accel ? 3.0 : 0.8);
+                const moveAmount = dt * SPEED * (this.accel ? 5.0 : 0.8);
                 if (this.moveState == 'left') {
                     this.padPos -= moveAmount;
                     if (this.padPos < - PAD.x / 2) this.padPos = - PAD.x / 2;
