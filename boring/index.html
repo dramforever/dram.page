@@ -157,6 +157,8 @@
                         // Otherwise we just skip this frame and try again
                         this.handleInput (dt);
                         this.updatePhysics (dt);
+                    } else {
+                        console.log ('Last frame took %o ms???', dt);
                     }
                     this.draw ();
                     this.prevTime = time;
