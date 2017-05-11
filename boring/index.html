@@ -13,6 +13,8 @@
 
             #main-view {
                 border: 1px solid white;
+                width: 800px;
+                height: 600px;
             }
 
             #info {
@@ -54,7 +56,7 @@
         <p id='pause'><u>P</u> or <u>Esc</u> to pause. Press any other key to continue</p>
         <p>The angle in which the ball bounces off the pad depends <b>only on the point of contact</b></p>
     </div>
-    <canvas id="main-view" height="600" width="800"><canvas>
+    <canvas id="main-view"><canvas>
     <script>
         const SCREEN = { x : 800, y : 600 };
         const BOTTOM = 570;
@@ -83,7 +85,11 @@
             constructor (ele) {
                 this.canvas = ele;
                 this.context = this.canvas.getContext ('2d');
-                
+
+                this.canvas.width = SCREEN.x * devicePixelRatio;
+                this.canvas.height = SCREEN.y * devicePixelRatio;
+                this.context.scale(devicePixelRatio, devicePixelRatio);
+
                 this.ballPos = { x: SCREEN.x / 2, y : BOTTOM - BALL_RADIUS };
                 this.ballVel = INITIAL_VEL;
                 
