@@ -152,7 +152,7 @@
                     this.prevTime = time;
                 else {
                     const dt = time - this.prevTime;
-                    if (this.running && dt < 20) {
+                    if (this.running && dt < 80) {
                         // If the animation hasn't stopped, then animations will make sense
                         // Otherwise we just skip this frame and try again
                         this.handleInput (dt);
@@ -281,9 +281,9 @@
 
                 this.context.fillStyle = '#ff77cc';
                 this.context.font = '25px sans-serif';
-                this.context.fillText (`Score: ${this.score}`, 20, 35);
+                this.context.fillText (`Combo: ${this.combo} (Best: ${this.maxCombo})`, 20, 35);
                 this.context.font = '17px sans-serif';
-                this.context.fillText (`Combo: ${this.combo} (Best: ${this.maxCombo})`, 20, 60);
+                this.context.fillText (`Score: ${this.score}`, 20, 60);
 
                 if (! this.running) {
                     this.context.fillStyle = '#ff0000'
