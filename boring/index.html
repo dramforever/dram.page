@@ -394,7 +394,7 @@
                         bv.y *= -1;
                     
                     const dpad = { x: this.padPos - bp.x, y: BOTTOM + PAD_RADIUS - bp.y - 1e-3 };
-                    if (norm (dpad) < square (BALL_RADIUS + PAD_RADIUS) && bv.y > 0) {
+                    if (norm (dpad) < square (BALL_RADIUS + PAD_RADIUS) && dot (dpad, bv) > 0) {
                         console.log ('slide');
                         bv = this.reflectVel (dpad);
                         this.clearBounceCounter ();
