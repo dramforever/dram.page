@@ -1,0 +1,492 @@
+<html>
+    <head>
+        <title>Boring</title>
+        <style>
+            body {
+                font-family: sans-serif;
+                color: #f0f0f0;
+                background-color: black;
+                margin-bottom: 0;
+                margin-top: 4px;
+                font-size: 17px;
+            }
+
+            u {
+                text-decoration: none;
+                border-bottom: 1px solid;
+                border-color: inherit;
+            } 
+
+            #main-view {
+                position: absolute;
+                border: 1px solid white;
+                width: 800px;
+                height: 600px;
+                overflow: hidden;
+            }
+
+            #main-view .canvas-object {
+                position: absolute;
+            }
+
+            #info {
+                position: absolute;
+                width: calc(100% - 830px);
+                right: 5px;
+                top: 5px;
+            }
+
+            #info p {
+                display: block;
+                border: 2px solid transparent;
+                padding: 4px 2px;
+                margin: 3px;
+                transition: border-color 0.2s;
+            }
+
+            @media(max-width: 1000px) {
+                #info {
+                    display: none;
+                }
+            }
+
+            #info:not(.running) #pause {
+                color: yellow;
+                border-color: yellow;
+            }
+
+
+            #info:not(.flying) #launch {
+                color: yellow;
+                border-color: yellow;
+            }
+
+            #info.long-bounce #long-bounce {
+                color: yellow;
+                border-color: yellow;
+            }
+
+            #info.flying #move {
+                color: yellow;
+                border-color: yellow;
+            }
+
+            #info.miss #miss {
+                color: yellow;
+                border-color: yellow;
+            }
+
+            #info.accel #accel {
+                color: yellow;
+                border-color: yellow;    
+            }
+
+            #canvas-ball {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                top: 550px;
+                left: 390px;
+                background-color: #22ff22;
+                /*transition: left 0.1s, top 0.1s;*/
+            }
+
+            .long-bounce #canvas-ball {
+                background-color: #ff2222;
+            }
+
+            #canvas-pad {
+                width: 80px;
+                height: 10px;
+                background-color: #66ccff;
+                top: 570px;
+                left: 360px;
+            }
+
+            .accel #canvas-pad {
+                background-color: yellow;
+            }
+            
+            #canvas-block {
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                left: 350px;
+                top: 250px;
+                background-color: #2222ff;
+            }
+
+            #canvas-score {
+                font-size: 17pt;
+                color: #ff77cc;
+                left: 20px;
+                top: 60px;
+            }
+
+            #canvas-combo {
+                font-size: 25pt;
+                color: #ff77cc;
+                left: 20px;
+                top: 20px;
+                transition: left 0.1s;
+            }
+
+            .scoring #canvas-combo {
+                left: 30px;
+            }
+
+            #canvas-pause {
+                left: 400px;
+                transform: translateX(-50%);
+                top: 200px;
+            }
+
+            #canvas-pause::before {
+                color: #ff0000;
+                opacity: 0;
+                content: 'Pause';
+                font-size: 70px;
+            }
+
+            .pause #canvas-pause::before {
+                opacity: 1;
+            }
+        </style>
+    </head>
+<body>
+    <div id="info">
+        <h1><i>Boring</i> <small>(by dramforever)</small></h1>
+        <p><span>http://dram.cf/boring/</span></p>
+        <p id="launch">按 <u>Space</u> 发射。</p>
+        <p id="move"><u>&larr;&nbsp;&rarr;</u> 控制板移动。不要让球掉到板以下。</p>
+        <p id="miss">
+            Combo n 得 n<sup>2</sup> 分。每次球掉落扣 3 分，Combo 清零。但是如果在 Combo 为 0 的时候掉落，扣 5 分。
+        </p>
+        <p id='accel'>按 <u>Shift</u> 加速。</p>
+        <p id='long-bounce'>如果球在 5 秒内没有碰到大球或板，可以按 <u>Space</u> 强制使球竖直掉落。</p>
+        <p id='pause'>按 <u>P</u> 或 <u>Esc</u> 暂停。按任意其它键继续。</p>
+        <p>球在板上的反弹角只和碰撞的位置有关。</p>
+    </div>
+    <div id="main-view"></div>
+    <script>
+        const kEsc = 27, kP = 80, kLeft = 37, kRight = 39, kShift = 16, kSpace = 32;
+        const SCREEN = { x : 800, y : 600 };
+        const BOTTOM = 570;
+        const SPEED = 0.5, INITIAL_VEL = () => cscale (SPEED, { x : 0.6, y : - 0.8 });
+        const BALL_RADIUS = 10, BLOCK_RADIUS = 50;
+        const PAD = { x : 80, y : 10 };
+        const GRAV_LIM = 7000;
+
+        function square (a) { return a * a; }
+        function dot (a, b) { return a.x * b.x + a.y * b.y; }
+        function cross (a, b) { return a.x * b.y - b.x * a.y; }
+        function cmul (a, b) {
+            return {
+                x: a.x * b.x - a.y * b.y,
+                y: a.x * b.y + a.y * b.x};
+        }
+        function cscale (k, a) { return { x: k * a.x, y: k * a.y }; }
+        function norm (a) { return a.x * a.x + a.y * a.y; }
+        function cdiv (a, b) {
+            const N = norm (b); // TODO Maybe NaN
+            return {
+                x: (a.x * b.x + a.y * b.y) / N,
+                y: (a.y * b.x - a.x * b.y) / N};
+        }
+        class Game {
+            constructor (view) {
+                this.hInfo = document.getElementById ('info');
+
+                this.view = view;
+
+                this.ePad = document.createElement ('div');
+                this.ePad.id = 'canvas-pad';
+                this.ePad.classList.add ('canvas-object');
+                view.appendChild (this.ePad);
+
+                this.eBall = document.createElement ('div');
+                this.eBall.id = 'canvas-ball';
+                this.eBall.classList.add ('canvas-object');
+                view.appendChild (this.eBall);
+
+                this.eBlock = document.createElement ('div');
+                this.eBlock.id = 'canvas-block';
+                this.eBlock.classList.add ('canvas-object');
+                view.appendChild (this.eBlock);
+
+                this.eCombo = document.createElement ('div');
+                this.eCombo.id = 'canvas-combo';
+                this.eCombo.classList.add ('canvas-object');
+                view.appendChild (this.eCombo);
+
+                this.eScore = document.createElement ('div');
+                this.eScore.id = 'canvas-score';
+                this.eScore.classList.add ('canvas-object');
+                view.appendChild (this.eScore);
+
+                this.ePause = document.createElement ('div');
+                this.ePause.id = 'canvas-pause';
+                this.ePause.classList.add ('canvas-object');
+                view.appendChild (this.ePause);
+                
+                this.ballPos = { x: SCREEN.x / 2, y : BOTTOM - BALL_RADIUS };
+                this.ballVel = INITIAL_VEL ();
+                
+                this.padPos = this.ballPos.x - PAD.x / 2;
+                
+                this.blockPos = { x : SCREEN.x / 2, y : 300 };
+                
+                this.bounceCounter = 0;
+
+                this.combo = 0;
+                this.score = 0;
+                this.maxCombo = localStorage['maxCombo'] ? parseInt (localStorage['maxCombo']) : 0;
+
+                this.prevTime = null;
+                
+                this.moveState = null;
+
+                this.accel = false;
+
+                this.keyState = {};
+                
+                this.flying = false;
+                this.hInfo.classList.remove ('flying');
+
+                this.running = true;
+                this.hInfo.classList.add ('running');
+
+                window.onblur = (event) => {
+                    this.setRunning (false);
+                };
+
+                this.update ();
+
+                window.onkeydown = this.method ('keyDown');
+                window.onkeyup = this.method ('keyUp');
+            }
+
+            method (name) {
+                return this[name].bind(this);
+            }
+
+            keyDown (event) {
+                if (event.keyCode != kP && event.key != kEsc) this.setRunning (true);
+                this.keyState[event.keyCode] = true;
+            }
+
+            keyUp (event) {
+                this.keyState[event.keyCode] = false;
+            }
+
+            setRunning (st) {
+                if (this.running != st) {
+                    console.log (st);
+                    if (st) this.hInfo.classList.add ('running');
+                    else this.hInfo.classList.remove ('running');
+                    this.running = st;
+                }
+            }
+
+            clearBounceCounter () {
+                this.bounceCounter = 0;
+                this.hInfo.classList.remove ('long-bounce');
+            }
+
+            update (time) {
+                if (this.prevTime == null)
+                    this.prevTime = time;
+                else {
+                    const dt = time - this.prevTime;
+                    if (this.running && dt < 100) {
+                        // If the animation hasn't stopped, then animations will make sense
+                        // Otherwise we just skip this frame and try again
+                        this.handleInput (dt);
+                        this.updatePhysics (dt);
+                    }
+                    this.draw ();
+                    this.prevTime = time;
+                }
+                requestAnimationFrame (this.method ('update'));
+            }
+
+                                        
+            //  # #    # #####  #    # ##### 
+            //  # ##   # #    # #    #   #   
+            //  # # #  # #    # #    #   #   
+            //  # #  # # #####  #    #   #   
+            //  # #   ## #      #    #   #   
+            //  # #    # #       ####    #   
+                                        
+
+            handleInput (dt) {
+                if (this.keyState[kP] || this.keyState[kEsc])
+                    this.setRunning (false);
+
+                if (this.accel != this.keyState[kShift]) {
+                    if (this.keyState[kShift]) this.hInfo.classList.add ('accel');
+                    else this.hInfo.classList.remove ('accel');
+                    this.accel = this.keyState[kShift];
+                }
+
+                if (this.keyState[kLeft] && !this.keyState[kRight])
+                    this.moveState = 'left';
+                else if (this.keyState[kRight] && !this.keyState[kLeft])
+                    this.moveState = 'right';
+                else
+                    this.moveState = null;
+
+                if (this.keyState[kSpace]) {
+                    if (this.bounceCounter > GRAV_LIM) {
+                        this.ballVel = { x: 0, y: SPEED };
+                        this.clearBounceCounter ();
+                    }
+                    if (! this.flying) {
+                        this.ballVel = INITIAL_VEL ();
+                        this.flying = true;
+                        this.hInfo.classList.add ('flying');
+                    }
+                }
+
+                const moveAmount = dt * SPEED * (this.accel ? 5.0 : 0.8);
+                if (this.moveState == 'left') {
+                    this.padPos -= moveAmount;
+                    if (this.padPos < - PAD.x / 2) this.padPos = - PAD.x / 2;
+                } else if (this.moveState == 'right') {
+                    this.padPos += moveAmount;
+                    if (this.padPos > SCREEN.x - PAD.x / 2) this.padPos = SCREEN.x - PAD.x / 2;
+                }
+            }
+
+            reflectVel (d) {
+                const v = this.ballVel;
+                return cscale (- norm (v) / norm (d), cmul (d, cdiv (d, v)));
+            }
+
+
+            //  #####  #    # #   #  ####  #  ####   ####  
+            //  #    # #    #  # #  #      # #    # #      
+            //  #    # ######   #    ####  # #       ####  
+            //  #####  #    #   #        # # #           # 
+            //  #      #    #   #   #    # # #    # #    # 
+            //  #      #    #   #    ####  #  ####   ####  
+
+
+            updatePhysics (dt) {
+                if (this.flying) {
+                    let bp = this.ballPos;
+                    let bv = this.ballVel;
+                    const oldBallPos = { x: bp.x, y: bp.y };
+
+                    for (let ax of ['x', 'y'])
+                        bp[ax] += dt * bv[ax];
+
+                    if ((bp.x < BALL_RADIUS && bv.x < 0)
+                        || (bp.x >= SCREEN.x - BALL_RADIUS && bv.x > 0))
+                        bv.x *= -1;
+                    
+                    if (bp.y < BALL_RADIUS && bv.y < 0)
+                        bv.y *= -1;
+                    
+                    if (oldBallPos.y < BOTTOM - BALL_RADIUS && bp.y >= BOTTOM - BALL_RADIUS
+                        && bp.x >= this.padPos - 1.5 * BALL_RADIUS && bp.x < this.padPos + PAD.x + 1.5 * BALL_RADIUS) {
+                        const vx = (bp.x - this.padPos - PAD.x / 2) / (1.5 * BALL_RADIUS + 0.5 * PAD.x);
+                        bv = { x: vx * SPEED, y: (- Math.sqrt (1 + 1e-7 - vx * vx)) * SPEED };
+                        console.log ('bounce');
+                        this.clearBounceCounter ();
+                    }
+
+                    if (bp.y > SCREEN.y + BALL_RADIUS) {
+                        bv = INITIAL_VEL ();
+                        bp = { x: this.padPos + PAD.x / 2, y : BOTTOM - BALL_RADIUS - 1 };
+                        this.clearBounceCounter ();
+                        if (this.combo) this.score -= 3;
+                        else this.score -= 5;
+                        this.combo = 0;
+                        this.flying = false;
+                        this.hInfo.classList.remove ('flying');
+                        if (! this.hInfo.classList.contains ('miss')) {
+                            this.hInfo.classList.add ('miss');
+                            setTimeout (() => { this.hInfo.classList.remove ('miss'); }, 800);
+                        }
+                    }
+
+                    const d = { x: this.blockPos.x - bp.x, y: this.blockPos.y - bp.y - 1e-3 };
+
+                    if (norm (d) < square (BALL_RADIUS + BLOCK_RADIUS) && dot (d, bv) > 0) {
+                        bv = this.reflectVel (d);
+                        let newPos;
+                        do newPos = {
+                            x: Math.random () * (SCREEN.x - 2 * BLOCK_RADIUS) + BLOCK_RADIUS,
+                            y: Math.random () * (BOTTOM * 0.6 - 3 * BLOCK_RADIUS) + BLOCK_RADIUS};
+                        while (square (newPos.x - this.blockPos.x) + square (newPos.y - this.blockPos.y) <
+                            square (BLOCK_RADIUS) * 8)
+                        this.blockPos = newPos;
+                        this.combo ++;
+                        if (! this.view.classList.contains ('scoring')) {
+                            this.view.classList.add ('scoring');
+                            setTimeout (() => { this.view.classList.remove ('scoring'); }, 100);
+                        }
+                        if (this.combo > this.maxCombo)
+                            localStorage['maxCombo'] = this.maxCombo = this.combo;
+                        this.score += this.combo * 2 - 1;
+                        this.clearBounceCounter ();
+                    }
+
+                    if (this.bounceCounter < GRAV_LIM && this.bounceCounter + dt > GRAV_LIM) {
+                        this.hInfo.classList.add ('long-bounce');
+                    }
+
+                    this.bounceCounter += dt;
+                    this.ballPos = bp;
+                    this.ballVel = bv;
+                } else {
+                    this.ballPos = { x: this.padPos + PAD.x / 2, y: BOTTOM - BALL_RADIUS };
+                }
+            }
+
+                                        
+            //  #####  #####    ##   #    # 
+            //  #    # #    #  #  #  #    # 
+            //  #    # #    # #    # #    # 
+            //  #    # #####  ###### # ## # 
+            //  #    # #   #  #    # ##  ## 
+            //  #####  #    # #    # #    # 
+                                        
+
+            draw () {
+                this.eBall.style.left = this.ballPos.x - BALL_RADIUS;
+                this.eBall.style.top = this.ballPos.y - BALL_RADIUS;
+
+                this.eBlock.style.left = this.blockPos.x - BLOCK_RADIUS;
+                this.eBlock.style.top = this.blockPos.y - BLOCK_RADIUS;
+
+                this.ePad.style.left = this.padPos;
+
+                this.eCombo.textContent = `Combo: ${this.combo} (Best: ${this.maxCombo})`;
+                this.eScore.textContent = `Score: ${this.score}`;
+
+                if (this.running && this.view.classList.contains ('pause'))
+                    this.view.classList.remove ('pause');
+
+                if (! this.running && ! this.view.classList.contains ('pause'))
+                    this.view.classList.add ('pause');
+
+                if (! this.accel && this.view.classList.contains ('accel'))
+                    this.view.classList.remove ('accel');
+
+                if (this.accel && ! this.view.classList.contains ('accel'))
+                    this.view.classList.add ('accel');
+
+                if (this.bounceCounter <= GRAV_LIM && this.view.classList.contains ('long-bounce'))
+                    this.view.classList.remove ('long-bounce');
+
+                if (this.bounceCounter > GRAV_LIM && ! this.view.classList.contains ('long-bounce'))
+                    this.view.classList.add ('long-bounce');
+            }
+        }
+
+        const game = new Game (document.getElementById ('main-view'));
+    </script>
+</body>
+</html>
