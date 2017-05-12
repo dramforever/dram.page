@@ -11,6 +11,11 @@
                 font-size: 17px;
             }
 
+            u {
+                text-decoration: none;
+                border-bottom: 1px solid white;
+            } 
+
             #main-view {
                 border: 1px solid white;
                 width: 800px;
@@ -47,14 +52,13 @@
     <div id="info">
         <h1><i>Boring</i> <small>(by dramforever)</small></h1>
         <p><span>http://dram.cf/boring/</span></p>
-        <p>Arrow keys to move. Don't let the ball fall below your pad. Hit the circles.</p>
-        <p>Combos are counted between to failures. A combo of n gives n<sup>2</sup> points.</p>
-        <p>Failures lose 3 points. But if you fail with combo = 0, you lose 5 points</p>
-        <p id='accel'><u>Shift</u> to accelerate.</p>
-        <p id='long-bounce'>When the ball has flown for 7 seconds without hitting a circle or the pad,
-            pressing <u>Space</u> will make the ball fall straight down.</p>
-        <p id='pause'><u>P</u> or <u>Esc</u> to pause. Press any other key to continue</p>
-        <p>The angle in which the ball bounces off the pad depends <b>only on the point of contact</b></p>
+        <p><u>左右方向键</u>控制板移动。不要让球掉到板以下。</p>
+        <p>每次球掉落的时候，Combo 清零。Combo n 得 n<sup>2</sup> 分。</p>
+        <p>球掉落扣 3 分。但是如果在 Combo 为 0 的时候掉落，扣 5 分。</p>
+        <p id='accel'>按 <u>Shift</u> 加速。</p>
+        <p id='long-bounce'>如果球在 7 秒内没有碰到大球或板，可以按 <u>Space</u> 强制使球竖直掉落。</p>
+        <p id='pause'>按 <u>P</u> 或 <u>Esc</u> 暂停。按任意其它键继续。</p>
+        <p>球在板上的反弹角只和碰撞的位置有关。</p>
     </div>
     <canvas id="main-view"><canvas>
     <script>
