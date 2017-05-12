@@ -13,7 +13,8 @@
 
             u {
                 text-decoration: none;
-                border-bottom: 1px solid white;
+                border-bottom: 1px solid;
+                border-color: inherit;
             } 
 
             #main-view {
@@ -32,7 +33,7 @@
             #info p {
                 display: block;
                 border: 2px solid transparent;
-                padding: 2px;
+                padding: 4px 2px;
                 margin: 3px;
             }
 
@@ -42,9 +43,30 @@
                 }
             }
 
-            .highlight {
+            #info:not(.running) #pause {
                 color: yellow;
-                border: 2px solid yellow !important;
+                border-color: yellow;
+            }
+
+
+            #info:not(.flying) #launch {
+                color: yellow;
+                border-color: yellow;
+            }
+
+            #info.long-bounce #long-bounce {
+                color: yellow;
+                border-color: yellow;
+            }
+
+            #info.running.flying #move {
+                color: yellow;
+                border-color: yellow;
+            }
+
+            #info.miss #miss {
+                color: yellow;
+                border-color: yellow;
             }
         </style>
     </head>
@@ -52,22 +74,25 @@
     <div id="info">
         <h1><i>Boring</i> <small>(by dramforever)</small></h1>
         <p><span>http://dram.cf/boring/</span></p>
-        <p><u>左右方向键</u>控制板移动。不要让球掉到板以下。</p>
-        <p>每次球掉落的时候，Combo 清零。Combo n 得 n<sup>2</sup> 分。</p>
-        <p>球掉落扣 3 分。但是如果在 Combo 为 0 的时候掉落，扣 5 分。</p>
+        <p id="launch">按 <u>Space</u> 发射。</p>
+        <p id="move"><u>左右方向键</u>控制板移动。不要让球掉到板以下。</p>
+        <p id="miss">
+            Combo n 得 n<sup>2</sup> 分。每次球掉落扣 3 分，Combo 清零。但是如果在 Combo 为 0 的时候掉落，扣 5 分。
+        </p>
         <p id='accel'>按 <u>Shift</u> 加速。</p>
-        <p id='long-bounce'>如果球在 7 秒内没有碰到大球或板，可以按 <u>Space</u> 强制使球竖直掉落。</p>
+        <p id='long-bounce'>如果球在 5 秒内没有碰到大球或板，可以按 <u>Space</u> 强制使球竖直掉落。</p>
         <p id='pause'>按 <u>P</u> 或 <u>Esc</u> 暂停。按任意其它键继续。</p>
         <p>球在板上的反弹角只和碰撞的位置有关。</p>
     </div>
     <canvas id="main-view"><canvas>
     <script>
+        const kEsc = 27, kP = 80, kLeft = 37, kRight = 39, kShift = 16, kSpace = 32;
         const SCREEN = { x : 800, y : 600 };
         const BOTTOM = 570;
-        const SPEED = 0.5, INITIAL_VEL = cscale (SPEED, { x : 0.6, y : - 0.8 });
+        const SPEED = 0.5, INITIAL_VEL = () => cscale (SPEED, { x : 0.6, y : - 0.8 });
         const BALL_RADIUS = 10, BLOCK_RADIUS = 50;
         const PAD = { x : 80, y : 10 };
-        const GRAV_LIM = 7000;
+        const GRAV_LIM = 1000;
 
         function square (a) { return a * a; }
         function dot (a, b) { return a.x * b.x + a.y * b.y; }
@@ -87,6 +112,8 @@
         }
         class Game {
             constructor (ele) {
+                this.hInfo = document.getElementById ('info');
+
                 this.canvas = ele;
                 this.context = this.canvas.getContext ('2d');
 
@@ -95,7 +122,7 @@
                 this.context.scale(devicePixelRatio, devicePixelRatio);
 
                 this.ballPos = { x: SCREEN.x / 2, y : BOTTOM - BALL_RADIUS };
-                this.ballVel = INITIAL_VEL;
+                this.ballVel = INITIAL_VEL ();
                 
                 this.padPos = this.ballPos.x - PAD.x / 2;
                 
@@ -115,11 +142,11 @@
 
                 this.keyState = {};
                 
-                this.running = true;
+                this.flying = false;
+                this.hInfo.classList.remove ('flying');
 
-                this.hPause = document.getElementById ('pause');
-                this.hAccel = document.getElementById ('accel');
-                this.hLongBounce = document.getElementById ('long-bounce');
+                this.running = true;
+                this.hInfo.classList.add ('running');
 
                 window.onblur = (event) => {
                     this.setRunning (false);
@@ -135,26 +162,26 @@
             }
 
             keyDown (event) {
-                if (event.key != 'p' && event.key != 'Escape') this.setRunning (true);
-                this.keyState[event.key] = true;
+                if (event.keyCode != kP && event.key != kEsc) this.setRunning (true);
+                this.keyState[event.keyCode] = true;
             }
 
             keyUp (event) {
-                this.keyState[event.key] = false;
+                this.keyState[event.keyCode] = false;
             }
 
             setRunning (st) {
                 if (this.running != st) {
                     console.log (st);
-                    if (st) this.hPause.classList.remove ('highlight');
-                    else this.hPause.classList.add ('highlight');
+                    if (st) this.hInfo.classList.add ('running');
+                    else this.hInfo.classList.remove ('running');
                     this.running = st;
                 }
             }
 
             clearBounceCounter () {
                 this.bounceCounter = 0;
-                this.hLongBounce.classList.remove ('highlight');
+                this.hInfo.classList.remove ('long-bounce');
             }
 
             update (time) {
@@ -175,25 +202,32 @@
             }
 
             handleInput (dt) {
-                if (this.keyState['p'] || this.keyState['Escape'])
+                if (this.keyState[kP] || this.keyState[kEsc])
                     this.setRunning (false);
 
-                if (this.accel != this.keyState['Shift']) {
-                    if (this.keyState['Shift']) this.hAccel.classList.add ('highlight');
-                    else this.hAccel.classList.remove ('highlight');
-                    this.accel = this.keyState['Shift'];
+                if (this.accel != this.keyState[kShift]) {
+                    if (this.keyState[kShift]) this.hInfo.classList.add ('accel');
+                    else this.hInfo.classList.remove ('accel');
+                    this.accel = this.keyState[kShift];
                 }
 
-                if (this.keyState['ArrowLeft'] && !this.keyState['ArrowRight'])
+                if (this.keyState[kLeft] && !this.keyState[kRight])
                     this.moveState = 'left';
-                else if (this.keyState['ArrowRight'] && !this.keyState['ArrowLeft'])
+                else if (this.keyState[kRight] && !this.keyState[kLeft])
                     this.moveState = 'right';
                 else
                     this.moveState = null;
 
-                if (this.keyState[' '] && this.bounceCounter > GRAV_LIM) {
-                    this.ballVel = { x: 0, y: SPEED };
-                    this.clearBounceCounter ();
+                if (this.keyState[kSpace]) {
+                    if (this.bounceCounter > GRAV_LIM) {
+                        this.ballVel = { x: 0, y: SPEED };
+                        this.clearBounceCounter ();
+                    }
+                    if (! this.flying) {
+                        this.ballVel = INITIAL_VEL ();
+                        this.flying = true;
+                        this.hInfo.classList.add ('flying');
+                    }
                 }
 
                 const moveAmount = dt * SPEED * (this.accel ? 5.0 : 0.8);
@@ -212,59 +246,72 @@
             }
             
             updatePhysics (dt) {
-                let bp = this.ballPos;
-                let bv = this.ballVel;
-                const oldBallPos = { x: bp.x, y: bp.y };
+                if (this.flying) {
+                    let bp = this.ballPos;
+                    let bv = this.ballVel;
+                    const oldBallPos = { x: bp.x, y: bp.y };
 
-                for (let ax of ['x', 'y'])
-                    bp[ax] += dt * bv[ax];
+                    for (let ax of ['x', 'y'])
+                        bp[ax] += dt * bv[ax];
 
-                if ((bp.x < BALL_RADIUS && bv.x < 0)
-                    || (bp.x >= SCREEN.x && bv.x > 0))
-                    bv.x *= -1;
-                
-                if (bp.y < BALL_RADIUS && bv.y < 0)
-                    bv.y *= -1;
-                
-                if (oldBallPos.y < BOTTOM - BALL_RADIUS && bp.y >= BOTTOM - BALL_RADIUS
-                    && bp.x >= this.padPos - BALL_RADIUS && bp.x < this.padPos + PAD.x + BALL_RADIUS) {
-                    const vx = (bp.x - this.padPos - PAD.x / 2) / (BALL_RADIUS + 0.5 * PAD.x);
-                    bv = { x: vx * SPEED, y: (- Math.sqrt (1 + 1e-7 - vx * vx)) * SPEED };
-                    this.clearBounceCounter ();
+                    if ((bp.x < BALL_RADIUS && bv.x < 0)
+                        || (bp.x >= SCREEN.x && bv.x > 0))
+                        bv.x *= -1;
+                    
+                    if (bp.y < BALL_RADIUS && bv.y < 0)
+                        bv.y *= -1;
+                    
+                    if (oldBallPos.y < BOTTOM - BALL_RADIUS && bp.y >= BOTTOM - BALL_RADIUS
+                        && bp.x >= this.padPos - BALL_RADIUS && bp.x < this.padPos + PAD.x + BALL_RADIUS) {
+                        const vx = (bp.x - this.padPos - PAD.x / 2) / (BALL_RADIUS + 0.5 * PAD.x);
+                        bv = { x: vx * SPEED, y: (- Math.sqrt (1 + 1e-7 - vx * vx)) * SPEED };
+                        console.log ('bounce');
+                        this.clearBounceCounter ();
+                    }
+
+                    if (bp.y > SCREEN.y + BALL_RADIUS) {
+                        bv = INITIAL_VEL ();
+                        bp = { x: this.padPos + PAD.x / 2, y : BOTTOM - BALL_RADIUS - 1 };
+                        this.clearBounceCounter ();
+                        if (this.combo) this.score -= 3;
+                        else this.score -= 5;
+                        this.combo = 0;
+                        this.flying = false;
+                        this.hInfo.classList.remove ('flying');
+                        if (! this.hInfo.classList.contains ('miss')) {
+                            this.hInfo.classList.add ('miss');
+                            setTimeout (() => { this.hInfo.classList.remove ('miss'); }, 800);
+                        }
+                    }
+
+                    const d = { x: this.blockPos.x - bp.x, y: this.blockPos.y - bp.y - 1e-3 };
+
+                    if (norm (d) < square (BALL_RADIUS + BLOCK_RADIUS) && dot (d, bv) > 0) {
+                        bv = this.reflectVel (d);
+                        let newPos;
+                        do newPos = {
+                            x: Math.random () * (SCREEN.x - 2 * BLOCK_RADIUS) + BLOCK_RADIUS,
+                            y: Math.random () * (BOTTOM * 0.6 - 3 * BLOCK_RADIUS) + BLOCK_RADIUS};
+                        while (square (newPos.x - this.blockPos.x) + square (newPos.y - this.blockPos.y) <
+                            square (BLOCK_RADIUS) * 8)
+                        this.blockPos = newPos;
+                        this.combo ++;
+                        if (this.combo > this.maxCombo)
+                            localStorage['maxCombo'] = this.maxCombo = this.combo;
+                        this.score += this.combo * 2 - 1;
+                        this.clearBounceCounter ();
+                    }
+
+                    if (this.bounceCounter < GRAV_LIM && this.bounceCounter + dt > GRAV_LIM) {
+                        this.hInfo.classList.add ('long-bounce');
+                    }
+
+                    this.bounceCounter += dt;
+                    this.ballPos = bp;
+                    this.ballVel = bv;
+                } else {
+                    this.ballPos = { x: this.padPos + PAD.x / 2, y: BOTTOM - BALL_RADIUS };
                 }
-
-                if (bp.y > SCREEN.y + BALL_RADIUS) {
-                    bv = INITIAL_VEL;
-                    bp = { x: this.padPos + PAD.x / 2, y : BOTTOM - BALL_RADIUS - 1 };
-                    this.clearBounceCounter ();
-                    if (this.combo) this.score -= 3;
-                    else this.score -= 5;
-                    this.combo = 0;
-                }
-
-                const d = { x: this.blockPos.x - bp.x, y: this.blockPos.y - bp.y };
-                if (norm (d) < square (BALL_RADIUS + BLOCK_RADIUS) && dot (d, bv) > 0) {
-                    bv = this.reflectVel (d);
-                    let newPos;
-                    do newPos = {
-                        x: Math.random () * (SCREEN.x - 2 * BLOCK_RADIUS) + BLOCK_RADIUS,
-                        y: Math.random () * (BOTTOM * 0.6 - 3 * BLOCK_RADIUS) + BLOCK_RADIUS};
-                    while (square (newPos.x - this.blockPos.x) + square (newPos.y - this.blockPos.y) <
-                        square (BLOCK_RADIUS) * 8)
-                    this.blockPos = newPos;
-                    this.combo ++;
-                    if (this.combo > this.maxCombo)
-                        localStorage['maxCombo'] = this.maxCombo = this.combo;
-                    this.score += this.combo * 2 - 1;
-                    this.clearBounceCounter ();
-                }
-
-                if (this.bounceCounter < GRAV_LIM && this.bounceCounter + dt > GRAV_LIM) {
-                    this.hLongBounce.classList.add ('highlight');
-                }
-                this.bounceCounter += dt;
-                this.ballPos = bp;
-                this.ballVel = bv;
             }
 
             draw () {
