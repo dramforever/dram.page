@@ -41,7 +41,6 @@
                 border: 2px solid transparent;
                 padding: 4px 2px;
                 margin: 3px;
-                transition: border-color 0.2s;
             }
 
             @media(max-width: 1000px) {
@@ -49,7 +48,6 @@
                     display: none;
                 }
             }
-
             #info:not(.running) #pause {
                 color: yellow;
                 border-color: yellow;
@@ -88,7 +86,6 @@
                 top: 550px;
                 left: 390px;
                 background-color: #22ff22;
-                /*transition: left 0.1s, top 0.1s;*/
             }
 
             .long-bounce #canvas-ball {
@@ -96,8 +93,9 @@
             }
 
             #canvas-pad {
+                border-radius: 50%;
                 width: 80px;
-                height: 10px;
+                height: 80px;
                 background-color: #66ccff;
                 top: 570px;
                 left: 360px;
@@ -108,32 +106,25 @@
             }
             
             #canvas-block {
-                width: 100px;
-                height: 100px;
+                width: 86px;
+                height: 86px;
                 border-radius: 50%;
+                border: 7px solid white;
+                background-color: #ff8888;
+                color: white;
                 left: 350px;
                 top: 250px;
-                background-color: #2222ff;
             }
 
-            #canvas-score {
-                font-size: 17pt;
-                color: #ff77cc;
-                left: 20px;
-                top: 60px;
+            #canvas-marker {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 50px;
+                font-weight: bold;
             }
 
-            #canvas-combo {
-                font-size: 25pt;
-                color: #ff77cc;
-                left: 20px;
-                top: 20px;
-                transition: left 0.1s;
-            }
-
-            .scoring #canvas-combo {
-                left: 30px;
-            }
 
             #canvas-pause {
                 left: 400px;
@@ -172,9 +163,9 @@
         const kEsc = 27, kP = 80, kLeft = 37, kRight = 39, kShift = 16, kSpace = 32;
         const SCREEN = { x : 800, y : 600 };
         const BOTTOM = 570;
-        const SPEED = 0.5, INITIAL_VEL = () => cscale (SPEED, { x : 0.6, y : - 0.8 });
+        const SPEED = 0.5, INITIAL_VEL = () => cscale (SPEED, { x : 0, y : - 1 });
         const BALL_RADIUS = 10, BLOCK_RADIUS = 50;
-        const PAD = { x : 80, y : 10 };
+        const PAD_RADIUS = 40;
         const GRAV_LIM = 7000;
 
         function square (a) { return a * a; }
@@ -214,15 +205,10 @@
                 this.eBlock.classList.add ('canvas-object');
                 view.appendChild (this.eBlock);
 
-                this.eCombo = document.createElement ('div');
-                this.eCombo.id = 'canvas-combo';
-                this.eCombo.classList.add ('canvas-object');
-                view.appendChild (this.eCombo);
-
-                this.eScore = document.createElement ('div');
-                this.eScore.id = 'canvas-score';
-                this.eScore.classList.add ('canvas-object');
-                view.appendChild (this.eScore);
+                this.eMarker = document.createElement ('span');
+                this.eMarker.id = 'canvas-marker';
+                this.eMarker.classList.add ('canvas-object');
+                this.eBlock.appendChild (this.eMarker);
 
                 this.ePause = document.createElement ('div');
                 this.ePause.id = 'canvas-pause';
@@ -232,7 +218,7 @@
                 this.ballPos = { x: SCREEN.x / 2, y : BOTTOM - BALL_RADIUS };
                 this.ballVel = INITIAL_VEL ();
                 
-                this.padPos = this.ballPos.x - PAD.x / 2;
+                this.padPos = SCREEN.x / 2;
                 
                 this.blockPos = { x : SCREEN.x / 2, y : 300 };
                 
@@ -281,7 +267,6 @@
 
             setRunning (st) {
                 if (this.running != st) {
-                    console.log (st);
                     if (st) this.hInfo.classList.add ('running');
                     else this.hInfo.classList.remove ('running');
                     this.running = st;
@@ -351,10 +336,10 @@
                 const moveAmount = dt * SPEED * (this.accel ? 5.0 : 0.8);
                 if (this.moveState == 'left') {
                     this.padPos -= moveAmount;
-                    if (this.padPos < - PAD.x / 2) this.padPos = - PAD.x / 2;
+                    if (this.padPos < 0) this.padPos = 0;
                 } else if (this.moveState == 'right') {
                     this.padPos += moveAmount;
-                    if (this.padPos > SCREEN.x - PAD.x / 2) this.padPos = SCREEN.x - PAD.x / 2;
+                    if (this.padPos > SCREEN.x) this.padPos = SCREEN.x;
                 }
             }
 
@@ -388,17 +373,16 @@
                     if (bp.y < BALL_RADIUS && bv.y < 0)
                         bv.y *= -1;
                     
-                    if (oldBallPos.y < BOTTOM - BALL_RADIUS && bp.y >= BOTTOM - BALL_RADIUS
-                        && bp.x >= this.padPos - 1.5 * BALL_RADIUS && bp.x < this.padPos + PAD.x + 1.5 * BALL_RADIUS) {
-                        const vx = (bp.x - this.padPos - PAD.x / 2) / (1.5 * BALL_RADIUS + 0.5 * PAD.x);
-                        bv = { x: vx * SPEED, y: (- Math.sqrt (1 + 1e-7 - vx * vx)) * SPEED };
-                        console.log ('bounce');
+                    const dpad = { x: this.padPos - bp.x, y: BOTTOM + PAD_RADIUS - bp.y - 1e-3 };
+                    if (norm (dpad) < square (BALL_RADIUS + PAD_RADIUS) && dot (dpad, bv) > 0) {
+                        console.log ('slide');
+                        bv = this.reflectVel (dpad);
                         this.clearBounceCounter ();
                     }
 
                     if (bp.y > SCREEN.y + BALL_RADIUS) {
                         bv = INITIAL_VEL ();
-                        bp = { x: this.padPos + PAD.x / 2, y : BOTTOM - BALL_RADIUS - 1 };
+                        bp = { x: this.padPos, y : BOTTOM - BALL_RADIUS - 1 };
                         this.clearBounceCounter ();
                         if (this.combo) this.score -= 3;
                         else this.score -= 5;
@@ -423,10 +407,6 @@
                             square (BLOCK_RADIUS) * 8)
                         this.blockPos = newPos;
                         this.combo ++;
-                        if (! this.view.classList.contains ('scoring')) {
-                            this.view.classList.add ('scoring');
-                            setTimeout (() => { this.view.classList.remove ('scoring'); }, 100);
-                        }
                         if (this.combo > this.maxCombo)
                             localStorage['maxCombo'] = this.maxCombo = this.combo;
                         this.score += this.combo * 2 - 1;
@@ -441,7 +421,7 @@
                     this.ballPos = bp;
                     this.ballVel = bv;
                 } else {
-                    this.ballPos = { x: this.padPos + PAD.x / 2, y: BOTTOM - BALL_RADIUS };
+                    this.ballPos = { x: this.padPos, y: BOTTOM - BALL_RADIUS };
                 }
             }
 
@@ -461,10 +441,9 @@
                 this.eBlock.style.left = this.blockPos.x - BLOCK_RADIUS;
                 this.eBlock.style.top = this.blockPos.y - BLOCK_RADIUS;
 
-                this.ePad.style.left = this.padPos;
+                this.eMarker.textContent = (this.combo + 1).toString ();
 
-                this.eCombo.textContent = `Combo: ${this.combo} (Best: ${this.maxCombo})`;
-                this.eScore.textContent = `Score: ${this.score}`;
+                this.ePad.style.left = this.padPos - PAD_RADIUS;
 
                 if (this.running && this.view.classList.contains ('pause'))
                     this.view.classList.remove ('pause');
