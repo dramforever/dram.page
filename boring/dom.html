@@ -36,6 +36,13 @@
                 top: 5px;
             }
 
+            #scoreboard {
+                position: absolute;
+                width: calc(100% - 830px);
+                right: 5px;
+                bottom: 5px;
+            }
+
             #info p {
                 display: block;
                 border: 2px solid transparent;
@@ -45,6 +52,10 @@
 
             @media(max-width: 1000px) {
                 #info {
+                    display: none;
+                }
+
+                #scoreboard {
                     display: none;
                 }
             }
@@ -94,23 +105,24 @@
 
             #canvas-pad {
                 border-radius: 50%;
-                width: 80px;
-                height: 80px;
-                background-color: #66ccff;
+                border: 5px solid rgb(242, 170, 195);
+                width: 75px;
+                height: 75px;
+                background-color: black;
                 top: 570px;
                 left: 360px;
             }
 
             .accel #canvas-pad {
-                background-color: yellow;
+                border-color: yellow;
             }
             
             #canvas-block {
                 width: 86px;
                 height: 86px;
                 border-radius: 50%;
-                border: 7px solid white;
-                background-color: #ff8888;
+                border: 5px solid white;
+                background-color: rgb(43, 138, 255);
                 color: white;
                 left: 350px;
                 top: 250px;
@@ -121,10 +133,9 @@
                 left: 50%;
                 top: 50%;
                 transform: translate(-50%, -50%);
-                font-size: 50px;
+                font-size: 40px;
                 font-weight: bold;
             }
-
 
             #canvas-pause {
                 left: 400px;
@@ -156,7 +167,10 @@
         <p id='accel'>按 <u>Shift</u> 加速。</p>
         <p id='long-bounce'>如果球在 5 秒内没有碰到大球或板，可以按 <u>Space</u> 强制使球竖直掉落。</p>
         <p id='pause'>按 <u>P</u> 或 <u>Esc</u> 暂停。按任意其它键继续。</p>
-        <p>球在板上的反弹角只和碰撞的位置有关。</p>
+    </div>
+    <div id="scoreboard">
+        <p>Score: <span id="score">0</span></p>
+        <p>Best combo: <span id="max-combo">0</span></p>
     </div>
     <div id="main-view"></div>
     <script>
@@ -187,6 +201,8 @@
         class Game {
             constructor (view) {
                 this.hInfo = document.getElementById ('info');
+                this.eScore = document.getElementById ('score');
+                this.eMaxCombo = document.getElementById ('max-combo');
 
                 this.view = view;
 
@@ -225,8 +241,12 @@
                 this.bounceCounter = 0;
 
                 this.combo = 0;
+
                 this.score = 0;
+                this.eScore.textContent = this.score.toString ();
+
                 this.maxCombo = localStorage['maxCombo'] ? parseInt (localStorage['maxCombo']) : 0;
+                this.eMaxCombo.textContent = this.maxCombo.toString ();
 
                 this.prevTime = null;
                 
@@ -386,6 +406,8 @@
                         this.clearBounceCounter ();
                         if (this.combo) this.score -= 3;
                         else this.score -= 5;
+                        this.eScore.textContent = this.score.toString ();
+                        
                         this.combo = 0;
                         this.flying = false;
                         this.hInfo.classList.remove ('flying');
@@ -407,9 +429,12 @@
                             square (BLOCK_RADIUS) * 8)
                         this.blockPos = newPos;
                         this.combo ++;
-                        if (this.combo > this.maxCombo)
+                        if (this.combo > this.maxCombo) {
                             localStorage['maxCombo'] = this.maxCombo = this.combo;
+                            this.eMaxCombo.textContent = this.maxCombo.toString ();
+                        }
                         this.score += this.combo * 2 - 1;
+                        this.eScore.textContent = this.score.toString ();
                         this.clearBounceCounter ();
                     }
 
