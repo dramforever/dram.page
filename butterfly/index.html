@@ -74,7 +74,6 @@ y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
     function update(curTime) {
         if (lastTime !== null && curTime - lastTime < 50) {
             ctx.clearRect(0, 0, outputE.width, outputE.height);
-            const diffTime = curTime - lastTime;
             const [mainPos, mainVel] = equation(target);
             const mainSpeed = Math.hypot(mainVel[0], mainVel[1]);
             
@@ -82,11 +81,9 @@ y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
 
             ctx.beginPath();
 
-
             let time = target;
             
             const [fromPos, fromVel] = equation(time);
-            const fromSpeed = Math.hypot(fromVel[0], fromVel[1]);
             ctx.moveTo(200 + 50 * fromPos[0], 150 + 50 * fromPos[1]);
 
             for (let i = 0; i < 5000; i ++) {
