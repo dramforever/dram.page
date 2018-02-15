@@ -71,13 +71,28 @@ y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
 
     let target = 0;
 
+    function speedAt(time) {
+        const vel = equation(time)[1];
+        return Math.hypot(vel[0], vel[1]);
+    }
+
+    function incrementAt(time) {
+        const k1 = 1 / speedAt(time);
+        const k2 = 1 / speedAt(time + step * k1 / 2);
+        const k3 = 1 / speedAt(time + step * k2 / 2);
+        const k4 = 1 / speedAt(time + step * k3);
+        /**
+        return step * k1;
+        /*/
+        return step * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+        //*/
+    }
+
     function update(curTime) {
         if (lastTime !== null && curTime - lastTime < 50) {
             ctx.clearRect(0, 0, outputE.width, outputE.height);
-            const [mainPos, mainVel] = equation(target);
-            const mainSpeed = Math.hypot(mainVel[0], mainVel[1]);
-            
-            target += step / mainSpeed;
+
+            target += incrementAt(target);
 
             ctx.beginPath();
 
@@ -86,14 +101,16 @@ y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
             const [fromPos, fromVel] = equation(time);
             ctx.moveTo(200 + 50 * fromPos[0], 150 + 50 * fromPos[1]);
 
-            for (let i = 0; i < 5000; i ++) {
+            for (let i = 0; i < 500; i ++) {
                 const [curPos, curVel] = equation(time);
                 const curSpeed = Math.hypot(curVel[0], curVel[1]);
                 ctx.lineTo(200 + 50 * curPos[0], 150 + 50 * curPos[1]);
-                time -= 0.005 / curSpeed;
+                time -= incrementAt(time);
             }
 
             ctx.stroke();
+
+            const [mainPos, mainVel] = equation(target);
 
             ctx.beginPath();
             ctx.arc(200 + 50 * mainPos[0], 150 + 50 * mainPos[1], 6, 0, 2 * Math.PI);
