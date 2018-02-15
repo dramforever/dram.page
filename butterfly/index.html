@@ -1,0 +1,109 @@
+<style>
+    body {
+        width: 400px;
+        left: calc(100vh - 200px);
+        position: absolute;
+    }
+</style>
+
+<canvas id="output" style="border: 1px solid black"></canvas>
+
+<div style="margin: 12px">
+    <p>This is a ball set to move at a <em>constant speed</em> in a butterfly pattern</p>
+    <p>Think that's easy? Try it yourself perhaps?</p>
+    <p>The butterfly curve is a parametric equation:</p>
+    <pre><code>x = cos(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
+y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
+    </code></pre>
+    <p>Check this link for more on the curve: <a href="https://en.wikipedia.org/wiki/Butterfly_curve_(transcendental)">https://en.wikipedia.org/wiki/Butterfly_<wbr>curve_(transcendental)</a></p>
+</div>
+
+
+<script>
+    function equation(t) {
+        var v1 = Math.cos(t);
+        var dv1 = (- Math.sin(t)) * 1;
+        var v2 = Math.exp(v1);
+        var dv2 = (Math.exp(v1)) * dv1;
+        var v3 = 4.0 * t;
+        var dv3 = 4.0 * 1 + 0 * t;
+        var v4 = Math.cos(v3);
+        var dv4 = (- Math.sin(v3)) * dv3;
+        var v5 = 2.0 * v4;
+        var dv5 = 2.0 * dv4 + 0 * v4;
+        var v6 = v2 - v5;
+        var dv6 = dv2 - dv5;
+        var v7 = t / 12.0;
+        var dv7 = 1 / 12.0 - t * 0 / 12.0 / 12.0;
+        var v8 = Math.sin(v7);
+        var dv8 = (Math.cos(v7)) * dv7;
+        var v9 = Math.pow(v8, 5.0);
+        var dv9 = (Math.pow(v8, 5.0 - 1) * 5.0) * dv8;
+        var v10 = v6 - v9;
+        var dv10 = dv6 - dv9;
+        var v11 = Math.cos(t);
+        var dv11 = (- Math.sin(t)) * 1;
+        var v12 = v11 * v10;
+        var dv12 = v11 * dv10 + dv11 * v10;
+        var v13 = Math.sin(t);
+        var dv13 = (Math.cos(t)) * 1;
+        var v14 = v13 * v10;
+        var dv14 = v13 * dv10 + dv13 * v10;
+        return [[v12,v14], [dv12,dv14]];
+    }
+
+    const outputE = document.getElementById("output");
+
+    outputE.width = 400 * devicePixelRatio;
+    outputE.height = 300 * devicePixelRatio;
+
+    outputE.style.width = "400px";
+    outputE.style.height = "300px";
+
+    const ctx = outputE.getContext("2d");
+
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    const step = 0.05;
+
+    let lastTime = null;
+
+    let target = 0;
+
+    function update(curTime) {
+        if (lastTime !== null && curTime - lastTime < 50) {
+            ctx.clearRect(0, 0, outputE.width, outputE.height);
+            const diffTime = curTime - lastTime;
+            const [mainPos, mainVel] = equation(target);
+            const mainSpeed = Math.hypot(mainVel[0], mainVel[1]);
+            
+            target += step / mainSpeed;
+
+            ctx.beginPath();
+
+
+            let time = target;
+            
+            const [fromPos, fromVel] = equation(time);
+            const fromSpeed = Math.hypot(fromVel[0], fromVel[1]);
+            ctx.moveTo(200 + 50 * fromPos[0], 150 + 50 * fromPos[1]);
+
+            for (let i = 0; i < 5000; i ++) {
+                const [curPos, curVel] = equation(time);
+                const curSpeed = Math.hypot(curVel[0], curVel[1]);
+                ctx.lineTo(200 + 50 * curPos[0], 150 + 50 * curPos[1]);
+                time -= 0.005 / curSpeed;
+            }
+
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(200 + 50 * mainPos[0], 150 + 50 * mainPos[1], 6, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        lastTime = curTime;
+        requestAnimationFrame(update);
+    }
+
+    update();
+</script>
