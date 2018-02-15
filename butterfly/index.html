@@ -65,8 +65,6 @@ y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
 
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
-    const step = 0.05;
-
     let lastTime = null;
 
     let target = 0;
@@ -76,7 +74,7 @@ y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
         return Math.hypot(vel[0], vel[1]);
     }
 
-    function incrementAt(time) {
+    function incrementAt(time, step) {
         const k1 = 1 / speedAt(time);
         const k2 = 1 / speedAt(time + step * k1 / 2);
         const k3 = 1 / speedAt(time + step * k2 / 2);
@@ -92,7 +90,7 @@ y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
         if (lastTime !== null && curTime - lastTime < 50) {
             ctx.clearRect(0, 0, outputE.width, outputE.height);
 
-            target += incrementAt(target);
+            target += incrementAt(target, 0.05);
 
             ctx.beginPath();
 
@@ -105,7 +103,7 @@ y = sin(t) * (exp(cos(t)) - 2*cos(4t) - (sin(t/12))^5)
                 const [curPos, curVel] = equation(time);
                 const curSpeed = Math.hypot(curVel[0], curVel[1]);
                 ctx.lineTo(200 + 50 * curPos[0], 150 + 50 * curPos[1]);
-                time -= incrementAt(time);
+                time += incrementAt(time, -0.05);
             }
 
             ctx.stroke();
