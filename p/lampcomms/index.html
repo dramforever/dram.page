@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>用 2 盏灯也能实现群聊 -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+    <style>
+        h4:target {
+            border-bottom: 3px solid blue;
+        }
+    </style>
+</head>
+<body>
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+<div id="post-title" class="clear">
+    <h2 id="post-title-main">用 2 盏灯也能实现群聊</h2>
+    <span id="post-title-sub">2018-05-18</span>
+</div>
+
+<h3>趣味题的启发</h3>
+
+<p>这是题目：</p>
+
+<p><img src="lampcomms.jpg" alt="lampcomms" style="width: 100%"></p>
+
+<p>10 个人不能见面，只靠 3 盏灯交换信息，如何协调配合呢？</p>
+
+<p>这里加上一些解释：</p>
+
+<ul>
+    <li>灯的初始状态是<b>未知</b>的</li>
+    <li>进入房间的顺序是未知的，但是“随机”。“随机”的定义是：任何一个一些人的序列，如 <code>1 0 3 3 2 5 4</code>，都以概率为 1 在整个无限长的进入房间的序列中出现。比如，每次独立等可能随机挑选一个人进入是符合这个要求的</li>
+    <li>这 10 个人每次只有一个人在房间里，其他人看不到灯的状态</li>
+    <li>最终要求以概率为 1 完成所有人安全摘下项圈</li>
+</ul>
+
+<p>这类似于 10 个协助式多任务的线程（在自己自愿 yield 之前不会被打断），只共享 3 bit 的内存，如何知道所有其它线程都已经开始运行？</p>
+
+<h3>游戏没劲了，就开始聊天</h3>
+
+<p>jinzihao 受到这个问题的启发，在他的文章<a href="https://jinzihao.me/2018/05/%E7%94%A83%E7%9B%8F%E7%81%AF%E5%AE%9E%E7%8E%B0%E7%BE%A4%E8%81%8A-%E4%B8%80%E9%81%93%E8%B6%A3%E5%91%B3%E9%A2%98%E5%92%8C%E4%B8%80%E4%B8%AA%E5%8D%8F%E8%AE%AE%E8%AE%BE%E8%AE%A1/">《用3盏灯实现群聊 —— 一道趣味题和一个协议设计》</a>中，描述了一种可以使用这 3 个灯进行任意通讯的方法。</p>
+
+<p>另外，有人<sup>[citation needed]</sup>也提出了一种可以使用只 2 个灯就可以解决原来的“项圈问题”的解法。我们在这里不给出这种解法，以便读者可以思考原问题。</p>
+
+<p>但是这让我们想到，有没有可能可以只用两个灯也实现任意多方通讯呢？</p>
+
+<p>理论分析和随机试验表明，这是可行的！</p>
+
+<p style="font-size: 2.5em; border-bottom: 3px solid red"><b>以下是剧透</b></p>
+
+<h3>协议的设计</h3>
+
+<p>这里我们采用了一种与 jinzihao 不同的思路。我们让每个人轮流控制消息的传输，并在此过程中发送一个自己希望广播的 bit。在此基础上，我们确认所有人都收到这个 bit 后，安全地将传输控制权转交给下一个人。</p>
+
+<p>当然，由于初始状态不知道的不确定性，我们需要一个“同步”的步骤。在这个设计中，我们由 0 号作为 host 为其他 guest 控制同步过程，不仅了解到 guest 的情况，还要确保 guest 也能接收到 host 的消息，让所有人都知道同步顺利完成。事实上，这个同步过程的完成即是原问题的一种解法，所以这些人可以把项圈摘下来继续聊天。</p>
+
+<p>这样，我们实现了一个所有人轮流发送 bit 流的“物理层”协议。在此基础上实现任意通讯，相信并不困难。</p>
+
+<p>关于最终设计的结果，我们的通讯协议具有以下大致结构：</p>
+
+<ol>
+    <li>同步</li>
+    <ul>
+        <li>host 控制这个过程，只接收对自己的消息的 ack</li>
+        <li>guest ack 两次，且两次的 ack 有所区别，以确定是对初始条件的不确定的回应，还是对 host 的真正消息的回应</li>
+    </ul>
+    <li>发送：循环轮流进行</li>
+    <ol>
+        <li><b>接管发送</b>：同步刚完成时，或者上一次传输刚完成是，状态不方便直接开始传递信息，所以让发信者再次召集一下所有人</li>
+        <li><b>传输信息</b>：这时我们下一步的状态就更轻松地有了两个选择，分别代表希望发送 0 和 1。这样，让所有收信者接收到这个信息后，发送一个相反的 bit，来告诉下一个循环的发信者接管信息传输</li>
+    </ol>
+</ol>
+
+<h3>协议的实现：</h3>
+
+<h4>结果展示</h4>
+
+<p>使用 Python 语言的 generator 功能，我们可以很方便的实现类似 coroutine 的功能。这样，我们就不需要设计繁琐的状态机来完成工作。</p>
+
+<p>这里我们先给出一段运行时 log 的删减版。在 log 的最后是一段对传输的总结和检查。</p>
+
+<p>我们还提供了一个 200000 次进入房间的 log，可以直接下载：<a href="lampcomms_log.txt" download>lampcomms_log.txt (1.3 MB)</a>。这里展示的 log 即便经过删减仍较长，读者可以直接<a href="#code">跳到代码实现</a>。</p>
+
+<pre><code>        0 |   0: + sync: begin counting
+        1 |   2:   sync: first ack
+       10 |   3:   sync: first ack
+       19 |   4:   sync: first ack
+       27 |   1:   sync: first ack
+       31 |   3:   sync: second ack
+       31 |   3:   sync: slave done
+
+...
+
+       51 |   2:   sync: second ack
+       51 |   2:   sync: slave done
+       52 |   0: + sync: master done
+       53 |   1:   takeover: ack
+       55 |   3:   takeover: ack
+       66 |   2:   takeover: ack
+       71 |   4:   takeover: ack
+       76 |   0: + takeover: done
+       76 |   0: + send: sending 0
+       78 |   3:   recv: ack, bit 0 from 0
+       81 |   1:   recv: ack, bit 0 from 0
+       83 |   2:   recv: ack, bit 0 from 0
+       88 |   4:   recv: ack, bit 0 from 0
+       89 |   0: + send: done
+       96 |   1: + taking over transmission
+
+...
+
+      971 |   1:   recv: ack, bit 0 from 4
+      985 |   2:   recv: ack, bit 0 from 4
+
+   Transmission check
+
+     0|       000
+       >   1: 000 (Ok!)
+       >   2: 000 (Ok!)
+       >   3: 000 (Ok!)
+       >   4: 000 (Ok!)
+
+...
+
+   Transmission statistics:
+       5 actors, 14 bits, 1000 steps
+       14.0 bits per 1k steps</code></pre>
+
+
+<h4 id="code">协议代码实现</h4>
+
+<p>完整的代码可以下载：<a href="lampcomms.py" download>lampcomms.py</a>。代码的注释比较详细地解释了协议的设计，并讲述了如此设计的一些思路和原因，可能不是很易懂，我暂时没有想到解决办法。</p>
+
+<p>代码的开头有一些配置参数，可以调整实验。</p>
+
+<pre><code>import random
+
+        # 配置参数
+        
+        num_actors = 5
+        max_steps = 2000
+        random.seed(12345)
+        logging = True
+        
+        # 初始状态随机
+        state = random.choice(['00', '01', '10', '11'])
+        
+        # 现在是第几个回合
+        step = 0
+        
+        # 记录发送和接收的数据
+        
+        sent = ['' for i in range(num_actors)]
+        recv = [['' for j in range(num_actors)] for i in range(num_actors)]
+        
+        def log_sent(src, bit):
+            sent[src] += str(bit)
+        
+        def log_recv(src, dest, bit):
+            recv[dest][src] += str(bit)
+        
+        # 每个人的程序区别在于自己的 id
+        
+        def actor(me):
+            global state, step
+        
+            def log(str):
+                if logging:
+                    print('{:6} | {:3}: {}'.format(step, me, str))
+        
+            def next_actor(x):
+                '''由于后面需要所有人轮流发送信息，这个函数返回 x 后面的是谁'''
+                return (x + 1) % num_actors
+        
+            def wait_ack(msg, ack):
+                '''将灯的状态置于 msg，然后计数 n - 1 次，等每个人都将灯置于
+                ack 一次表示接收到
+                只有置于 ack 的才算，置于其它状态会被忽略并改回 msg
+        
+                用法：yield from wait_ack(...)'''
+                global state
+                state = msg
+                count = 1
+                while count < num_actors:
+                    yield
+                    if state == ack:
+                        count += 1
+                    state = msg
+        
+            def wait_until(target):
+                '''等待灯出现 target 状态
+                target 可以是一个 str 表示期待的状态，或者一个 list 表示期待
+                的状态集合
+        
+                用法：yield from wait_until(...)'''
+                if type(target) == str:
+                    target = [target]
+                while state not in target:
+                    yield
+        
+            # 同步阶段，由 0 号掌控
+        
+            if me == 0:
+        
+                state = '10'
+        
+                log('+ sync: begin counting')
+        
+                # 这里等待每个人都 ack 一次 11，可以保证同步完成
+                # 具体解释见下方对于 1 ~ n-1 号的表述
+        
+                yield from wait_ack(msg = '10', ack = '11')
+        
+                log('+ sync: master done')
+        
+            else:
+                yield from wait_until(['10', '01'])
+        
+                log('  sync: first ack')
+        
+                state = '00'
+        
+                # 第一次的 ack 其实不重要
+        
+                yield from wait_until('10')
+        
+                # 这里因为我们之前将灯置于 00 了，所以知道这个 10 是 0 号告诉我们的
+        
+                log('  sync: second ack')
+        
+                # 也就是说这个 11 的 ack 都是对 0 号发出的 10，而不是初始条件的 10
+        
+                state = '11'
+        
+                log('  sync: slave done')
+        
+            # 现在，每个人轮流发送信息
+        
+            current = 0     # 当前是谁发送信息
+        
+            while True:
+                if me == current:
+                    # 对于发信者
+        
+                    ### 1. 接管发信
+        
+                    # 第一个循环：
+                    #   如果是我发信息，那么我将状态置为 01
+                    #   其他人已经同步过了，所以知道这个 01 是 current 发出的
+        
+                    state = '01'
+        
+                    # 等待所有人都接收到 01，知道我要开始发信息了
+        
+                    yield from wait_ack(msg = '01', ack = '00')
+        
+                    log('+ takeover: done')
+        
+                    ### 2. 正式发信
+        
+                    # 随机选择 0 或 1 发送
+        
+                    bit = random.choice([0, 1])
+        
+                    log('+ send: sending {}'.format(bit))
+        
+                    # 因为上面接管只用了 00 和 01
+                    # 我们用 1x 来表示信息的话一定能区分开
+        
+                    msg = '1' + str(bit)
+        
+                    # 自然要等大家 ack
+        
+                    yield from wait_ack(msg = msg, ack = '00')
+        
+                    log('+ send: done')
+        
+                    log_sent(src = me, bit = bit)
+        
+                    # 现在所有人都知道了信息是什么，所以发送一个和信息相反的
+                    # 以表示等待下一个人接管
+        
+                    state = '1' + str(1 - bit)
+        
+                else:
+                    # 对于收信者
+        
+                    ### 1. 等待接管
+        
+                    yield from wait_until('01')
+        
+                    log('  takeover: ack')
+                    state = '00'
+        
+                    ### 2. 接收信息
+        
+                    yield from wait_until(['10', '11'])
+        
+                    bit = int(state[1])
+        
+                    log('  recv: ack, bit {} from {}'.format(bit, current))
+                    log_recv(src = current, dest = me, bit = bit)
+        
+                    state = '00'
+        
+                    yield
+        
+                    if me == next_actor(current):
+                        # 如果下一个发信的是我，那么
+        
+                        ### 3. 准备接管
+        
+                        # 我们等待这局发信者的与消息相反的灯状态
+                        # 这样我们就知道什么时候可以开始接管
+        
+                        neg_msg = '1' + str(1 - bit)
+        
+                        yield from wait_until(neg_msg)
+        
+                        log('+ taking over transmission')
+        
+                current = next_actor(current)
+        
+        
+        actors = [actor(i) for i in range(num_actors)]
+        
+        for i in range(max_steps):
+            step = i
+            last_state = state
+            actor_num = random.randrange(num_actors)
+            next(actors[actor_num])
+        
+        
+        # 输出并检查传输情况
+        
+        print('')
+        print('Transmission check')
+        print('')
+        
+        for src in range(num_actors):
+            src_sent = sent[src]
+            print('{:3}|       {}'.format(src, src_sent))
+            for dest in range(num_actors):
+                if src != dest:
+                    dest_recv = recv[dest][src]
+        
+                    # 这里，有可能不是所有人都接收到了最后一个 bit 就终止了
+                    # 或者有可能所有人都接收到了最后一个 bit，但是发信者还不知道
+                    # 因此接收到的可能比实际完成发送的多一个 bit
+        
+                    # won't fix
+        
+                    ok = '(Ok!)' if dest_recv[:len(src_sent)] == src_sent else '(Not ok!)'
+                    print('    > {:3}: {} {}'.format(dest, dest_recv, ok))
+            print('')
+        
+        # 一些关于传输数据的统计
+        
+        total_bits = sum(map(len, sent))
+        
+        print('Transmission statistics:')
+        print('    {} actors, {} bits, {} steps'.format(num_actors, total_bits, max_steps))
+        print('    {} bits per 1k steps'.format(1000 * total_bits / max_steps))</code></pre>
+
+</body>
+</html>
