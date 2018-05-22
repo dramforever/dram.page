@@ -1,0 +1,90 @@
+<script src="dist/kagome.js"></script>
+
+<style>
+    input {
+        display: block;
+        margin: 10px;
+    }
+    #output {
+        border: 1px solid black;
+        padding: 10px;
+    }
+</style>
+
+<div>
+    <p>Type 0 in the first box, 1 in the second, 2 in the third, etc.</p>
+    <p>After making a few boxes, try changing any one of the boxes to see what happens</p>
+</div>
+
+<div id="output"></div>
+
+<p>Behaviors are basically reactive variables. The magic part (marked <code>Magic!</code>) is that whenever <code>K.sampleB</code> detects that the behavior changes, it <b>undos</b> all the actions after it. Created behaviors are destroyed, appended elements are removed, event are unlistened, etc. This is what allows reactivity.</p>
+
+<p>Incidentally, we are able to <button id="destroy">destroy</button> a whole application after starting it. Give it a try.</p>
+
+<p>As for the library, sorry, no releases yet.</p>
+
+<p>The code is as follows:</p>
+
+<pre><code>K = Kagome;
+
+const output = document.getElementById('output');
+
+function createInput() {
+    const inputE = document.createElement('input');
+    return K.registerB(inputE.value).then(inputB =>  // Creates a new Behavior
+        K.listen(inputE, 'input',                    // Change the behavior when input changes
+            () => inputB.changeValue(inputE.value)).then(() =>
+        K.appendChild(output, inputE).then(() =>     // Put the element into output
+        K.pure([inputE, inputB]))));
+}
+
+function game(i) {
+    return createInput().then(([inputE, inputB]) =>
+        K.sampleB(window.ib = inputB).then(val => { // Magic!
+            console.log('blah', val);
+            if (val == i.toString())
+                return game(i + 1);                 // Recursion is fun!
+            else
+                return K.pure(undefined);
+        }));
+}
+
+const app = game(0);
+
+const trace = app.run(() => null);
+
+document.getElementById('destroy').onclick = () => trace.dispose();
+</code></pre>
+
+<script>
+K = Kagome;
+
+const output = document.getElementById('output');
+
+function createInput() {
+    const inputE = document.createElement('input');
+    return K.registerB(inputE.value).then(inputB =>
+        K.listen(inputE, 'input',
+            () => inputB.changeValue(inputE.value)).then(() =>
+        K.appendChild(output, inputE).then(() =>
+        K.pure([inputE, inputB]))));
+}
+
+function game(i) {
+    return createInput().then(([inputE, inputB]) =>
+        K.sampleB(window.ib = inputB).then(val => {
+            console.log('blah', val);
+            if (val == i.toString())
+                return game(i + 1);
+            else
+                return K.pure(undefined);
+        }));
+}
+
+const app = game(0);
+
+const trace = app.run(() => null);
+
+document.getElementById('destroy').onclick = () => trace.dispose();
+</script>
