@@ -156,7 +156,7 @@
                 }
             } else if ('[' === str[pos]) {
                 // Pragma
-                const res = /^\[(?<expr>.*?)\]/.exec(str.substr(pos));
+                const res = /^\[(.*?)\]/.exec(str.substr(pos));
 
 
                 if (null === res) {
@@ -168,7 +168,7 @@
                     });
                     pos ++;
                 } else {
-                    const cmd = res.groups.expr.split(' ');
+                    const cmd = res[1].split(' ');
 
                     done: {
                         if (cmd[0] == 'dur') {
