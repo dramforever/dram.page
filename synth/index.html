@@ -98,8 +98,9 @@
                 if (null !== note.num) {
                     gain[note.wf].gain.setValueAtTime(0, t);
                     gain[note.wf].gain.linearRampToValueAtTime(1, t + (1 / 32) * note.dur);
-                    gain[note.wf].gain.linearRampToValueAtTime(0.2, t + (7 / 8) * note.dur);
-                    gain[note.wf].gain.setValueAtTime(0, t + (7 / 8) * note.dur, note.dur / 3);
+                    gain[note.wf].gain.linearRampToValueAtTime(0.2, t + (3 / 4) * note.dur);
+                    gain[note.wf].gain.setTargetAtTime(0, t + (7 / 8) * note.dur, note.dur / 3)
+                    gain[note.wf].gain.setValueAtTime(0, t + (7 / 8) * note.dur);
 
                     osc[note.wf].frequency.setValueAtTime(freq(note.num), t);
                 }
