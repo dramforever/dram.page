@@ -132,29 +132,40 @@
                 // Pragma
                 const res = /^\[(?<expr>.*?)\]/.exec(str.substr(pos));
 
-                const cmd = res.groups.expr.split(' ');
 
-                done: {
-                    if (cmd[0] == 'dur') {
-                        if (cmd.length == 2 && 0 < +cmd[1]) {
-                            durUnit = +cmd[1];
-                            break done;
-                        } else if (cmd.length == 1) {
-                            durUnit = 0.3;
-                            break done;
+                if (null === res) {
+                    // Unclosed    
+                    result.push({
+                        error: str[pos],
+                        first: pos,
+                        last: pos + 1
+                    });
+                    pos ++;
+                } else {
+                    const cmd = res.groups.expr.split(' ');
+
+                    done: {
+                        if (cmd[0] == 'dur') {
+                            if (cmd.length == 2 && 0 < +cmd[1]) {
+                                durUnit = +cmd[1];
+                                break done;
+                            } else if (cmd.length == 1) {
+                                durUnit = 0.3;
+                                break done;
+                            }
                         }
+
+                        // No command match
+
+                        result.push({
+                            error: res[0],
+                            first: pos,
+                            last: pos + res[0].length
+                        });
                     }
 
-                    // No command match
-
-                    result.push({
-                        error: res[0],
-                        first: pos,
-                        last: pos + res[0].length
-                    });
+                    pos += res[0].length;
                 }
-
-                pos += res[0].length;
             } else if (' \n\t'.includes(str[pos])) {
                 // Ignore
                 pos ++;
