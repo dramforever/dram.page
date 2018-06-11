@@ -93,7 +93,8 @@
         for (const note of notes) {
             if (!note.error) {
                 if (null !== note.num) {
-                    gain[note.wf].gain.setValueAtTime(1, t);
+                    gain[note.wf].gain.setValueAtTime(0, t);
+                    gain[note.wf].gain.linearRampToValueAtTime(1, t + (1 / 32) * note.dur);
                     gain[note.wf].gain.linearRampToValueAtTime(0.2, t + (7 / 8) * note.dur);
                     gain[note.wf].gain.setTargetAtTime(0, t + (7 / 8) * note.dur, note.dur / 3);
 
