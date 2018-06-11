@@ -17,12 +17,14 @@
         white-space: pre;
     }
 
-    #start {
+    .btn {
         text-align: center;
     }
 </style>
 
-<div class="box" id="start">Play <sub>(Shift + Enter)</sub></div>
+<div class="box btn" id="start">Play <sub>(Shift + Enter)</sub></div>
+
+<div class="box btn" id="stop">Stop <sub>(Shift + \)</sub></div>
 
 <div class="box" id="notes" contenteditable autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
 
@@ -225,6 +227,7 @@
 
     
     const startBtn = document.querySelector('#start');
+    const stopBtn = document.querySelector('#stop');
     const notesBox = document.querySelector('#notes');
 
     notesBox.textContent = `(Bad Apple!! abridged)
@@ -251,13 +254,19 @@ ga>cd<aga- ga>cd<aga-
     notesBox.focus();
 
     const start = () => playNotes(parseNotes(notesBox.textContent));
+    const stop = () => playNotes([]);
 
     startBtn.onclick = start;
+    stopBtn.onclick = stop;
 
     window.onkeypress = (event) => {
         if ('Enter' === event.code && (event.ctrlKey || event.shiftKey || event.metaKey)) {
             event.preventDefault();
             start();
+        }
+        if ('Backslash' === event.code && (event.ctrlKey || event.shiftKey || event.metaKey)) {
+            event.preventDefault();
+            stop();
         }
     };
 
