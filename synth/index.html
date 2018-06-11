@@ -26,6 +26,10 @@
 
 <div class="box" id="notes" contenteditable autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
 
+<div class="box" id="visual-wrap">
+    <canvas id="visual" height="150"></canvas>
+</div>
+
 <div class="box">
     <ul>
         <li><b>cdefgab</b> notes</li>
@@ -51,6 +55,8 @@
 
     const osc = {}, gain = {};
 
+    const analyser = actx.createAnalyser();
+
     for (const wf of waveforms) {
         osc[wf] = actx.createOscillator();
         gain[wf] = actx.createGain();
@@ -59,6 +65,7 @@
 
         osc[wf].connect(gain[wf]);
         gain[wf].connect(actx.destination);
+        gain[wf].connect(analyser);
         gain[wf].gain.value = 0;
     }
 
@@ -221,11 +228,13 @@
 
 p
 
+[wf sawtooth]
 defga- >dc<a-d- agfe
 defga- gfedefedce
 defga- >dc<a-d- agfe
 defga- gfe-f-g-a-
 
+[wf triangle]
 >cd<aga- ga>cd<aga-
 gagfecd- cdefgad-
 ga>cd<aga- ga>cd<aga-
@@ -233,6 +242,7 @@ ga>cd<aga- ga>cd<aga-
 
 p
 
+[wf square]
 ga>cd<aga- ga>cd<aga-
 gagfecd- cdefgad-
 ga>cd<aga- ga>cd<aga-
@@ -250,4 +260,78 @@ ga>cd<aga- ga>cd<aga-
             start();
         }
     };
+
+    const visual = document.querySelector('#visual');
+    const visualWrap = document.querySelector('#visual-wrap');
+
+    visual.width = visualWrap.getBoundingClientRect().width - 8;
+
+    const vwidth = visual.width, vheight = visual.height;
+
+    visual.style.width = visual.width;
+    visual.style.height = visual.height;
+    visual.width *= devicePixelRatio;
+    visual.height *= devicePixelRatio;
+
+    const vctx = visual.getContext('2d');
+
+    vctx.scale(devicePixelRatio, devicePixelRatio);
+
+    analyser.fftSize = 2048;
+    const bufferLength = analyser.frequencyBinCount;
+    const sliceLength = 512, halfLength = 256;
+    const dataArray = new Float32Array(bufferLength);
+
+    function draw() {
+        analyser.getFloatTimeDomainData(dataArray);
+
+        const threshold = -0.1;
+
+        let pos = null;
+
+        for (let i = halfLength; i <= bufferLength - sliceLength + halfLength; i ++) {
+            if (dataArray[i-1] > threshold && dataArray[i] <= threshold) {
+                pos = i;
+                break;
+            }
+        }
+
+        if (null !== pos) {
+            vctx.fillStyle = '#ffffff';
+            vctx.clearRect(0, 0, vwidth, vheight);
+            vctx.lineWidth = 2;
+
+            vctx.strokeStyle = '#000000';
+
+            vctx.beginPath();
+
+            const sliced = dataArray.slice(pos - halfLength, pos - halfLength + sliceLength);
+
+            for (let i = 0; i < sliceLength; i ++) {
+                // const y = (1 - Math.pow((dataArray[i] + 100) / 85, 10)) * vheight;
+                const y = (0.5 - sliced[i] / 2) * vheight;
+                if (i == 0) {
+                    vctx.moveTo(i * vwidth / sliceLength, y);
+                } else {
+                    vctx.lineTo(i * vwidth / sliceLength, y);
+                }
+            }
+
+            vctx.stroke();
+        } else if (dataArray.every((x) => 0 === x)) {
+            vctx.fillStyle = '#ffffff';
+            vctx.clearRect(0, 0, vwidth, vheight);
+            vctx.strokeStyle = '#000000';
+            vctx.lineWidth = 2;
+            
+            vctx.beginPath();
+            vctx.moveTo(0, vheight / 2);
+            vctx.lineTo(vwidth, vheight / 2);
+            vctx.stroke();
+        }
+
+        requestAnimationFrame(draw);
+    }
+
+    draw();
 </script>
