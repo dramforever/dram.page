@@ -39,20 +39,28 @@
         <ul>
             <li><b>[dur 0.3]</b> beat length</li>
             <li><b>[dur]</b> reset beat length</li>
+            <li><b>[wf q]</b> waveform: s<u>i</u>ne, s<u>q</u>uare, sa<u>w</u>tooth, <u>t</u>riangle</li>
         </ul>
     </ul>
 </div>
 
 <script>
     const actx = new AudioContext();
-    const osc = actx.createOscillator();
-    const gain = actx.createGain();
 
-    osc.type = 'square';
+    const waveforms = ['sine', 'square', 'sawtooth', 'triangle'];
 
-    osc.connect(gain);
-    gain.connect(actx.destination);
-    gain.gain.value = 0;
+    const osc = {}, gain = {};
+
+    for (const wf of waveforms) {
+        osc[wf] = actx.createOscillator();
+        gain[wf] = actx.createGain();
+
+        osc[wf].type = wf;
+
+        osc[wf].connect(gain[wf]);
+        gain[wf].connect(actx.destination);
+        gain[wf].gain.value = 0;
+    }
 
     let oscStarted = false;
 
@@ -61,29 +69,35 @@
     function playNotes(notes) {
         if (!oscStarted) {
             oscStarted = true;
-            osc.start();
+            for (const wf of waveforms)
+                osc[wf].start();
         }
 
         const time = actx.currentTime;
 
-        osc.frequency.cancelScheduledValues(time);
-        gain.gain.cancelScheduledValues(time);
+        for (const wf of waveforms) {
+            osc[wf].frequency.cancelScheduledValues(time);
+            gain[wf].gain.cancelScheduledValues(time);
+            gain[wf].gain.value = 0;
+        }
 
         let t = time;
         for (const note of notes) {
             if (!note.error) {
                 if (null !== note.num) {
-                    gain.gain.setValueAtTime(1, t);
-                    gain.gain.linearRampToValueAtTime(0.2, t + (7 / 8) * note.dur);
-                    gain.gain.setTargetAtTime(0, t + (7 / 8) * note.dur, note.dur / 3);
+                    gain[note.wf].gain.setValueAtTime(1, t);
+                    gain[note.wf].gain.linearRampToValueAtTime(0.2, t + (7 / 8) * note.dur);
+                    gain[note.wf].gain.setTargetAtTime(0, t + (7 / 8) * note.dur, note.dur / 3);
 
-                    osc.frequency.setValueAtTime(freq(note.num), t);
+                    osc[note.wf].frequency.setValueAtTime(freq(note.num), t);
                 }
 
                 t += note.dur;
             }
         }
-        gain.gain.setValueAtTime(0, t);
+
+        for (const wf of waveforms)
+            gain[wf].gain.setValueAtTime(0, t);
     }
 
     function parseNotes(str) {
@@ -92,6 +106,7 @@
 
         let noteBase = -9;
         let durUnit = 0.3;
+        let curwf = 'square';
 
         let pos = 0;
         const peek = () => str[pos];
@@ -103,6 +118,7 @@
                         ? null
                         : (noteBase + names.indexOf(str[pos])),
                     dur: durUnit,
+                    wf: curwf,
                     first: pos,
                     last: pos
                 };
@@ -151,6 +167,20 @@
                                 break done;
                             } else if (cmd.length == 1) {
                                 durUnit = 0.3;
+                                break done;
+                            }
+                        }
+
+                        if (cmd[0] == 'wf' && cmd.length == 2) {
+                            const wfs = {
+                                'sine': 'sine', 'i': 'sine',
+                                'square': 'square', 'q': 'square',
+                                'sawtooth': 'sawtooth', 'w': 'sawtooth',
+                                'triangle': 'triangle', 't': 'triangle'
+                            };
+
+                            if (wfs.hasOwnProperty(cmd[1])) {
+                                curwf = wfs[cmd[1]];
                                 break done;
                             }
                         }
