@@ -28,13 +28,18 @@
 
 <div class="box">
     <ul>
-        <li><b>cdefgab</b>: notes</li>
-        <li><b>&gt; &lt;</b>: up/down octave</li>
-        <li><b>p q</b>: up/down semitone</li>
-        <li><b># v</b>: sharp/flat</li>
-        <li><b>-</b>: duration +1 beat</li>
-        <li><b>.</b>: duration 1.5x</li>
-        <li><b>(</b>...<b>)</b>: comments</li>
+        <li><b>cdefgab</b> notes</li>
+        <li><b>&gt; &lt;</b> up/down octave</li>
+        <li><b>p q</b> up/down semitone</li>
+        <li><b># v</b> sharp/flat</li>
+        <li><b>-</b> duration +1 beat</li>
+        <li><b>.</b> duration 1.5x</li>
+        <li><b>(</b>...<b>)</b> comments</li>
+        <li><b>[</b>...<b>]</b> pragmas</li>
+        <ul>
+            <li><b>[dur 0.3]</b> beat length</li>
+            <li><b>[dur]</b> reset beat length</li>
+        </ul>
     </ul>
 </div>
 
@@ -67,76 +72,103 @@
         let t = time;
         for (const note of notes) {
             if (!note.error) {
-                gain.gain.setValueAtTime(1, t);
-                gain.gain.linearRampToValueAtTime(0.2, t + (7 / 8) * note.dur * 0.3);
-                gain.gain.setTargetAtTime(0, t + (7 / 8) * note.dur * 0.3, note.dur * 0.1);
+                if (null !== note.num) {
+                    gain.gain.setValueAtTime(1, t);
+                    gain.gain.linearRampToValueAtTime(0.2, t + (7 / 8) * note.dur);
+                    gain.gain.setTargetAtTime(0, t + (7 / 8) * note.dur, note.dur / 3);
 
-                osc.frequency.setValueAtTime(freq(note.num), t);
+                    osc.frequency.setValueAtTime(freq(note.num), t);
+                }
 
-                t += note.dur * 0.3;
+                t += note.dur;
             }
         }
+        gain.gain.setValueAtTime(0, t);
     }
 
     function parseNotes(str) {
-        str = str.replace(
-            /\([^)]*\)/gm,
-            (x) => x.replace(/./gm, ' '));
-
         const names = 'c d ef g a b';
+        const result = [];
+
         let noteBase = -9;
-        const notes = [];
-        for (const [i, c] of [].entries.call(str)) {
-            if ('cdefgab'.includes(c)) {
-                notes.push({
-                    num: noteBase + names.indexOf(c),
-                    dur: 1,
-                    first: i,
-                    last: i
-                });
+        let durUnit = 0.3;
 
-            } else if ('>' === c) {
-                noteBase += 12;
+        let pos = 0;
+        const peek = () => str[pos];
 
-            } else if ('<' === c) {
-                noteBase -= 12;
+        while (str[pos]) {
+            if ('cdefgabx'.includes(str[pos])) {
+                const note = {
+                    num: ('x' === str[pos])
+                        ? null
+                        : (noteBase + names.indexOf(str[pos])),
+                    dur: durUnit,
+                    first: pos,
+                    last: pos
+                };
+                pos++;
 
-            } else if ('p' === c) {
-                noteBase += 1;
-
-            } else if ('q' === c) {
-                noteBase -= 1;
-
-            } else if ('#v.-'.includes(c)) {
-                if (notes.length == 0 || notes[notes.length - 1].error) {
-                    notes.push({
-                        error: c,
-                        first: i,
-                        last: i
-                    });
-
-                } else {
-                    const prev = notes[notes.length - 1];
-                    prev.last = i;
-
-                    if ('#' === c) prev.num += 1;
-                    else if ('v' === c) prev.num -= 1;
-                    else if ('-' === c) prev.dur += 1;
-                    else if ('.' === c) prev.dur *= 1.5;
-
+                for (; '#v.-/'.includes(str[pos]); pos++) {
+                    if ('#' === str[pos]) note.num += 1;
+                    else if ('v' === str[pos]) note.num -= 1;
+                    else if ('-' === str[pos]) note.dur += durUnit;
+                    else if ('.' === str[pos]) note.dur *= 1.5;
+                    else if ('/' === str[pos]) note.dur *= 0.5;
                 }
-            } else if (' \n\t'.includes(c)) {
+                note.last = pos;
+                result.push(note);
+            } else if ('><pq'.includes(str[pos])) {
+                const delta = { '>': 12, '<': -12, 'p': 1, 'q': -1 };
+                noteBase += delta[str[pos]];
+                pos ++;                
+            } else if ('(' === str[pos]) {
+                // Comment
+                pos ++;
+                for (let count = 1; str[pos] && count > 0; pos ++) {
+                    if (str[pos] == '(') count ++;
+                    else if (str[pos] == ')') count --;
+                }
+            } else if ('[' === str[pos]) {
+                // Pragma
+                const res = /^\[(?<expr>.*?)\]/.exec(str.substr(pos));
+
+                const cmd = res.groups.expr.split(' ');
+
+                done: {
+                    if (cmd[0] == 'dur') {
+                        if (cmd.length == 2 && 0 < +cmd[1]) {
+                            durUnit = +cmd[1];
+                            break done;
+                        } else if (cmd.length == 1) {
+                            durUnit = 0.3;
+                            break done;
+                        }
+                    }
+
+                    // No command match
+
+                    result.push({
+                        error: res[0],
+                        first: pos,
+                        last: pos + res[0].length
+                    });
+                }
+
+                pos += res[0].length;
+            } else if (' \n\t'.includes(str[pos])) {
                 // Ignore
+                pos ++;
             } else {
-                notes.push({
-                    error: c,
-                    first: i,
-                    last: i
+                result.push({
+                    error: str[pos],
+                    first: pos,
+                    last: pos + 1
                 });
+                pos ++;
             }
         }
 
-        return notes;
+        return result;
     }
 
     
@@ -172,8 +204,8 @@ ga>cd<aga- ga>cd<aga-
 
     window.onkeypress = (event) => {
         if ('Enter' === event.code && (event.ctrlKey || event.shiftKey || event.metaKey)) {
-            start();
             event.preventDefault();
+            start();
         }
     };
 </script>
