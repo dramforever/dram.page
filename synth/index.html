@@ -41,6 +41,7 @@
         <li><b># v</b> sharp/flat</li>
         <li><b>-</b> duration +1 beat</li>
         <li><b>.</b> duration 1.5x</li>
+        <li><b>c-d~</b> slide</li>
         <li><b>(</b>...<b>)</b> comments</li>
         <li><b>[</b>...<b>]</b> pragmas</li>
         <ul>
@@ -103,6 +104,8 @@
                     gain[note.wf].gain.setValueAtTime(0, t + (7 / 8) * note.dur);
 
                     osc[note.wf].frequency.setValueAtTime(freq(note.num), t);
+                    if (note.slide)
+                        osc[note.wf].frequency.setTargetAtTime(freq(note.slide), t, note.dur / 3);
                 }
 
                 t += note.dur;
@@ -132,6 +135,7 @@
                         : (noteBase + names.indexOf(str[pos])),
                     dur: durUnit,
                     wf: curwf,
+                    slide: null,
                     first: pos,
                     last: pos
                 };
@@ -143,9 +147,16 @@
                     else if ('-' === str[pos]) note.dur += durUnit;
                     else if ('.' === str[pos]) note.dur *= 1.5;
                     else if ('/' === str[pos]) note.dur *= 0.5;
+
                 }
-                note.last = pos;
-                result.push(note);
+                if ('~' === str[pos]) {
+                    pos ++;
+                    result[result.length - 1].slide = note.num;
+                    result[result.length - 1].last = pos;
+                } else {
+                    note.last = pos;
+                    result.push(note);
+                }
             } else if ('><pq'.includes(str[pos])) {
                 const delta = { '>': 12, '<': -12, 'p': 1, 'q': -1 };
                 noteBase += delta[str[pos]];
@@ -241,14 +252,14 @@ defga- gfe-f-g-a-
 
 >cd<aga- ga>cd<aga-
 gagfecd- cdefgad-
-a>ccd<aga- ga>cd<aga-
+a>cc#-d~<aga- ga>cd<aga-
 >defedc<a- gagfecd-
 
 p
 
 ga>cd<aga- ga>cd<aga-
 gagfecd- cdefgad-
-a>ccd<aga- ga>cd<aga-
+a>cc#-d~<aga- ga>cd<aga-
 >defedc<a- gagfecd-`;
 
     notesBox.focus();
