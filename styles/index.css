@@ -8,7 +8,7 @@
 .widget-list {
   list-style-position: outside;
   padding: 0;
-  margin-top: -2px;
+  margin-top: 0;
 }
 
 .widget-list li {
