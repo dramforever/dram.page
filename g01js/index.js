@@ -186,18 +186,18 @@ function game(code) {
                 if (y1 > origobj.y + nobj.height - eps) {
                     nobj.riding = lid;
                     if (changevel && nobj.vy > 0) nobj.vy = 0;
-                    else nobj.y = y1 - nobj.height;
+                    else nobj.y = y1 - nobj.height; // - eps;
                 } else if (y2 < origobj.y + eps) {
                     if (changevel && nobj.vy < 0) nobj.vy = 0;
-                    else nobj.y = y2;
+                    else nobj.y = y2; // + eps;
                 } else {
                     if (changevel) {
                         nobj.vx = 0;
                     } else {
                         if (x2 < nobj.x + nobj.width/2)
-                            nobj.x = x2 + eps;
+                            nobj.x = x2; // + eps;
                         else
-                            nobj.x = x1 - nobj.width;
+                            nobj.x = x1 - nobj.width; // - eps;
                     }
                 }
             }
@@ -220,9 +220,9 @@ function game(code) {
 
         for (let i = vl_l; i != vl_r; i ++) line_bump(lines.vlines[i], true);
 
-        for (let i = vl_l; i != vl_r; i ++) line_bump(lines.vlines[i], false);
+        for (let i = vl_r - 1; i != vl_l - 1; i --) line_bump(lines.vlines[i], false);
 
-        for (let i = hl_l; i != hl_r; i ++) line_bump(lines.hlines[i], false);
+        for (let i = hl_r - 1; i != hl_l - 1; i --) line_bump(lines.hlines[i], false);
 
         Object.assign(origobj, nobj);
     }
