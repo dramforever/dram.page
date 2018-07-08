@@ -162,15 +162,14 @@ function game(code) {
     function physics(origobj) {
         const nobj = Object.assign({}, origobj);
 
-        // Falling off the edge
+        const eps = 1e-1;
 
         if (nobj.riding != -1) {
             const x1 = lines.x1[nobj.riding], x2 = lines.x2[nobj.riding];
-            if (nobj.x + nobj.width < x1 || x2 < nobj.x)
+            if (nobj.x + nobj.width <= x1 || x2 <= nobj.x)
                 nobj.riding = -1;
         }
 
-        const eps = 1e-5;
 
         function line_bump(lid, changevel) {
             const x1 = lines.x1[lid];
@@ -185,19 +184,19 @@ function game(code) {
                 && y2 > nobj.y) {
                 if (y1 > origobj.y + nobj.height - eps) {
                     nobj.riding = lid;
-                    if (changevel && nobj.vy > 0) nobj.vy = 0;
-                    else nobj.y = y1 - nobj.height; // - eps;
+                    if (changevel && nobj.vy) nobj.vy = 0;
+                    else nobj.y = y1 - nobj.height;
                 } else if (y2 < origobj.y + eps) {
                     if (changevel && nobj.vy < 0) nobj.vy = 0;
-                    else nobj.y = y2; // + eps;
+                    else nobj.y = y2;
                 } else {
                     if (changevel) {
                         nobj.vx = 0;
                     } else {
                         if (x2 < nobj.x + nobj.width/2)
-                            nobj.x = x2; // + eps;
+                            nobj.x = x2;
                         else
-                            nobj.x = x1 - nobj.width; // - eps;
+                            nobj.x = x1 - nobj.width;
                     }
                 }
             }
