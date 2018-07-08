@@ -39,7 +39,6 @@ function game(code) {
     const canvas = document.createElement('canvas');
     document.body.appendChild(canvas);
     const ctx = canvas.getContext('2d');
-    let canvasx = 1000, canvasy = - 1000;
 
     Object.assign(canvas, {
         width: 1600,
@@ -118,28 +117,9 @@ function game(code) {
 
     const lines = parse(code);
 
-    let tracking = false, scale = 1;
-
-    canvas.onclick = function () {
-        if (tracking)
-            document.exitPointerLock();
-        else
-            canvas.requestPointerLock();
-    };
-
-
-    document.addEventListener('pointerlockchange', function () {
-        tracking = (document.pointerLockElement === canvas);
-    }, false);
-
-    canvas.onmousemove = function (event) {
-        if (! tracking) return;
-        canvasx -= event.movementX;
-        canvasy -= event.movementY;
-    };
+    let scale = 1;
     
-    canvas.onwheel = (event) => {
-        if (! tracking) return;
+    window.onwheel = (event) => {
         const sc = Math.pow(1.001, event.deltaY);
 
         if (0.1 < scale * sc && scale * sc < 10)
@@ -284,11 +264,14 @@ function game(code) {
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, 1600, 1000);
-        ctx.setTransform(1 / scale, 0, 0, 1 / scale, - rect.x + 800 - rect.width / 2, - rect.y + 500 - rect.height / 2);
+        ctx.translate(800, 500);
+        ctx.scale(1 / scale, 1 / scale);
+        ctx.translate(- rect.x - rect.width / 2, - rect.y - rect.height / 2);
         // ctx.transform(1 / scale, 0, 0, 1 / scale, - canvasx, - canvasy);
 
         ctx.lineWidth = 4;
-        ctx.lineCap = 'square';
+        ctx.lineCap = 'round';
+
         ctx.fillStyle = 'black';
         ctx.strokeStyle = 'black';
 
@@ -298,6 +281,9 @@ function game(code) {
             ctx.lineTo(lines.x2[i], lines.y2[i]);
             ctx.stroke();
         }
+
+        ctx.fillStyle = '#777';
+        ctx.strokeStyle = '#777';
 
         ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
 
