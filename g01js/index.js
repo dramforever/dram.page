@@ -162,7 +162,7 @@ function game(code) {
     function physics(origobj) {
         const nobj = Object.assign({}, origobj);
 
-        const eps = 1e-1;
+        const eps = 1e-2;
 
         if (nobj.riding != -1) {
             const x1 = lines.x1[nobj.riding], x2 = lines.x2[nobj.riding];
@@ -171,7 +171,7 @@ function game(code) {
         }
 
 
-        function line_bump(lid, changevel) {
+        function line_bump(lid) {
             const x1 = lines.x1[lid];
             const y1 = lines.y1[lid];
             const x2 = lines.x2[lid];
@@ -184,20 +184,17 @@ function game(code) {
                 && y2 > nobj.y) {
                 if (y1 > origobj.y + nobj.height - eps) {
                     nobj.riding = lid;
-                    if (changevel && nobj.vy) nobj.vy = 0;
-                    else nobj.y = y1 - nobj.height;
+                    nobj.vy = 0;
+                    nobj.y = y1 - nobj.height;
                 } else if (y2 < origobj.y + eps) {
-                    if (changevel && nobj.vy < 0) nobj.vy = 0;
-                    else nobj.y = y2;
+                    nobj.vy = 0;
+                    nobj.y = y2;
                 } else {
-                    if (changevel) {
-                        nobj.vx = 0;
-                    } else {
-                        if (x2 < nobj.x + nobj.width/2)
-                            nobj.x = x2;
-                        else
-                            nobj.x = x1 - nobj.width;
-                    }
+                    nobj.vx = 0;
+                    if (x2 < nobj.x + nobj.width/2)
+                        nobj.x = x2;
+                    else
+                        nobj.x = x1 - nobj.width;
                 }
             }
         }
@@ -214,10 +211,6 @@ function game(code) {
 
         const vl_l = lower_bound(lines.vlines, lines.x1, nobj.x);
         const vl_r = upper_bound(lines.vlines, lines.x1, nobj.x + nobj.width);
-        
-        for (let i = hl_l; i != hl_r; i ++) line_bump(lines.hlines[i], true);
-
-        for (let i = vl_l; i != vl_r; i ++) line_bump(lines.vlines[i], true);
 
         for (let i = vl_r - 1; i != vl_l - 1; i --) line_bump(lines.vlines[i], false);
 
