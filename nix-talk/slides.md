@@ -99,7 +99,6 @@ Example: Upgrading kernel version means that old kernel modules are overriden wi
 ## Scenario
 
 - Dependency hell
-- “每次 Python 第二版本号升级我都要忙活一阵” (TUNA chat)
 - <!-- .element: class="fragment" -->
   <u>If I just want to install two separate Python programs, I shouldn't care that they depend on different versions of Python.</u>
 - <!-- .element: class="fragment" -->
