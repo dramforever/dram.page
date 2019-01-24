@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Bootstrapping Nix -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+</head>
+
+<body>
+
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<div id="post-title" class="clear">
+    <h2 id="post-title-main">Bootstrapping Nix</h2>
+    <span id="post-title-sub">2019-01-16</span>
+</div>
+
+<p><em>Bootstrapping Nix for just fun and no profit.</em></p>
+
+<p><em>Code implementing this blog post can be found at <a href="https://github.com/dramforever/bootstrap-nix">https://github.com/dramforever/bootstrap-nix</a>, and the Nixpkgs fork used at <a href="https://github.com/dramforever/nixpkgs/tree/dram-boot">https://github.com/dramforever/nixpkgs/tree/dram-boot</a>.</em></p>
+
+<p><a href="https://nixos.org/nix">Nix</a> is a unique package manager that I probably shouldn't try to explain here. Let's just say it's a <a href="https://wiki.gentoo.org/wiki/Project:Prefix">Gentoo Prefix</a> but with every single package in its own prefix. You might want to check out <a href="https://dram.cf/nix-talk/">the slides of a talk I did a while back</a>.</p>
+
+<p>But unlike a Gentoo Prefix, where the user builds the world from source and thus can generally be put anywhere on the filesystem, Nix users usually download pre-built binaries from the official 'binary cache'. As the official build farm builds packages in <code>/nix/store</code>, that's also where almost every Nix installation lives in and works on.</p>
+
+<p>Even though <code>/nix/store</code> is the default configuration, it doesn't have to be the <em>only</em> possible one. By changing a handful of <code>./configure</code> options, Nix can be configured to store packages and other data in directories other than <code>/nix</code>. This can be useful for situations where it's impossible to use the directory <code>/nix</code> because root access isn't available.</p>
+
+<p>Gentoo Prefix sure is commonly used in such situations. Does a 'Nix Prefix' <em>actually</em> work?</p>
+
+<h3>The plan</h3>
+
+<p>We will build a Nix installation in <code>/tmp/nix</code>, since it's likely that <code>/tmp</code> is writable by anyone on a system. Specifically, our new Nix will:</p>
+
+<ul>
+    <li>(<code>--with-store-dir</code>) Store packages in <code>/tmp/nix/store</code> instead of <code>/nix/store</code></li>
+    <li>(<code>--localstatedir</code>) Store other data in <code>/tmp/nix/var</code> instead of <code>/nix/var</code></li>
+    <li>(<code>--sysconfdir</code>) Look for configuration in <code>/tmp/etc/nix</code> instead of <code>/etc/nix</code></li>
+</ul>
+
+<p>The <code>nix</code> derivation in Nixpkgs already provides these three options as configuration arguments, so let's just <code>override</code> them to our needs:</p>
+
+<pre><code>with import ./nixpkgs;
+
+rec {
+  nixBoot = nix.override {
+    storeDir = "/tmp/nix/store";
+    stateDir = "/tmp/nix/var";
+    confDir = "/tmp/nix/etc";
+  };
+
+  # ...
+}</code></pre>
+
+<p>This means that we <em>are</em> going to build Nix with Nix, so an already-working Nix <em>is</em> required. Moreover, since the 'normal' Nix builds packages to <code>/nix/store</code>, we're going to have to have three different Nix flavors:</p>
+
+<ul>
+    <li>The <strong>'normal' Nix</strong> that lives in <code>/nix/store</code> and works on <code>/nix/store</code></li>
+    <li>Using the normal Nix, we build <code>nixBoot</code>. We get <strong>Nix stage 1</strong> that lives in <code>/nix/store</code> but works on <code>/tmp/nix/store</code></li>
+    <li>Using Nix stage 1 we build <code>nixBoot</code> <em>again</em>. We get <strong>Nix stage 2</strong> that lives in <code>/tmp/nix/store</code> and works on <code>/tmp/nix/store</code></li>
+</ul>
+
+<p>This isn't quite as 'good' as Gentoo Prefix, since it requires building Nix on another system beforehand, whereas Gentoo Prefix can do all the work on the target system. However, since Nix stage 2 lives in and works on <code>/tmp/nix/store</code>, which a non-root user is likely to be able to install Nix to, it's conceivable that an installer script could download a pre-built Nix stage 2 and build stage 3 and 4 on a user-selected directory.</p>
+
+<h3>Installer</h3>
+
+<p>Nix stage 2 is 'pure', in the sense that just by copying it and all dependencies, transitive ones included, to <code>/tmp/nix/store</code> on another machine is sufficient to get a running Nix. Indeed, if we were making a Docker container image in which package <em>management</em> is not required, this would be the method of deployment.</p>
+
+<p>However, as hinted above, Nix also stores some 'other data' in a 'state directory'. An important one is the Nix database, which, among other things, stores metadata and reference information of so called valid store paths. This is akin to a database of installed packages kept by other package managers to keep track of the files installed in a system.</p>
+
+<p>The <code>closureInfo</code> function from Nixpkgs shall help us with both tasks. From <code>pkgs/build-support/closure-info.nix</code></p>
+
+<blockquote>This derivation builds two files containing information about the closure of 'rootPaths': <code>$out/store-paths</code> contains the paths in the closure, and <code>$out/registration</code> contains a file suitable for use with <code>nix-store --load-db</code> and <code>nix-store --register-validity --hash-given</code>.</blockquote>
+
+<p>Moreover, <code>release.nix</code> from the source code of Nix contains an example of building a binary tarball. With those it's not hard to come up with a tarball containing store paths, registration information for <code>nix-store --load-db</code> and a (crude) installer script that copies the store paths to the real destination, <code>/tmp/nix</code> and initializes the Nix database.</p>
+
+<p>The tarball can be found at <a href="https://github.com/dramforever/bootstrap-nix/releases/download/snapshot-20190124.4/nix-installer.tar.xz">https://github.com/dramforever/bootstrap-nix/releases/download/snapshot-20190124.4/nix-installer.tar.xz</a>.</p>
+
+<h3>Extra: Packaging with <code>stdenv</code></h3>
+
+<p>Before the excessively time-consuming build process of Nix stage 2, a huge list of derivations to build is presented. Some of these like GCC or glibc take a quite while to build. These toolchain dependencies are useful for building most packages in our new bootstrapped Nix installation, which cannot take advantage from a pre-existing binary cache.</p>
+
+<p>Since <code>stdenv</code> contains the 'default' set of build tools, one might expect that adding <code>stdenv</code> to the closure above would make it possible to avoid the large builds of the toolchains. But quite surprisingly, if you install just Nix and <code>stdenv</code> and try to build install basically anything else, some toolchain derivations still need to be built, indicating that at least <em>some</em> toolchain that is a ubiquitous dependency is not actually in the closure of <code>stdenv</code>.</p>
+
+<p>Several derivations with names like <code>bootstrap-stage4-stdenv-linux</code> stand out. As their name hints, they constitute the progess of bootstrapping the build environment for other 'normal' derivations in Nixpkgs, and are themselves some of the most basic derivations. This bootstrapping process unsurprisingly also comes in multiple stages. The files <code>pkgs/stdenv/linux/default.nix</code> and <code>pkgs/stdenv/booter.nix</code> in Nixpkgs document the <code>stdenv</code> bootstrapping process quite throughly, so I will not attempt to reproduce it here. There is, however, one implication that I should mention, and that is some of the derivations you see in the final Nixpkgs might be from an earlier bootstrapping stage and use a different <code>stdenv</code>. The <code>stdenv</code> attribute of a derivation shows which <code>stdenv</code> a derivation was built against. Some examples:</p>
+
+<pre><code>nix-repl> whois.stdenv
+«derivation /nix/store/...-stdenv-linux.drv»
+
+nix-repl> bash.stdenv
+«derivation /nix/store/...-bootstrap-stage4-stdenv-linux.drv»
+
+nix-repl> gcc.stdenv
+«derivation /nix/store/...-bootstrap-stage4-stdenv-linux.drv»
+
+nix-repl> gcc-unwrapped.stdenv
+«derivation /nix/store/...-bootstrap-stage3-stdenv-linux.drv»
+
+nix-repl> glibc.stdenv
+«derivation /nix/store/...-bootstrap-stage2-stdenv-linux.drv»</code></pre>
+
+<p>If we only have the final <code>stdenv</code> (first one listed) installed, then when you want to build, say, <code>bash</code>, the stage 4 <code>stdenv</code> would be unavailable, and much of the bootstrap builds would have to be repeated. A way to overcome this would be to include every stdenv stage and not just the last.</p>
+
+<p>To find all the stages of <code>stdenv</code> requires some light Nixpkgs internals hacking. <code>pkgs/stdenv/booter.nix</code> adds attributes to the bootstrapping stages to aid debugging. Using the <code>__bootPackages</code> attribute added to every <code>stdenv</code> stage, we can access the packages set used to build it, and thus <code>__bootPackages.stdenv</code> is the previous stage of <code>stdenv</code>. For example:</p>
+
+<pre><code>nix-repl> stdenv
+«derivation /nix/store/...-stdenv-linux.drv»
+
+nix-repl> stdenv.__bootPackages.stdenv
+«derivation /nix/store/...-bootstrap-stage4-stdenv-linux.drv»
+
+nix-repl> stdenv.__bootPackages.stdenv.__bootPackages.stdenv
+«derivation /nix/store/...-bootstrap-stage3-stdenv-linux.drv»</code></pre>
+
+<p>If a certain package set has <code>__raw</code> attribute set to <code>true</code>, such debugging attributes are not added to the <code>stdenv</code>. This also signifies an end to our recursive adventure, since no more <code>__bootPackage</code> can be found.</p>
+
+<pre><code>nix-repl> stage3 = stdenv.__bootPackages.stdenv.__bootPackages.stdenv
+
+nix-repl> stage1 = stage3.__bootPackages.stdenv.__bootPackages.stdenv
+
+nix-repl> stage1.__bootPackages.stdenv
+«derivation /nix/store/h40r3ja68g0phsx7xzqphkryqgkmy9jv-bootstrap-stage0-stdenv-linux.drv»
+
+nix-repl> stage1.__bootPackages.stdenv.__bootPackages.__raw
+true</code></pre>
+
+<p>This leads to a roughly working way of finding the stages of <code>stdenv</code>:</p>
+
+<pre><code>let
+  stdenvStages = curStage:
+    [ curStage ]
+      ++
+        (if ! curStage.__bootPackages.__raw or false
+          then stdenvStages curStage.__bootPackages.stdenv
+          else []);
+in stdenvStages stdenv</code></pre>
+
+<p>Which, if you test, works pretty well in terms of avoiding toolchain rebuilding.</p>
+
+<p>The tarball built with stages of stdenv can be found at <a href="https://github.com/dramforever/bootstrap-nix/releases/download/snapshot-20190124.4/nix-stdenv-installer.tar.xz">https://github.com/dramforever/bootstrap-nix/releases/download/snapshot-20190124.4/nix-stdenv-installer.tar.xz</a>.</p>
+
+<h3>Hiccups</h3>
+
+<p>These are just random things found when troubleshooting. Documented here in case anyone is interested.</p>
+
+<h4>Disabling sandboxing</h4>
+
+<p>If the 'normal' Nix is single-user, Nix stage 1 might fail to find Nix build users and refuse to build anything. Write this file to <code>/tmp/nix/etc/nix/nix.conf</code>:</p>
+
+<pre><code>build-users-group =
+sandbox = false</code></pre>
+
+<p>In fact, it's probably a sane default, as we do intend to make <code>/tmp/nix</code> portable.</p>
+
+<h4>Other random problems</h4>
+
+<ul>
+    <li><a href="https://github.com/NixOS/nixpkgs/issues/53809">(NixOS/nixpkgs#53809) Dead link to <code>boehm-gc-7.6.0-sys_select.patch</code></a></li>
+    <em>Solution</em>: <a href="https://github.com/NixOS/nixpkgs/commit/ac7f4c0478679cc6059bcf7f9bcefe2b5b604064"><code>ac7f4c0</code></a>, which is already in <code>nixpkgs-unstable</code>
+    <li><code>ncurses-6.1.20181027.tgz</code> download failure</li>
+    <em>Solution</em>: <a href="https://github.com/NixOS/nixpkgs/pull/53942">PR #53942</a>
+    <li><code>aws-sdk-cpp</code> tests failing in Docker containers</li>
+    <em>Solution</em>: Add <a href="https://github.com/ploki/aws-sdk-cpp/commit/c5aa6ec225cb9f77793654e5334ee49faa6e1ae2"><code>ploki/aws-sdk-cpp</code> commit <code>c5aa6e</code> as a patch</a>
+    <li><code>gcc-unwrapped.src</code> really slow to download at my location</li>
+    <em>Solution</em>: Find the slow derivation, find the <code>url</code> field in the <code>.drv</code> text file (mine in this case is <a href="ftp://ftp.nluug.nl/mirror/languages/gcc/releases/gcc-7.4.0/gcc-7.4.0.tar.xz">ftp://ftp.nluug.nl/mirror/languages/gcc/releases/gcc-7.4.0/gcc-7.4.0.tar.xz</a>), download the file manually through a proxy, and add the file with <code>$nix_stage_1/bin/nix-store --add-fixed sha256 gcc-7.4.0.tar.xz</code>. Or pass proxy environment variables if you disabled sandboxing.
+</ul>
+
+<h3>Conclusion</h3>
+
+<p>The resulting Nix tarball is certainly usable. With a clone of Nixpkgs, it is passable as a source-based package manager and distribution. However, as I said at the very start, this bootstrapping is only for fun and no profit, as I have not found a use case with such a non-root package management situation. More testing should be done if anyone is interested in using it.</p>
+
+<p>When using Nix in a source-based manner, a common cause of build failure is link rot. A link to a source tarball or a patch may be dead due to whatever reason on the side of link targets. Two examples can be found in the 'Hiccups' section above. These might not pose a huge problem to the casual binary user, but affects builds a bit more than expected.</p>
+
+<p>The hackability of Nixpkgs served us pretty well in the whole process, and the use of the Nix language certainly played a huge role. Without the light functional programming capabilities of Nix language, utilities from Nixpkgs and the very useful <code>nix repl</code>, it would have been much harder to play around. I feel like the design of Nix language is at a sweet spot for describing and composing derivations, being pretty minimal in syntax and not really getting in the way in the kind of programming needed for a package distribution.</p>
+
+</body>
+</html>
