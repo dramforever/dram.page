@@ -177,6 +177,8 @@ sandbox = false</code></pre>
 
 <p>When using Nix in a source-based manner, a common cause of build failure is link rot. A link to a source tarball or a patch may be dead due to whatever reason on the side of link targets. Two examples can be found in the 'Hiccups' section above. These might not pose a huge problem to the casual binary user, but affects builds a bit more than expected.</p>
 
+<p>(<strong>Edit</strong>: To combat this problem, Gentoo mirrors these downloaded 'distfiles' for users to use. On NixOS Discourse <a href="https://discourse.nixos.org/t/detecting-outdated-urls-in-nixpkgs/1959/2">edolstra mentioned that</a> there is a tarball mirror for Nixkpgs as well, at <a href="https://tarballs.nixos.org">https://tarballs.nixos.org</a>, which is accessed using the SHA-256 hash specified to <code>fetchurl</code>. I have not checked this in detail, but it seems that Gentoo mirrorring infrastructure has checking of dead links, while the infrastructure for tarballs.nixos.org doesn't.)</p>
+
 <p>The hackability of Nixpkgs served us pretty well in the whole process, and the use of the Nix language played a huge role. Without the light functional programming capabilities of Nix language, utilities from Nixpkgs and the very useful <code>nix repl</code>, it would have been much harder to play around. I feel like the design of Nix language is at a sweet spot for describing and composing derivations, being pretty minimal in syntax and not really getting in the way in the kind of programming needed for a package distribution. The dynamic-typed-ness is also a pragmatic choice, drastically simplifying how the language works</p>
 
 <p>The whole process was an entertaining ride, and we sure had the fun promised!</p>
