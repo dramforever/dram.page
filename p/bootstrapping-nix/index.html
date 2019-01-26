@@ -19,7 +19,7 @@
 
 <div id="post-title" class="clear">
     <h2 id="post-title-main">Bootstrapping Nix</h2>
-    <span id="post-title-sub">2019-01-16</span>
+    <span id="post-title-sub">2019-01-24</span>
 </div>
 
 <p><em>Bootstrapping Nix for just fun and no profit.</em></p>
@@ -177,7 +177,9 @@ sandbox = false</code></pre>
 
 <p>When using Nix in a source-based manner, a common cause of build failure is link rot. A link to a source tarball or a patch may be dead due to whatever reason on the side of link targets. Two examples can be found in the 'Hiccups' section above. These might not pose a huge problem to the casual binary user, but affects builds a bit more than expected.</p>
 
-<p>The hackability of Nixpkgs served us pretty well in the whole process, and the use of the Nix language certainly played a huge role. Without the light functional programming capabilities of Nix language, utilities from Nixpkgs and the very useful <code>nix repl</code>, it would have been much harder to play around. I feel like the design of Nix language is at a sweet spot for describing and composing derivations, being pretty minimal in syntax and not really getting in the way in the kind of programming needed for a package distribution.</p>
+<p>The hackability of Nixpkgs served us pretty well in the whole process, and the use of the Nix language played a huge role. Without the light functional programming capabilities of Nix language, utilities from Nixpkgs and the very useful <code>nix repl</code>, it would have been much harder to play around. I feel like the design of Nix language is at a sweet spot for describing and composing derivations, being pretty minimal in syntax and not really getting in the way in the kind of programming needed for a package distribution. The dynamic-typed-ness is also a pragmatic choice, drastically simplifying how the language works</p>
+
+<p>The whole process was an entertaining ride, and we sure had the fun promised!</p>
 
 </body>
 </html>
