@@ -44,6 +44,8 @@
     <li>(<code>--sysconfdir</code>) Look for configuration in <code>/tmp/etc/nix</code> instead of <code>/etc/nix</code></li>
 </ul>
 
+<p><em>(<b>Edit</b>: I have since learned that the `NIX_STORE` variable can override the pre-configured settings within Nix. In other words, Nix does not require rebuilding for a 'cross-compiling' scenario like this. We can save one stage of Nix.)</em></p>
+
 <p>The <code>nix</code> derivation in Nixpkgs already provides these three options as configuration arguments, so let's just <code>override</code> them to our needs:</p>
 
 <pre><code>with import ./nixpkgs;
