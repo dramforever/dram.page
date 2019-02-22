@@ -1,0 +1,62 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+svg {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.node-label {
+    text-anchor: middle;
+    alignment-baseline: middle;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.node-border {
+    stroke: black;
+    fill: transparent;
+    stroke-width: 2px;
+}
+
+.link {
+    stroke: black;
+    fill: none;
+    stroke-width: 2px;
+}
+
+.link-arrow-head {
+    marker-end: url(#end-arrow);
+}
+
+#end-arrow {
+    fill: none;
+    stroke-width: 3px;
+}
+
+.junction {
+    stroke: black;
+    fill: transparent;
+    stroke-width: 2px;
+}
+
+.queue {
+    stroke: black;
+    fill: transparent;
+    stroke-width: 2px;
+}
+
+.pointer {
+    stroke: black;
+    stroke-dasharray: 10px 4px;
+    fill: none;
+    stroke-width: 2px;
+    marker-end: url(#end-arrow);
+}
