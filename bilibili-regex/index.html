@@ -1,0 +1,84 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    body {
+        max-width: 700px;
+        margin: auto;
+        padding: 40px;
+    }
+
+    #input {
+        width: 100%;
+        min-height: 200px;
+    }
+</style>
+
+<body>
+    <div>
+        <textarea id="input">￥taobaocode￥
+QQ1234567890
+微信 helloworld
+https://bilibili.com/video/av706
+https://bilibili.com/video/av0000000000000</textarea>
+    </div>
+    <div>
+        <ul id="output"></ul>
+    </div>
+</body>
+
+<script>
+    const mark = (z) => z ? '✓' : '✗';
+
+    const inputEle = document.querySelector('#input');
+    const outputEle = document.querySelector('#output');
+
+    const regexes = {
+        Taobao: () => /￥([\w\s]+)￥/g,
+        URL: () => /(?:http|https|www)(?:[\s\.:\/\/]{1,})([\w%+:\s\/\.?=]{1,})/g,
+        Whitelist: () => /((acg|im9|bili|gov).*(com|html|cn|tv)|(av\d{8,}|AV\d{8,}))/g,
+        QQ: () => /(?:[加qQ企鹅号码\s]{2,}|[群号]{1,})(?:[\u4e00-\u9eff]*)(?:[:，：]?)([\d\s]{6,})/g,
+        Wechat: () => /(?:[加+微＋+➕薇？vV威卫星♥❤姓xX信]{2,}|weixin|weix)(?:[，❤️.\s]?)(?:[\u4e00-\u9eff]?)(?:[:，：]?)([\w\s]{6,})/g
+    };
+
+    const showMatch = new Set(['Taobao', 'URL', 'QQ', 'WeChat'])
+
+    const rs = Object.keys(regexes).map((s) => {
+        const li = document.createElement('li');
+        li.textContent = s;
+        const ul = document.createElement('ul');
+        outputEle.appendChild(li);
+        outputEle.appendChild(ul);
+        return [s, ul];
+    });
+
+    function update() {
+        const str = inputEle.value;
+        for (const [ name, ul ] of rs) {
+            while (ul.firstChild)
+                ul.firstChild.remove();
+            for (const line of str.split('\n')) {
+                const regex = regexes[name]();
+                let match;
+                const seenIndex = new Set();
+                while ((match = regex.exec(line))) {
+                    if (seenIndex.has(match.index)) continue;
+                    else seenIndex.add(match.index);
+
+                    if (match[0].trim() == '') continue; // Empty
+                    const li = document.createElement('li');
+                    if (showMatch.has(name)) {
+                        const text = document.createTextNode(`${match[0]}${match[1].trim() == '' ? '' : ':'} `);
+                        li.appendChild(text);
+                    }
+                    const b = document.createElement('b');
+                    b.textContent = `${match[1]}`
+                    li.appendChild(b);
+                    ul.appendChild(li);
+                }
+            }
+        }
+    }
+
+    inputEle.addEventListener('input', update);
+    update();
+</script>
