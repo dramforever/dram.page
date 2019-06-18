@@ -41,7 +41,7 @@ function createInput() {
 
 function game(i) {
     return createInput().then(([inputE, inputB]) =>
-        K.sampleB(window.ib = inputB).then(val => { // Magic!
+        K.sampleB(inputB).then(val => {             // Magic!
             console.log('blah', val);
             if (val == i.toString())
                 return game(i + 1);                 // Recursion is fun!
@@ -73,7 +73,7 @@ function createInput() {
 
 function game(i) {
     return createInput().then(([inputE, inputB]) =>
-        K.sampleB(window.ib = inputB).then(val => {
+        K.sampleB(inputB).then(val => {
             console.log('blah', val);
             if (val == i.toString())
                 return game(i + 1);
