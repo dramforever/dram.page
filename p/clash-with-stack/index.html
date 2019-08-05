@@ -82,7 +82,7 @@ Total compilation took 2.079329679s
 
 <p>Clash also turns on and off some GHC extensions, because type-level programming is used somewhat extensively in Clash so stuff like <code>DataKinds</code> are automatically enabled. The list of wanted and unwanted extensions can be seen in the <a href="https://github.com/clash-lang/clash-compiler/blob/master/clash-ghc/src-ghc/Clash/GHC/LoadModules.hs#L614">source for <code>clash</code></a> (Look for <code>wantedLanguageExtensions ::</code> if the function moved). For 'wanted' extensions we just add them to <code>default-extensions</code>, and for 'unwanted' ones we prepend <code>No</code> and add them.</p>
 
-<p>The final configuration looks <a href="https://github.com/dramforever/clash-with-stack/blob/master/package.yaml">something like this</a>. Now plain <code>stack repl</code> works with our Clash programs. Of course, it cannot generate HDL, but that is beside the point.</p>
+<p>The final configuration looks <a href="https://github.com/dramforever/clash-with-stack/blob/master/package.yaml">something like this</a>. Now regular <code>stack repl</code> works with our Clash programs. Of course, regular <code>stack repl</code> cannot generate HDL, but that is beside the point.</p>
 
 <h3>Result</h3>
 
@@ -90,7 +90,7 @@ A sample project is available at <a href="https://github.com/dramforever/clash-w
 
 <h3>Extra: Where to put <code>clash-ghc</code>?</h3>
 
-<p>The above depends on <code>clash</code> present. But where should we put the <code>clash-ghc</code> dependency? <code>build-depends</code> is easy but are really not import anything from <code>clash-ghc</code>. <code>build-tool-depends</code> could work because it conveys that we only ever uses the binaries, but if we are writing a library downstream libraries are forced to pull <code>clash-ghc</code> in. We can also not put it anywhere and rely on the user to install it for the compiler version used, which for Stack means <em>not</em> running <code>stack install</code> but just <code>stack build</code>, so that Clash multiple compiler versions can coexist. That is not exactly the best experience.</p>
+<p>The above depends on <code>clash</code> being present. But where should we put the <code>clash-ghc</code> dependency? <code>build-depends</code> is easy but are really not import anything from <code>clash-ghc</code>. <code>build-tool-depends</code> could work because it conveys that we only ever uses the binaries, but if we are writing a library downstream libraries are forced to pull <code>clash-ghc</code> in. We can also not put it anywhere and rely on the user to install it for the compiler version used, which for Stack means <em>not</em> running <code>stack install</code> but just <code>stack build</code>, so that Clash multiple compiler versions can coexist. That is not exactly the best experience.</p>
 
 <p>My take is that if you are writing 'final' Clash code intended to just compile to HDL, then put <code>clash-ghc</code> in <code>build-tool-depends</code>, and otherwise if you want your code to be imported by others leave it out. I chose the former in the sample project.</p>
 
