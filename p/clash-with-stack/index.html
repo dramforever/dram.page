@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Stack-based Clash environment -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+</head>
+
+<body>
+
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<div id="post-title" class="clear">
+    <h2 id="post-title-main">Stack-based Clash environment</h2>
+    <span id="post-title-sub">2019-08-05</span>
+</div>
+
+<p><em>(I thought someone must have done it before, but I could not find this documented anywhere, so here we are.)</em></p>
+
+<h3>TL;DR</h3>
+
+<pre><code>$ stack repl --with-ghc clash</code></pre>
+
+<p>&hellip; with <a href="https://github.com/dramforever/clash-with-stack/blob/master/package.yaml">a bit of configuration in <code>package.yaml</code></a>.</p>
+
+<h3>Background</h3>
+
+<p><a href="https://clash-lang.org/">Clash</a> is a hardware description language (HDL) that happens to be a subset of Haskell. The compiler works as a modified GHC that simplifies Core and from that generates HDL code like VHDL or Verilog. This has some interesting implications, such as the fact that a Clash program run as plain Haskell, where it would be a regular function or a functional reactive program using a reduced set of reactive features, and the <em>same</em> program can also be compiled to conventional HDL code with matching semantics.</p>
+
+<p>There is just a slight problem with all the tutorials I could find: They all run bare <code>.hs</code> files without using Cabal or Stack for project management. This includes the <a href="https://github.com/clash-lang/clash-compiler/wiki/FAQ#how-do-i-run-and-install-clash-using-stack">Clash FAQ</a> and the tutorial on <a href="https://bitlog.it/20180320_a_basic_introduction_to_clash_for_fpga_development_part_1.html">bitlog.it</a>. This is not necessarily bad, but I thought we could use a bit of Stack and Stackage magic to set up a nice project environment with <code>stack.yaml</code> and whatnot for your Clash code. Why use <code>stack exec -- clashi Foo.hs</code> when you can just <code>stack repl</code>?</p>
+
+<h3>Fitting Clash into Stack</h3>
+
+<p>If you play around for a bit you will find that <code>clash</code> and <code>clashi</code> look just like modded <code>ghc</code> and <code>ghci</code> respectively. Indeed, the code of both are based on that of GHC and are essentially drop-in replacements with a bit more features like HDL generation. This means we just need to replace <code>ghc</code> with <code>clash</code> and we are probably good to go.</p>
+
+<p>Fortunately <code>stack repl</code> has a flag <code>--with-ghc</code>. We can create a new Stack project, make it depend on <code>clash-prelude</code> for the functions, and run <code>stack repl --with-ghc clash</code>. It looks like Clash is no longer in the latest Stackage snapshots, but <code>lts-12.26</code> has it and installs cleanly. Unfortunately it fails with this message:</p>
+
+<pre><code>&lt;command line&gt;: Could not find module ‘GHC.TypeLits.KnownNat.Solver’
+Use -v to see a list of the files searched for.</code></pre>
+
+<p>Apparently we are missing some packages. Quick search on the missing module, add it as a dependency, repeat, and we get this list of packages that needs to be present as dependencies in <code>package.yaml</code> or <code>*.cabal</code>:</p>
+
+<ul>
+    <li><code>GHC.TypeLits.Normalise</code> from <code>ghc-typelits-natnormalise</code></li>
+    <li><code>GHC.TypeLits.Extra.Solver</code> from <code>ghc-typelits-extra</code></li>
+    <li><code>GHC.TypeLits.KnownNat.Solver</code> from <code>ghc-typelits-knownnat</code></li>
+</ul>
+
+<p>This is a bit weird, but we will come back to it in a while.</p>
+
+<h3>Give it a go</h3>
+
+<p>Run <code>stack repl --with-ghc clash</code> and sure enough, a prompt pops up, and in addition to the usual GHCi commands we can generate HDL like this:</p>
+
+<pre><code>ghci> :verilog PlayClash.Circuit
+Loading dependencies took 1.088728906s
+Compiling: PlayClash.Circuit.refAdder32
+Applied 550 transformations
+Normalisation took 0.891433855s
+Netlist generation took 0.003641186s
+Compiling: PlayClash.Circuit.chainAdder32
+Applied 32 transformations
+Normalisation took 0.083207021s
+Netlist generation took 0.004778602s
+Total compilation took 2.079329679s
+</code></pre>
+
+<p>If you want to pass flags to <code>clash</code>, just use something like <code>--ghci-options="-fclash-debug DebugName"</code>.</p>
+
+<h3>Compiling Clash code with regular GHC</h3>
+
+<p>As said at the very beginning, Clash code is also perfectly valid Haskell and can be run ('simulated' from the HDL perspective) as such. But Clash and GHC have differing default flags. Therefore if we want <code>stack repl</code> to work with Clash code we need to figure out the differences and handle them.</p>
+
+<p>As documented in the&hellip; other (?) <a href="https://clash-lang.readthedocs.io/en/latest/faq.html">Clash FAQ</a> (Look for <code>-fplugin</code>), Clash loads three compiler plugins that help with working with types, namely <code>GHC.TypeLits.Normalise</code>, <code>GHC.TypeLits.Extra.Solver</code> and <code>GHC.TypeLits.KnownNat.Solver</code>. Unsurprisingly, the modules that contained the plugins are exactly the missing modules appeared above when we first tried to start Clash. Now we know that Clash adds the three plugins by module name, so they appear to be required dependencies of our code. As documented adding the packages  as dependencies and adding a <code>-fplugin MODULE</code> for each module.</p>
+
+<p>Clash also turns on and off some GHC extensions, because type-level programming is used somewhat extensively in Clash so stuff like <code>DataKinds</code> are automatically enabled. The list of wanted and unwanted extensions can be seen in the <a href="https://github.com/clash-lang/clash-compiler/blob/master/clash-ghc/src-ghc/Clash/GHC/LoadModules.hs#L614">source for <code>clash</code></a> (Look for <code>wantedLanguageExtensions ::</code> if the function moved). For 'wanted' extensions we just add them to <code>default-extensions</code>, and for 'unwanted' ones we prepend <code>No</code> and add them.</p>
+
+<p>The final configuration looks <a href="https://github.com/dramforever/clash-with-stack/blob/master/package.yaml">something like this</a>. Now plain <code>stack repl</code> works with our Clash programs. Of course, it cannot generate HDL, but that is beside the point.</p>
+
+<h3>Result</h3>
+
+A sample project is available at <a href="https://github.com/dramforever/clash-with-stack">https://github.com/dramforever/clash-with-stack</a>. It also demonstrates that imports work.
+
+<h3>Extra: Where to put <code>clash-ghc</code>?</h3>
+
+<p>The above depends on <code>clash</code> present. But where should we put the <code>clash-ghc</code> dependency? <code>build-depends</code> is easy but are really not import anything from <code>clash-ghc</code>. <code>build-tool-depends</code> could work because it conveys that we only ever uses the binaries, but if we are writing a library downstream libraries are forced to pull <code>clash-ghc</code> in. We can also not put it anywhere and rely on the user to install it for the compiler version used, which for Stack means <em>not</em> running <code>stack install</code> but just <code>stack build</code>, so that Clash multiple compiler versions can coexist. That is not exactly the best experience.</p>
+
+<p>My take is that if you are writing 'final' Clash code intended to just compile to HDL, then put <code>clash-ghc</code> in <code>build-tool-depends</code>, and otherwise if you want your code to be imported by others leave it out. I chose the former in the sample project.</p>
+
+</body>
+</html>
