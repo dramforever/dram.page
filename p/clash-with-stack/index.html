@@ -28,7 +28,7 @@
 
 <pre><code>$ stack repl --with-ghc clash</code></pre>
 
-<p>&hellip; with <a href="https://github.com/dramforever/clash-with-stack/blob/master/package.yaml">a bit of configuration in <code>package.yaml</code></a>.</p>
+<p>&hellip; with <a href="https://github.com/dramforever/clash-with-stack/blob/blog/package.yaml">a bit of configuration in <code>package.yaml</code></a>.</p>
 
 <h3>Background</h3>
 
@@ -82,11 +82,11 @@ Total compilation took 2.079329679s
 
 <p>Clash also turns on and off some GHC extensions, because type-level programming is used somewhat extensively in Clash so stuff like <code>DataKinds</code> are automatically enabled. The list of wanted and unwanted extensions can be seen in the <a href="https://github.com/clash-lang/clash-compiler/blob/master/clash-ghc/src-ghc/Clash/GHC/LoadModules.hs#L614">source for <code>clash</code></a> (Look for <code>wantedLanguageExtensions ::</code> if the function moved). For 'wanted' extensions we just add them to <code>default-extensions</code>, and for 'unwanted' ones we prepend <code>No</code> and add them.</p>
 
-<p>The final configuration looks <a href="https://github.com/dramforever/clash-with-stack/blob/master/package.yaml">something like this</a>. Now regular <code>stack repl</code> works with our Clash programs. Of course, regular <code>stack repl</code> cannot generate HDL, but that is beside the point.</p>
+<p>The final configuration looks <a href="https://github.com/dramforever/clash-with-stack/blob/blog/package.yaml">something like this</a>. Now regular <code>stack repl</code> works with our Clash programs. Of course, regular <code>stack repl</code> cannot generate HDL, but that is beside the point.</p>
 
 <h3>Result</h3>
 
-A sample project is available at <a href="https://github.com/dramforever/clash-with-stack">https://github.com/dramforever/clash-with-stack</a>. It also demonstrates that imports work.
+A sample project is available at <a href="https://github.com/dramforever/clash-with-stack">https://github.com/dramforever/clash-with-stack</a>, where the code corresponding to this post is in tag <a href="https://github.com/dramforever/clash-with-stack/tree/blog"><code>blog</code></a>. It also demonstrates that imports work.
 
 <h3>Extra: Where to put <code>clash-ghc</code>?</h3>
 
