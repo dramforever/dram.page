@@ -22,13 +22,15 @@
     <span id="post-title-sub">2019-08-05</span>
 </div>
 
+<p><em>This post and the repo has been updated on 2019-09-08 to use Clash 1.0.0</em></p>
+
 <p><em>(I thought someone must have done it before, but I could not find this documented anywhere, so here we are.)</em></p>
 
 <h3>TL;DR</h3>
 
 <pre><code>$ stack repl --with-ghc clash</code></pre>
 
-<p>&hellip; with <a href="https://github.com/dramforever/clash-with-stack/blob/blog/package.yaml">a bit of configuration in <code>package.yaml</code></a>.</p>
+<p>&hellip; with <a href="https://github.com/dramforever/clash-with-stack/blob/blog-1.0.0/package.yaml">a bit of configuration in <code>package.yaml</code></a>.</p>
 
 <h3>Background</h3>
 
@@ -57,20 +59,33 @@ Use -v to see a list of the files searched for.</code></pre>
 
 <h3>Give it a go</h3>
 
-<p>Run <code>stack repl --with-ghc clash</code> and sure enough, a prompt pops up, and in addition to the usual GHCi commands we can generate HDL like this:</p>
+<p>Run <code>stack repl --with-ghc clash</code> and sure enough, a prompt pops up, and in addition to the usual GHCi commands we have new ones like <code>:verilog [&lt;module&gt;]</code> that compiles a Haskell module to HDL.</p>
+
+<p>Compilation may fail with something like the message below. I don't know what it is, but if you create the directory manually it works fine:</p>
+
+<pre><code>Missing directory: .../.stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/global-autogen</code></pre>
+
+<p>Now we can generate HDL like this:</p>
 
 <pre><code>ghci&gt; :verilog PlayClash.Adder
-Loading dependencies took 1.088728906s
-Compiling: PlayClash.Circuit.refAdder32
-Applied 550 transformations
-Normalisation took 0.891433855s
-Netlist generation took 0.003641186s
-Compiling: PlayClash.Circuit.chainAdder32
-Applied 32 transformations
-Normalisation took 0.083207021s
-Netlist generation took 0.004778602s
-Total compilation took 2.079329679s
-</code></pre>
+GHC: Parsing and optimising modules took: 0.269s
+GHC: Loading external modules from interface files took: 0.260s
+GHC: Parsing annotations took: 0.000s
+Clash: Parsing and compiling primitives took 1.753s
+GHC+Clash: Loading modules cumulatively took 2.749s
+Clash: Compiling PlayClash.Adder.fullAdder
+Clash: Applied 3 transformations
+Clash: Normalisation took 0.001s
+Clash: Netlist generation took 0.000s
+Clash: Compiling PlayClash.Adder.refAdder32
+Clash: Applied 68 transformations
+Clash: Normalisation took 0.009s
+Clash: Netlist generation took 0.001s
+Clash: Compiling PlayClash.Adder.chainAdder32
+Clash: Applied 33 transformations
+Clash: Normalisation took 0.006s
+Clash: Netlist generation took 0.001s
+Clash: Total compilation took 2.786s</code></pre>
 
 <p>If you want to pass flags to <code>clash</code>, just use something like <code>--ghci-options="-fclash-debug DebugName"</code>.</p>
 
@@ -82,11 +97,11 @@ Total compilation took 2.079329679s
 
 <p>Clash also turns on and off some GHC extensions, because type-level programming is used somewhat extensively in Clash so stuff like <code>DataKinds</code> are automatically enabled. The list of wanted and unwanted extensions can be seen in the <a href="https://github.com/clash-lang/clash-compiler/blob/master/clash-ghc/src-ghc/Clash/GHC/LoadModules.hs#L614">source for <code>clash</code></a> (Look for <code>wantedLanguageExtensions ::</code> if the function moved). For 'wanted' extensions we just add them to <code>default-extensions</code>, and for 'unwanted' ones we prepend <code>No</code> and add them.</p>
 
-<p>The final configuration looks <a href="https://github.com/dramforever/clash-with-stack/blob/blog/package.yaml">something like this</a>. Now regular <code>stack repl</code> works with our Clash programs. Of course, regular <code>stack repl</code> cannot generate HDL, but that is beside the point.</p>
+<p>The final configuration looks <a href="https://github.com/dramforever/clash-with-stack/blob/blog-1.0.0/package.yaml">something like this</a>. Now regular <code>stack repl</code> works with our Clash programs. Of course, regular <code>stack repl</code> cannot generate HDL, but that is beside the point.</p>
 
 <h3>Result</h3>
 
-A sample project is available at <a href="https://github.com/dramforever/clash-with-stack">https://github.com/dramforever/clash-with-stack</a>, where the code corresponding to this post is in tag <a href="https://github.com/dramforever/clash-with-stack/tree/blog"><code>blog</code></a>. It also demonstrates that imports work.
+A sample project is available at <a href="https://github.com/dramforever/clash-with-stack">https://github.com/dramforever/clash-with-stack</a>, where the code corresponding to this post is in tag <a href="https://github.com/dramforever/clash-with-stack/tree/blog-1.0.0"><code>blog-1.0.0</code></a>. It also demonstrates that imports work.
 
 <h3>Extra: Where to put <code>clash-ghc</code>?</h3>
 
