@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>6 步搞懂 FFT -- dramforever</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+    <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+
+<body>
+
+<div id="site-title" class="clear">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<article>
+<div id="post-title" class="clear">
+    <h1 id="post-title-main">6 步搞懂 FFT</h1>
+    <span id="post-title-sub">2019-09-15</span>
+</div>
+<p>FFT，启动！</p>
+<h2>第一步：单位根</h2>
+<p>如下形式的复数称为 <span class="math inline">\(n\)</span> 次单位根（其中 <span class="math inline">\(i\)</span> 是虚数单位）：</p>
+<p><span class="math display">\[
+\omega_n^k = e^{2 \pi ik/n}
+\]</span></p>
+<p>（这里上标是幂次）</p>
+<p>基本性质有：</p>
+<p><span class="math display">\[
+\omega_n^k = \omega_n^{k+xn} = \omega_{xn}^{xk}
+\]</span></p>
+<p><span class="math display">\[
+\omega_n^a\omega_n^b=\omega_n^{a+b}
+\]</span></p>
+<p><span class="math display">\[
+\sum_{p=0}^{n-1} \omega_n^{pk} = \begin{cases} n &amp; k \bmod n = 0 \\ 0 &amp; k \bmod n \neq0  \end{cases}
+\]</span></p>
+<h2>第二步：DFT</h2>
+<p>DFT 是一个 <span class="math inline">\(n\)</span> 元序列到 <span class="math inline">\(n\)</span> 元序列的映射，如下：</p>
+<p><span class="math display">\[
+\mathsf{DFT}(a)_k = \sum_p a_p \omega_n^{pk}
+\]</span></p>
+<p>其逆如下：</p>
+<p><span class="math display">\[
+\mathsf{IDFT}(a)_k = {1 \over n} \sum_p a_p \omega_n^{-pk}
+\]</span></p>
+<p>以下默认：大写字母表示对应小写字母的 DFT，如：</p>
+<p><span class="math display">\[
+A=\mathsf{DFT}(a)
+\]</span></p>
+<h2>第三歩：循环卷积和多项式乘法</h2>
+<p>考虑如下序列，将各项重新组合可得：（用 <span class="math inline">\(\circ\)</span> 表示序列按位乘，如 <span class="math inline">\(\langle 1,2,3 \rangle \circ \langle 4,5,6 \rangle = \langle 4, 10, 18 \rangle\)</span>）</p>
+<p><span class="math display">\[
+\begin{align}
+\mathsf{IDFT}(A \circ B)_k &amp; = {1 \over n} (\sum_p (\sum_q a_q \omega_n^{qp})(\sum_r b_r \omega_n^{rp})\ \omega_n^{-pk} ) \\
+&amp; = {1 \over n} (\sum_q \sum_r a_q b_r (\sum_p \omega_n^{(q+r-k) p}))
+\end{align}
+\]</span></p>
+<p>根据单位根基本性质，将最里面的求和式化简：（方括号表示真取 <span class="math inline">\(1\)</span> 假取 <span class="math inline">\(0\)</span>）</p>
+<p><span class="math display">\[
+\sum_p \omega_n^{(q+r-k) p} = n \cdot [(q+r-k) \bmod n=0]
+\]</span></p>
+<p>故有：</p>
+<p><span class="math display">\[
+\mathsf{IDFT}(A \circ B)_k =\sum_q \sum_r a_q b_r [(q+r-k) \bmod n=0]
+\]</span></p>
+<p>（用类似的思路可以证明 DFT 和 IDFT 互逆，此处略去）</p>
+<p>也就是说，等式左侧实现了一个叫做循环卷积的过程，伪代码如下：</p>
+<pre class="plain"><code>c = new array of n zeros
+for q:
+    for r:
+        c[(q + r) mod n] += a[q] * b[r]</code></pre>
+<p>特别的，考虑需要计算两个多项式的乘法：我们有系数序列 <span class="math inline">\(a\)</span> 和 <span class="math inline">\(b\)</span>，<span class="math inline">\(a\)</span> 有 <span class="math inline">\(u\)</span> 项，<span class="math inline">\(b\)</span> 有 <span class="math inline">\(v\)</span> 项。假设系数存的是从常数项在下标 <span class="math inline">\(0\)</span> 开始，我们给 <span class="math inline">\(a\)</span> 后补 <span class="math inline">\(v\)</span> 个 <span class="math inline">\(0\)</span>，给 <span class="math inline">\(b\)</span> 后补 <span class="math inline">\(u\)</span> 个 <span class="math inline">\(0\)</span>，计算循环卷积时所有 <span class="math inline">\(q + r\)</span> “溢出” <span class="math inline">\(n\)</span> 的项都为 <span class="math inline">\(0\)</span>，也就是说相当于 <span class="math inline">\(\bmod n\)</span> 不需要考虑，那么循环卷积特化为多项式乘法：</p>
+<pre class="plain"><code>c = new array of n zeros
+for q:
+    for r:
+        c[q + r] += a[q] * b[r]</code></pre>
+<p>注意到大整数乘法可以化为多项式乘法加处理进位。</p>
+<p>直接计算是 <span class="math inline">\(O(n^2)\)</span> 的，我们通过在 <span class="math inline">\(O(n \log n)\)</span> 时间计算 DFT 和 IDFT，配合 <span class="math inline">\(O(n)\)</span> 时间按位乘，在 <span class="math inline">\(O(n \log n)\)</span> 时间完成这个过程。</p>
+<h2>第四步：DFT 的两个性质</h2>
+<p>线性性（此处加法是按位加），比较容易得到：</p>
+<p><span class="math display">\[
+\mathsf{DFT}(A+B) = \mathsf{DFT}(A) + \mathsf{DFT}(B)
+\]</span></p>
+<p>还有一个没那么明显：从 <span class="math inline">\(a\)</span> 和 <span class="math inline">\(b\)</span> 构造两个交替为原序列元素和 <span class="math inline">\(0\)</span> 的序列：</p>
+<p><span class="math display">\[
+x = \langle a_0, 0, a_1, 0, \dots,a_{n-1},0 \rangle \\
+y = \langle 0, b_0, 0, b_1, \dots,0, b_{n-1} \rangle \\
+\]</span></p>
+<p>则对 <span class="math inline">\(x\)</span>，利用其中只有一半元素非零，以及单位根的性质可得：</p>
+<p><span class="math display">\[
+X_k = \sum_{p = 0}^{2n-1} x_p \omega_{2n}^{pk}
+= \sum_{p = 0}^{n-1} a_{p} \omega_{2n}^{2pk}
+= \sum_{p = 0}^{n-1} a_{p} \omega_{n}^{pk}
+= A_{k \bmod n}
+\]</span></p>
+<p>类似的，对 <span class="math inline">\(y\)</span>：</p>
+<p><span class="math display">\[
+Y_k = \sum_{p = 0}^{2n-1} y_p \omega_{2n}^{pk}
+= \sum_{p = 0}^{n-1} b_{p} \omega_{2n}^{(2p+1)k}
+= \sum_{p = 0}^{n-1} b_{p} \omega_{n}^{pk} \omega_{2n}^{k}
+= \omega_{2n}^k B_{k \bmod n}
+\]</span></p>
+<p>（取模的原因是 <span class="math inline">\(k\)</span> 可能超过 <span class="math inline">\(n-1\)</span>，但是 DFT 原式代入 <span class="math inline">\(k\)</span> 和 <span class="math inline">\(k + n\)</span> 是一样的）</p>
+<h2>第五步：FFT</h2>
+<p>取上面的 <span class="math inline">\(x + y\)</span> 得：</p>
+<p><span class="math display">\[
+z = x+y=\langle a_0, b_0, a_1, b_1, \dots , a_{n-1}, b_{n-1} \rangle
+\]</span></p>
+<p>利用线性性有：</p>
+<p><span class="math display">\[
+Z_k = X_k + Y_k = A_{k \bmod n} + \omega_{2n}^k B_{k \bmod n}
+\]</span></p>
+<p>也就是说，我们可以将 <span class="math inline">\(2n\)</span> 长度的 <span class="math inline">\(z\)</span> 的 DFT 拆成两个长度为 <span class="math inline">\(n\)</span> 的 <span class="math inline">\(a\)</span> 和 <span class="math inline">\(b\)</span> 的 DFT，和一个 <span class="math inline">\(O(n)\)</span> 的合并过程（是奇偶拆，不是中间分开）。不断递归进行这个过程（单元素序列的 DFT 是其自身），可以在 <span class="math inline">\(O(n \log n)\)</span> 时间完成一个长度为 <span class="math inline">\(n\)</span> 的 DFT，这里 <span class="math inline">\(n\)</span> 需要是 <span class="math inline">\(2\)</span> 的幂。</p>
+<p>这个方法叫做 FFT。</p>
+<h2>第六步：二进制重排</h2>
+<p>考虑分治的“分”过程，我们首先将偶数位置和奇数位置分开，然后各自再拆偶数位和奇数位，依此类推。在二进制中，就是先按最低位 <code>0</code> <code>1</code> 排序，然后两半分别按照次低位排序，依此类推，也就是按照二进制反转排序（如 <code>000 100 010 ... 001 101 ...</code>）</p>
+<p>如对于 <span class="math inline">\(n = 8\)</span> 按照分治的顺序排好是：</p>
+<p><span class="math display">\[
+\langle 0, 4, 2, 6, 1, 5, 3, 7 \rangle
+\]</span></p>
+<p>然后迭代合并：</p>
+<p><span class="math display">\[
+\begin{align}
+&amp; \langle 0, 4, 2, 6, 1, 5, 3, 7 \rangle \\
+\to\ &amp; \langle 04, 26, 15, 37 \rangle \\
+\to\ &amp; \langle 0246, 1357 \rangle \\
+\to\ &amp; \langle 01234567 \rangle
+\end{align}
+\]</span></p>
+<p>这样我们可以使用两个数组来保存本次迭代和上次迭代的结果，每次一对一对合并，使用 <span class="math inline">\(O(n)\)</span> 的内存空间完成 FFT（直接递归需要 <span class="math inline">\(O(n \log n)\)</span>），而且一般更快。</p>
+<p>完工撒花！</p>
+<h2>注</h2>
+<ul>
+<li><p>在不同的实现中 DFT 的参数可能不同，如 <code>numpy.fft.fft</code> 的实现中，单位根上的的幂次是我们这里所用的取负，<span class="math inline">\(pk\)</span> 变为 <span class="math inline">\(-pk\)</span>（或者说单位根取共轭），<code>ifft</code> 相反。</p></li>
+<li><p>类似的方法可以构造拆成大于 <span class="math inline">\(2\)</span> 份的 FFT，在此略去。</p></li>
+</ul>
+<p>本文使用 <a href="https://pandoc.org/">Pandoc</a> 从 <a href="fft.md">Markdown 原始文件生成</a>，参数为：</p>
+<pre class="console"><code>$ pandoc --mathjax -f markdown-auto_identifiers -t html &lt; fft.md &gt; index.html</code></pre>
+</body>
+</html>
