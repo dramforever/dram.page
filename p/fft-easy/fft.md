@@ -75,12 +75,18 @@ $$
 
 ## 第三歩：循环卷积和多项式乘法
 
-考虑如下序列，将各项重新组合可得：（用 $\circ$ 表示序列按位乘，如 $\langle 1,2,3 \rangle \circ \langle 4,5,6 \rangle = \langle 4, 10, 18 \rangle$）
+考虑从 $a$ 和 $b$ 序列 $c$（用 $\circ$ 表示序列按位乘，如 $\langle 1,2,3 \rangle \circ \langle 4,5,6 \rangle = \langle 4, 10, 18 \rangle$）：
+
+$$
+c = \mathsf{IDFT}(A \circ B)
+$$
+
+展开定义将各项重新组合可得：
 
 $$
 \begin{align}
-\mathsf{IDFT}(A \circ B)_k & = {1 \over n} (\sum_p (\sum_q a_q \omega_n^{qp})(\sum_r b_r \omega_n^{rp})\ \omega_n^{-pk} ) \\
-& = {1 \over n} (\sum_q \sum_r a_q b_r (\sum_p \omega_n^{(q+r-k) p}))
+c_k & = {1 \over n} (\sum_p (\sum_q a_q \omega_n^{qp})(\sum_r b_r \omega_n^{rp})\ \omega_n^{-pk} ) \\
+  & = {1 \over n} (\sum_q \sum_r a_q b_r (\sum_p \omega_n^{(q+r-k) p}))
 \end{align}
 $$
 
@@ -93,7 +99,7 @@ $$
 故有：
 
 $$
-\mathsf{IDFT}(A \circ B)_k =\sum_q \sum_r a_q b_r [(q+r-k) \bmod n=0]
+c_k = \sum_q \sum_r a_q b_r [(q+r-k) \bmod n=0]
 $$
 
 （用类似的思路可以证明 DFT 和 IDFT 互逆，此处略去）
@@ -136,21 +142,24 @@ y = \langle 0, b_0, 0, b_1, \dots,0, b_{n-1} \rangle \\
 $$
 
 则对 $x$，利用其中只有一半元素非零，以及单位根的性质可得：
-
 $$
-X_k = \sum_{p = 0}^{2n-1} x_p \omega_{2n}^{pk}
-= \sum_{p = 0}^{n-1} a_{p} \omega_{2n}^{2pk}
-= \sum_{p = 0}^{n-1} a_{p} \omega_{n}^{pk}
-= A_{k \bmod n}
+\begin{align}
+X_k &= \sum_{p = 0}^{2n-1} x_p \omega_{2n}^{pk} \\
+& = \sum_{p = 0}^{n-1} a_{p} \omega_{2n}^{2pk}
+= \sum_{p = 0}^{n-1} a_{p} \omega_{n}^{pk} \\
+& = A_{k \bmod n}
+\end{align}
 $$
 
 类似的，对 $y$：
 
 $$
-Y_k = \sum_{p = 0}^{2n-1} y_p \omega_{2n}^{pk}
-= \sum_{p = 0}^{n-1} b_{p} \omega_{2n}^{(2p+1)k}
-= \sum_{p = 0}^{n-1} b_{p} \omega_{n}^{pk} \omega_{2n}^{k}
-= \omega_{2n}^k B_{k \bmod n}
+\begin{align}
+Y_k & = \sum_{p = 0}^{2n-1} y_p \omega_{2n}^{pk} \\
+& = \sum_{p = 0}^{n-1} b_{p} \omega_{2n}^{(2p+1)k}
+= \sum_{p = 0}^{n-1} b_{p} \omega_{n}^{pk} \omega_{2n}^{k} \\
+& = \omega_{2n}^k B_{k \bmod n}
+\end{align}
 $$
 
 （取模的原因是 $k$ 可能超过 $n-1$，但是 DFT 原式代入 $k$ 和 $k + n$ 是一样的）

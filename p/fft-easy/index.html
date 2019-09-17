@@ -55,11 +55,15 @@
 A=\mathsf{DFT}(a)
 \]</span></p>
 <h2>第三歩：循环卷积和多项式乘法</h2>
-<p>考虑如下序列，将各项重新组合可得：（用 <span class="math inline">\(\circ\)</span> 表示序列按位乘，如 <span class="math inline">\(\langle 1,2,3 \rangle \circ \langle 4,5,6 \rangle = \langle 4, 10, 18 \rangle\)</span>）</p>
+<p>考虑从 <span class="math inline">\(a\)</span> 和 <span class="math inline">\(b\)</span> 序列 <span class="math inline">\(c\)</span>（用 <span class="math inline">\(\circ\)</span> 表示序列按位乘，如 <span class="math inline">\(\langle 1,2,3 \rangle \circ \langle 4,5,6 \rangle = \langle 4, 10, 18 \rangle\)</span>）：</p>
+<p><span class="math display">\[
+c = \mathsf{IDFT}(A \circ B)
+\]</span></p>
+<p>展开定义将各项重新组合可得：</p>
 <p><span class="math display">\[
 \begin{align}
-\mathsf{IDFT}(A \circ B)_k &amp; = {1 \over n} (\sum_p (\sum_q a_q \omega_n^{qp})(\sum_r b_r \omega_n^{rp})\ \omega_n^{-pk} ) \\
-&amp; = {1 \over n} (\sum_q \sum_r a_q b_r (\sum_p \omega_n^{(q+r-k) p}))
+c_k &amp; = {1 \over n} (\sum_p (\sum_q a_q \omega_n^{qp})(\sum_r b_r \omega_n^{rp})\ \omega_n^{-pk} ) \\
+  &amp; = {1 \over n} (\sum_q \sum_r a_q b_r (\sum_p \omega_n^{(q+r-k) p}))
 \end{align}
 \]</span></p>
 <p>根据单位根基本性质，将最里面的求和式化简：（方括号表示真取 <span class="math inline">\(1\)</span> 假取 <span class="math inline">\(0\)</span>）</p>
@@ -68,7 +72,7 @@ A=\mathsf{DFT}(a)
 \]</span></p>
 <p>故有：</p>
 <p><span class="math display">\[
-\mathsf{IDFT}(A \circ B)_k =\sum_q \sum_r a_q b_r [(q+r-k) \bmod n=0]
+c_k = \sum_q \sum_r a_q b_r [(q+r-k) \bmod n=0]
 \]</span></p>
 <p>（用类似的思路可以证明 DFT 和 IDFT 互逆，此处略去）</p>
 <p>也就是说，等式左侧实现了一个叫做循环卷积的过程，伪代码如下：</p>
@@ -93,19 +97,22 @@ for q:
 x = \langle a_0, 0, a_1, 0, \dots,a_{n-1},0 \rangle \\
 y = \langle 0, b_0, 0, b_1, \dots,0, b_{n-1} \rangle \\
 \]</span></p>
-<p>则对 <span class="math inline">\(x\)</span>，利用其中只有一半元素非零，以及单位根的性质可得：</p>
-<p><span class="math display">\[
-X_k = \sum_{p = 0}^{2n-1} x_p \omega_{2n}^{pk}
-= \sum_{p = 0}^{n-1} a_{p} \omega_{2n}^{2pk}
-= \sum_{p = 0}^{n-1} a_{p} \omega_{n}^{pk}
-= A_{k \bmod n}
+<p>则对 <span class="math inline">\(x\)</span>，利用其中只有一半元素非零，以及单位根的性质可得： <span class="math display">\[
+\begin{align}
+X_k &amp;= \sum_{p = 0}^{2n-1} x_p \omega_{2n}^{pk} \\
+&amp; = \sum_{p = 0}^{n-1} a_{p} \omega_{2n}^{2pk}
+= \sum_{p = 0}^{n-1} a_{p} \omega_{n}^{pk} \\
+&amp; = A_{k \bmod n}
+\end{align}
 \]</span></p>
 <p>类似的，对 <span class="math inline">\(y\)</span>：</p>
 <p><span class="math display">\[
-Y_k = \sum_{p = 0}^{2n-1} y_p \omega_{2n}^{pk}
-= \sum_{p = 0}^{n-1} b_{p} \omega_{2n}^{(2p+1)k}
-= \sum_{p = 0}^{n-1} b_{p} \omega_{n}^{pk} \omega_{2n}^{k}
-= \omega_{2n}^k B_{k \bmod n}
+\begin{align}
+Y_k &amp; = \sum_{p = 0}^{2n-1} y_p \omega_{2n}^{pk} \\
+&amp; = \sum_{p = 0}^{n-1} b_{p} \omega_{2n}^{(2p+1)k}
+= \sum_{p = 0}^{n-1} b_{p} \omega_{n}^{pk} \omega_{2n}^{k} \\
+&amp; = \omega_{2n}^k B_{k \bmod n}
+\end{align}
 \]</span></p>
 <p>（取模的原因是 <span class="math inline">\(k\)</span> 可能超过 <span class="math inline">\(n-1\)</span>，但是 DFT 原式代入 <span class="math inline">\(k\)</span> 和 <span class="math inline">\(k + n\)</span> 是一样的）</p>
 <h2>第五步：FFT</h2>
