@@ -3,25 +3,6 @@ a {
     text-decoration: underline;
 }
 
-.clear:after {
-    content: ".";
-    display: block;
-    height: 0;
-    clear: both;
-    visibility:hidden;
-}
-
-*html .clear {
-    height: 1%;
-}
-*+html .clear {
-    height: 1%;
-}
-
-.clear {
-    display:block;
-}
-
 body {
     max-width: 691px;
     margin-top: 20px;
@@ -54,6 +35,7 @@ body {
 }
 
 #site-title-sub {
-    float: right;
-    margin-right: 3%;
+    display: flex;
+    flex-direction: row-reverse;
+    margin-right: 5px;
 }

@@ -12,14 +12,14 @@
 
 <body>
 
-<div id="site-title" class="clear">
+<div id="site-title">
     <h1 id="site-title-main"><a href="/">
         dramforever
     </a></h1>
     <div id="site-title-sub">coding, thoughts and stuff irl</div>
 </div>
 
-<div id="post-title" class="clear">
+<div id="post-title">
     <h2 id="post-title-main">Chair Trees (a.k.a Persistent Segment Trees) (SPOJ MKTHNUM)</h2>
     <span id="post-title-sub">2015-12-14</span>
 </div>
@@ -78,7 +78,7 @@ import Control.Monad.IO.Class</code></pre>
     <li> If \(i = j\), then the value at the node is the count of \(i\) in \(S\), and its children are <i>undefined</i>, meaning that they must not be accessed. Such a node is called a <b>leaf</b>
     <li> Otherwise, let \(m = \lfloor (i + j) / 2 \rfloor\). It can be shown trivially that \([i \dots m]\) and \([m + 1 \dots j]\) are valid subranges of \([i \dots j]\). The value at this node is the count of numbers in \(S\) within the range \([i \dots j\), and its left and right child describes the subranges \([i \dots m]\) and \([m+1 \dots j]\), respectively.
   </ul>
-  
+
 <p>Note that the indices \(i\) and \(j\) are not stored. They can be computed on-the-fly when recursing. A segment tree is then just a segment tree node describing the range \([0 \dots U]\). For an example, here's the segment tree for \(A = [1\ 5\ 2\ 6\ 3\ 7\ 4]\) (The undefined nodes are not shown):
 
 <p align="center"><img style="max-width: 100%" src="ex1.png" />
@@ -127,7 +127,7 @@ sgtGetKth k n t = go k 0 n t</code></pre>
 
 <p>Otherwise, we still let \(m = \lfloor (i + j) / 2 \rfloor\). We check to see how many numbers we have in \([i \dots m]\). If that number is larger than or equal to \(k\), it means that the \(k\)-th is in \([i \dots m]\), and otherwise it is in \([m + 1 \dots j]\). We then just recurse into the corresponding nodes. In the code below \(k\) is renamed to \(b\) to avoid name clashes.
 
-<pre><code>        go b lb rb (Branch _ l@(Branch sl _ _) r) = 
+<pre><code>        go b lb rb (Branch _ l@(Branch sl _ _) r) =
           if b <= sl
             then go b lb (middle lb rb) l
             else go (b - sl) (middle lb rb + 1) rb r</code></pre>
@@ -197,7 +197,7 @@ getInt = do modify (L.dropWhile isSpace)
             return n
 
 main' :: StateT L.ByteString IO ()
-main' = 
+main' =
   do n <- getInt
      m <- getInt
      xs <- replicateM n getInt</code></pre>
@@ -210,7 +210,7 @@ Due to a strange bug in the so-called "state hack" in GHC, I have to use these b
      replicateM_ m $ do i <- getInt
                         j <- getInt
                         k <- getInt
-                        
+
                         liftIO (print (mapping ! queryChairTree ct i j k))
 
 main :: IO ()

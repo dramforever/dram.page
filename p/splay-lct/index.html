@@ -11,14 +11,14 @@
 
 <body>
 
-<div id="site-title" class="clear">
+<div id="site-title">
     <h1 id="site-title-main"><a href="/">
         dramforever
     </a></h1>
     <div id="site-title-sub">coding, thoughts and stuff irl</div>
 </div>
 
-<div id="post-title" class="clear">
+<div id="post-title">
     <h2 id="post-title-main">Splay 和 Link/cut tree (HDU 2475)</h2>
     <span id="post-title-sub">2015-12-14</span>
 </div>
@@ -171,7 +171,7 @@ void access1(int x)
       x[c][1][parent] = -x;
       x[c][1] = 0;
     }
-  
+
   while(x[parent] < 0)
     {
       int w = -x[parent];</code></pre>
@@ -232,7 +232,7 @@ void access1(int x)
 
 <pre><code>  access(i);
   splay(i);
-  
+
   if(i[c][0]) i[c][0][parent] = 0, i[c][0] = 0;</code></pre>
 
 <p>最后，把 j 接到 i 上面去。方法：Access j，然后在 i 和 j 之间连一条偏好边。

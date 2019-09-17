@@ -13,7 +13,7 @@
 
 <body>
 
-<div id="site-title" class="clear">
+<div id="site-title">
     <h1 id="site-title-main"><a href="/">
         dramforever
     </a></h1>
@@ -21,7 +21,7 @@
 </div>
 
 <article>
-<div id="post-title" class="clear">
+<div id="post-title">
     <h1 id="post-title-main">6 步搞懂 FFT</h1>
     <span id="post-title-sub">2019-09-15</span>
 </div>

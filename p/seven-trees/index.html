@@ -12,14 +12,14 @@
 
 <body>
 
-<div id="site-title" class="clear">
+<div id="site-title">
     <h1 id="site-title-main"><a href="/">
         dramforever
     </a></h1>
     <div id="site-title-sub">coding, thoughts and stuff irl</div>
 </div>
 
-<div id="post-title" class="clear">
+<div id="post-title">
     <h2 id="post-title-main">七树归一</h2>
     <span id="post-title-sub">2016-02-10</span>
 </div>
@@ -45,13 +45,13 @@
 
 <pre><code>Definition Combine_helper (T1 T2 T3 T4 T5 T6 T7 : Tree) : Tree :=
   match (T1, T2, T3, T4) with
-  | (Empty, Empty, Empty, Empty) => 
+  | (Empty, Empty, Empty, Empty) =>
       match T5 with
       | Node T5a T5b => [[[[Empty, T7], T6], T5a], T5b]
-      | Empty => 
+      | Empty =>
           match T6 with
           | Node _ _ => [[[[[T6, T7], Empty], Empty], Empty], Empty]
-          | Empty => 
+          | Empty =>
               match T7 with
               | [[[[T7a, T7b], T7c], T7d], T7e] =>
                   [[[[[Empty, T7a], T7b], T7c], T7d], T7e]
