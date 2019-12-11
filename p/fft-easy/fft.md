@@ -75,7 +75,7 @@ $$
 
 ## 第三歩：循环卷积和多项式乘法
 
-考虑从 $a$ 和 $b$ 序列 $c$（用 $\circ$ 表示序列按位乘，如 $\langle 1,2,3 \rangle \circ \langle 4,5,6 \rangle = \langle 4, 10, 18 \rangle$）：
+考虑从 $a$ 和 $b$ 构造的序列 $c$（用 $\circ$ 表示序列按位乘，如 $\langle 1,2,3 \rangle \circ \langle 4,5,6 \rangle = \langle 4, 10, 18 \rangle$）：
 
 $$
 c = \mathsf{IDFT}(A \circ B)
