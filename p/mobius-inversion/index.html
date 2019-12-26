@@ -43,7 +43,7 @@
 
 <h3>Möbius 函数</h3>
 
-\[\mu(d) = \begin{cases}
+\[\mu(n) = \begin{cases}
 0&amp;n \text{有非} 1 \text{的平方因子}\\\
 (-1)^\alpha&amp;n \text{没有非} 1 \text{的平方因子，有} \alpha \text{个质因子}
 \end{cases} \]
@@ -55,7 +55,7 @@
 
 <p>那个是“p是质数”的意思</p>
 
-\[\mu(uv) = \mu(u)\mu(v) \quad (gcd(u, v) = 1)\]
+\[\mu(uv) = \mu(u)\mu(v) \quad (\operatorname{gcd}(u, v) = 1)\]
 
 <p>然后就可以线性筛了对吧</p>
 
@@ -85,7 +85,7 @@
 
 <p>如果你知道 \(F(1)\)，和如何比较方便地在 \(p\!\! \not|\ u\) 时算出 \(F(p^\alpha u)\)，那么就可以线性筛啦！</p>
 
-<p>方法是，对每个数 \(p^\alpha u\) 维护这个数的最小质因子 \(p\) 是什么（线性筛 ftw），和这个质因子出现了多少次 \(\alpha\)（发现（质数 \(z\)） \(z | m\) 就 \(count[zm] = count[m] + 1\) 就好了），还有除下这么多质数剩下的数 \(u\)。显然还是线性的，而且我们也确实维护出了需要的信息。</p>
+<p>方法是，对每个数 \(p^\alpha u\) 维护这个数的最小质因子 \(p\) 是什么（线性筛 ftw），和这个质因子出现了多少次 \(\alpha\)（发现（质数 \(z\)） \(z | m\) 就 \(\operatorname{count}[zm] = \operatorname{count}[m] + 1\) 就好了），还有除下这么多质数剩下的数 \(u\)。显然还是线性的，而且我们也确实维护出了需要的信息。</p>
 
 <hr>
 
