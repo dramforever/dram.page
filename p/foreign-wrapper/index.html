@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>What happens when you foreign import "wrapper"? -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">What happens when you <code>foreign import "wrapper"</code>?</h1>
+    <span id="post-title-sub">2020-01-29</span>
+</div>
+<p>(This article was already <a href="https://github.com/dramforever/haskell-stuff/blob/master/corecall.md">on GitHub</a>, but I decided to repost it here with minor edits.)</p>
+<p>As you might know, you can convert a Haskell function into a C function pointer, if you <code>foreign import "wrapper"</code> a function that does so.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1"></a>foreign <span class="kw">import</span> &quot;wrapper&quot; wrapper :: (<span class="dt">Int</span> -&gt; <span class="dt">IO</span> <span class="dt">Int</span>) -&gt; <span class="dt">IO</span> (<span class="dt">FunPtr</span> (<span class="dt">Int</span> -&gt; <span class="dt">IO</span> <span class="dt">Int</span>))</span></code></pre></div>
+<p>What happens when you call <code>wrapper fn</code>?</p>
+<h2 id="a-short-summary-of-the-procedure">A short summary of the procedure</h2>
+<p>In your program two things are added:</p>
+<ol type="1">
+<li>A C function that, given C-friendly arguments, can call a Haskell function and unwrap the result back to C-friendly form.</li>
+<li><code>wrapper</code> itself.</li>
+</ol>
+<p>And it when it is time for <code>wrapper fn</code>:</p>
+<ol type="1">
+<li>A <code>StablePtr</code> of <code>fn</code> is created, which tells the GC not to garbage collect the function.</li>
+<li>An <em>adjustor</em> is created by dynamically writing machine code that calls the C function with the <code>StablePtr</code> and more arguments from C. Basically a closure in machine code.</li>
+<li>The address to the machine code of the <em>adjustor</em> is wrapped in a <code>FunPtr</code> and returned.</li>
+</ol>
+<h2 id="a-breakdown-of-some-of-the-code-involved">A breakdown of some of the code involved</h2>
+<h3 id="a-c-function">A C function</h3>
+<p>GHC generates, this C function, and compiles/links it into your program: (Get this with <code>-ddump-foreign</code>.)</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1"></a>HsInt zdmainzdMainzdMainzuwrapper(StgStablePtr the_stableptr, HsInt a1)</span>
+<span id="cb2-2"><a href="#cb2-2"></a>{</span>
+<span id="cb2-3"><a href="#cb2-3"></a>    Capability *cap;</span>
+<span id="cb2-4"><a href="#cb2-4"></a>    HaskellObj ret;</span>
+<span id="cb2-5"><a href="#cb2-5"></a>    HsInt cret;</span>
+<span id="cb2-6"><a href="#cb2-6"></a></span>
+<span id="cb2-7"><a href="#cb2-7"></a>    <span class="co">// Wait for and grab a Haskell capability:</span></span>
+<span id="cb2-8"><a href="#cb2-8"></a>    cap = rts_lock();</span>
+<span id="cb2-9"><a href="#cb2-9"></a></span>
+<span id="cb2-10"><a href="#cb2-10"></a>    <span class="co">// Run the function passed in by the StablePtr and force the result Int to whnf:</span></span>
+<span id="cb2-11"><a href="#cb2-11"></a>    rts_evalIO(</span>
+<span id="cb2-12"><a href="#cb2-12"></a>        &amp;cap,</span>
+<span id="cb2-13"><a href="#cb2-13"></a>        rts_apply(</span>
+<span id="cb2-14"><a href="#cb2-14"></a>            cap,</span>
+<span id="cb2-15"><a href="#cb2-15"></a></span>
+<span id="cb2-16"><a href="#cb2-16"></a>            <span class="co">// GHC.TopHandler.runIO adds an exception handler to an IO function.</span></span>
+<span id="cb2-17"><a href="#cb2-17"></a>            (HaskellObj) runIO_closure,</span>
+<span id="cb2-18"><a href="#cb2-18"></a>            rts_apply(</span>
+<span id="cb2-19"><a href="#cb2-19"></a>                cap,</span>
+<span id="cb2-20"><a href="#cb2-20"></a>                (StgClosure*) deRefStablePtr(the_stableptr),</span>
+<span id="cb2-21"><a href="#cb2-21"></a>                rts_mkInt(</span>
+<span id="cb2-22"><a href="#cb2-22"></a>                    cap,</span>
+<span id="cb2-23"><a href="#cb2-23"></a></span>
+<span id="cb2-24"><a href="#cb2-24"></a>                    <span class="co">// In case you already forgot or never noticed, this is the argument.</span></span>
+<span id="cb2-25"><a href="#cb2-25"></a>                    a1))),</span>
+<span id="cb2-26"><a href="#cb2-26"></a>        &amp;ret);</span>
+<span id="cb2-27"><a href="#cb2-27"></a></span>
+<span id="cb2-28"><a href="#cb2-28"></a>    <span class="co">// Check, for example, whether we have been killed or interrupted, and if so exit:</span></span>
+<span id="cb2-29"><a href="#cb2-29"></a>    rts_checkSchedStatus(<span class="st">&quot;zdmainzdMainzdMainzuwrapper&quot;</span>, cap);</span>
+<span id="cb2-30"><a href="#cb2-30"></a></span>
+<span id="cb2-31"><a href="#cb2-31"></a>    <span class="co">// Get the x from an evaluated (I# x):</span></span>
+<span id="cb2-32"><a href="#cb2-32"></a>    cret = rts_getInt(ret);</span>
+<span id="cb2-33"><a href="#cb2-33"></a></span>
+<span id="cb2-34"><a href="#cb2-34"></a>    <span class="co">// Okay we&#39;re done with the capability:</span></span>
+<span id="cb2-35"><a href="#cb2-35"></a>    rts_unlock(cap);</span>
+<span id="cb2-36"><a href="#cb2-36"></a></span>
+<span id="cb2-37"><a href="#cb2-37"></a>    <span class="cf">return</span> cret;</span>
+<span id="cb2-38"><a href="#cb2-38"></a>}</span></code></pre></div>
+<p>(Here's <code>rts_getInt</code> in <code>rts/RtsAPI.c</code>.)</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1"></a>HsInt</span>
+<span id="cb3-2"><a href="#cb3-2"></a>rts_getInt (HaskellObj p)</span>
+<span id="cb3-3"><a href="#cb3-3"></a>{</span>
+<span id="cb3-4"><a href="#cb3-4"></a>    <span class="cf">return</span> (HsInt)(UNTAG_CLOSURE(p)-&gt;payload[<span class="dv">0</span>]);</span>
+<span id="cb3-5"><a href="#cb3-5"></a>}</span></code></pre></div>
+<h3 id="a-generated-haskell-function">A generated Haskell function</h3>
+<p>(Get this with <code>-ddump-simpl</code>.)</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1"></a>wrapper</span>
+<span id="cb4-2"><a href="#cb4-2"></a>  <span class="ot">=</span> \ function srw1 <span class="ot">-&gt;</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a></span>
+<span id="cb4-4"><a href="#cb4-4"></a>      <span class="co">-- Create a StablePtr# of</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a>      <span class="kw">case</span> makeStablePtr<span class="op">#</span> function srw1 <span class="kw">of</span></span>
+<span id="cb4-6"><a href="#cb4-6"></a>      { (<span class="op">#</span> srw2, stablePtr <span class="op">#</span>) <span class="ot">-&gt;</span></span>
+<span id="cb4-7"><a href="#cb4-7"></a></span>
+<span id="cb4-8"><a href="#cb4-8"></a>      <span class="co">-- Create the function pointer</span></span>
+<span id="cb4-9"><a href="#cb4-9"></a>      <span class="kw">case</span> {__pkg_ccall <span class="dt">Int</span><span class="op">#</span></span>
+<span id="cb4-10"><a href="#cb4-10"></a>             <span class="ot">-&gt;</span> <span class="dt">StablePtr</span><span class="op">#</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Int</span>)</span>
+<span id="cb4-11"><a href="#cb4-11"></a>             <span class="ot">-&gt;</span> <span class="dt">Addr</span><span class="op">#</span></span>
+<span id="cb4-12"><a href="#cb4-12"></a>             <span class="ot">-&gt;</span> <span class="dt">Addr</span><span class="op">#</span></span>
+<span id="cb4-13"><a href="#cb4-13"></a>             <span class="ot">-&gt;</span> <span class="dt">State</span><span class="op">#</span> <span class="dt">RealWorld</span></span>
+<span id="cb4-14"><a href="#cb4-14"></a>             <span class="ot">-&gt;</span> (<span class="op">#</span> <span class="dt">State</span><span class="op">#</span> <span class="dt">RealWorld</span>, <span class="dt">Addr</span><span class="op">#</span> <span class="op">#</span>)}_d1jo</span>
+<span id="cb4-15"><a href="#cb4-15"></a>             <span class="dv">1</span><span class="op">#</span></span>
+<span id="cb4-16"><a href="#cb4-16"></a>             stablePtr</span>
+<span id="cb4-17"><a href="#cb4-17"></a>             (__label <span class="st">&quot;zdmainzdMainzdMainzuwrapper&quot;</span> (function))</span>
+<span id="cb4-18"><a href="#cb4-18"></a>             main4</span>
+<span id="cb4-19"><a href="#cb4-19"></a>             srw2</span>
+<span id="cb4-20"><a href="#cb4-20"></a>      <span class="kw">of</span></span>
+<span id="cb4-21"><a href="#cb4-21"></a>      { (<span class="op">#</span> srw3, fptr <span class="op">#</span>) <span class="ot">-&gt;</span></span>
+<span id="cb4-22"><a href="#cb4-22"></a></span>
+<span id="cb4-23"><a href="#cb4-23"></a>      <span class="co">-- And wrap it in a constructor</span></span>
+<span id="cb4-24"><a href="#cb4-24"></a>      (<span class="op">#</span> srw3, <span class="dt">FunPtr</span> fptr <span class="op">#</span>)</span>
+<span id="cb4-25"><a href="#cb4-25"></a>      }</span>
+<span id="cb4-26"><a href="#cb4-26"></a>      }</span></code></pre></div>
+<p>A <code>__pkg_ccall</code> to what? C-- reveals the answer:</p>
+<p>(Get this from <code>-ddump-cmm</code>.)</p>
+<pre class="cmm"><code> c1Jy:
+     unwind Sp = Just Sp + 8;
+     (_s1J8::I64) = call &quot;ccall&quot; arg hints:  [‘signed’, PtrHint,
+                                              PtrHint,
+                                              PtrHint]  result hints:  [PtrHint] createAdjustor(1, R1, zdmainzdMainzdMainzuwrapper, main4_bytes);</code></pre>
+<p>It's actually a call to <code>createAdjustor</code>, basically <code>createAdjustor(1, R1, zdmainzdMainzdMainzuwrapper, main4_bytes)</code>.</p>
+<p>By the way, <code>main4</code> is:</p>
+<p>(<code>-ddump-simpl</code>)</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1"></a><span class="ot">main4 ::</span> <span class="dt">Addr</span><span class="op">#</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>main4 <span class="ot">=</span> <span class="st">&quot;L&quot;</span><span class="op">#</span></span></code></pre></div>
+<p>Which is basically:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1"></a><span class="dt">char</span> main4_bytes = <span class="st">&quot;L&quot;</span>;</span></code></pre></div>
+<h3 id="what-exactly-is-an-adjustor">What exactly is an adjustor</h3>
+<p>An adjustor is basically a piece of <em>dynamically created machine code</em> that arranges a call to the C function mentioned above. It is created as executable memory, and a pointer to it looks like a function pointer like, for example, <code>int (*)(int)</code> in our case.</p>
+<p><code>createAdjustor</code> can be found in <code>rts/Adjustor.c</code>. The prototype of <code>createAdjustor</code> is this:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1"></a><span class="dt">void</span>* createAdjustor (<span class="dt">int</span> cconv, StgStablePtr hptr, StgFunPtr wptr, <span class="dt">char</span> *typeString);</span></code></pre></div>
+<p>(Note that the <code>libffi</code> version of this function is probably not used, at least by default, as I cannot find <code>USE_LIBFFI_FOR_ADJUSTORS</code> anywhere else, and the wrapper has a wrong type. Try starting by finding <code>#else // To end of file...</code>.)</p>
+<p><code>cconv</code> is <code>1</code>, which means <code>ccall</code>. (It can also be <code>0</code> non-<code>darwin</code> x86, which means <code>stdcall</code>).</p>
+<p>(The non-<code>libffi</code> version of) <code>createAdjustor</code> is a monstrosity, with more than a thousand lines in its implementation, mainly due to the need to cater for all the architectures GHC needs to support.</p>
+<p>Freeing such a function pointer, then, involves finding and freeing the <code>StablePtr</code> hiding among the instructions, and deallocating the memory containing the machine code.</p>
+<h3 id="what-is-a-stableptr-anyway">What is a <code>StablePtr</code> anyway</h3>
+<p>The documentation for <code>Foreign.StablePtr</code> says it all, really:</p>
+<blockquote>
+<p>A stable pointer is a reference to a Haskell expression that is guaranteed not to be affected by garbage collection, i.e., it will neither be deallocated nor will the value of the stable pointer itself change during garbage collection (ordinary references may be relocated during garbage collection).</p>
+</blockquote>
+<p>How did we do this? In <code>rts/Stable.c</code>:</p>
+<blockquote>
+<p>Our solution is to keep a table of all objects we've given to the C-world and to make sure that the garbage collector collects<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> these objects — updating the table as required to make sure we can still find the object.</p>
+</blockquote>
+<p>So basically, a <code>StablePtr</code> is an entry in some global table of 'please don't free me' things. And you can't really reliably get the underlying pointer to the Haskell value in C because you weren't supposed to know what it was, or even where it was, since GHC has a moving garbage collector.</p>
+<p>And I didn't copy the code here, but that's it. <code>stable_ptr_table</code> is just an array of pointers, which automatically expands as needed. The pointer also doubles as a linked list of free entries. The GC checks this table and knows that the values pointed to are still accessible.</p>
+<h2 id="about-this-document">About this document</h2>
+<p>The source of this document can be found at <a href="corecall.md"><code>corecall.md</code></a>. Generate this HTML page with:</p>
+<pre class="console"><code>$ pandoc -f markdown+footnotes-smart &lt; corecall.md &gt; index.html</code></pre>
+</body>
+</html>
+<section class="footnotes" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>I think 'collects' means 'sees and doesn't free', instead of 'frees'.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
