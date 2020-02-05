@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Heyting algebra made unnecessarily complex -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+    <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">coding, thoughts and stuff irl</div>
+</div>
+
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Heyting algebra made unnecessarily complex</h1>
+    <span id="post-title-sub">2020-02-06</span>
+</div>
+<p>(Apparently I went through a very long detour when trying to understand Heyting algebra. At least now I have the following blog post.)</p>
+<p>Imagine an intuitionistic propositional logic, with the following formulas:</p>
+<ul>
+<li>Atoms <span class="math inline">\(A\)</span>, <span class="math inline">\(B\)</span> ...</li>
+<li>Disjunction <span class="math inline">\(A \vee B\)</span></li>
+<li>Conjunction <span class="math inline">\(A \wedge B\)</span></li>
+<li>Implication <span class="math inline">\(A \to B\)</span></li>
+<li>Propositional constants <span class="math inline">\(\top\)</span> <span class="math inline">\(\bot\)</span></li>
+</ul>
+<p>Also, imagine a simply typed lambda calculus (STLC) with at least the following types and their operations:</p>
+<ul>
+<li>Sum type <span class="math inline">\(A + B\)</span></li>
+<li>Product type <span class="math inline">\(A \times B\)</span></li>
+<li>Function type <span class="math inline">\(A \to B\)</span></li>
+<li>Unit type <span class="math inline">\(()\)</span></li>
+<li>Empty type <span class="math inline">\(\mathrm{Void}\)</span></li>
+</ul>
+<p>From the Curry-Howard correspondence we can establish a pretty solid connection between the two. This you probably already know.</p>
+<p>But it is also well-known that <a href="http://conal.net/papers/compiling-to-categories/">the (most general) simply typed lambda-calculus is modeled by any cartesian closed category (CCC)</a>. The STLC we need also needs coproduct (sum) objects in the category.</p>
+<h2 id="category-in-a-hurry">Category in a hurry</h2>
+<p>You might not even be familiar with categories at all, let alone 'cartesian closed' and 'coproduct'. Let's just have a really short overview on category theoretic concepts here. What follows is not a tutorial on category theory; it just serves to show on a high level what could be done, not to teach you how to do it.</p>
+<p>Category theory takes your algebraic structures into a whole new level, but let's start from the basics. A category <span class="math inline">\(\mathscr C\)</span> has a set of objects <span class="math inline">\(\operatorname{Ob}(\mathscr C)\)</span> and for all objects <span class="math inline">\(A\)</span>, <span class="math inline">\(B\)</span> a set of arrows <span class="math inline">\(A \to B\)</span>. <span class="math inline">\(f : A \to B\)</span> shall mean '<span class="math inline">\(f\)</span> is an arrow of <span class="math inline">\(A \to B\)</span>'. Two arrows can be <em>composed</em> when the ends match, specifically if <span class="math inline">\(f : B \to C\)</span> and <span class="math inline">\(g : A \to B\)</span> then <span class="math inline">\(f \circ g : A \to C\)</span>. There is also <span class="math inline">\(\mathrm{id}_X : X\)</span> for every object <span class="math inline">\(X\)</span>, which you can think of as 'nothing composed together', which when composed with <span class="math inline">\(f : A \to B\)</span> on either side shouldn't change <span class="math inline">\(f\)</span>: <span class="math inline">\(\mathrm{id}_B \circ f = f \circ \mathrm{id}_A = f\)</span>.</p>
+<p>One common pitfall: objects do not 'contain' anything! They are just tags. And also arrows aren't functions but it isn't uncommon to see function-like arrows.</p>
+<p>Objects can be related with one another. A common way is something like '<span class="math inline">\(C\)</span> is the product object of <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> iff something', but tracking the variables quickly gets unwieldy so we often say '<span class="math inline">\(A \times B\)</span> is the product object of <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> iff something'. Note that for convenience this might not actually well defined! But if a category 'has all binary products' it means there <em>is</em> an <span class="math inline">\(A \times B\)</span> for all <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span>.</p>
+<p>Examples objects are the <em>product</em> <span class="math inline">\(A \times B\)</span> and <em>exponential</em> <span class="math inline">\([A, B]\)</span>, which you can think of as representing something like product types and function types. But remember, objects do not contain anything! Instead we must define them using arrows. Let's try the exponential.</p>
+<p>An <strong>exponential</strong> object <span class="math inline">\([A, B]\)</span> of <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> in a category <span class="math inline">\(\mathscr C\)</span> is another object in <span class="math inline">\(\mathscr C\)</span> equipped with an arrow <span class="math inline">\(eval : [A, B] \times A \to B\)</span> such that, for any arrow <span class="math inline">\(m : X \times A \to B\)</span>, there is a unique arrow <span class="math inline">\(u(m) : X \to [A, B]\)</span> such that <span class="math inline">\(\mathrm{eval} \circ (u(m) \times \mathrm{id}_A) = m\)</span>. Graphically, this is shown as below (a 'commutative diagram' as they would call it):</p>
+<p><img src="exponential.svg" style="width: 40%; margin: 0 30%;" alt="Commutative diagram for exponential" /><br />
+</p>
+<p>Basically, it means that the essence of a function type is that it can be created by currying. You can see its usage in the lambda calculus below. In a functional language, say Haskell, <span class="math inline">\(u\)</span> would have type <code>((x, a) -&gt; b) -&gt; x -&gt; a -&gt; b</code>, which is just the <code>curry</code> function.</p>
+<p>(The <span class="math inline">\(\times \mathrm{id}_A\)</span> part of <span class="math inline">\(u(m) \times \mathrm{id}_A\)</span> turns a <span class="math inline">\(C \to [A, B]\)</span> into a <span class="math inline">\(C \times A \to [A, B] \times A\)</span>. Detail is of course skipped content.)</p>
+<p>(If you are still confused about the difference between <span class="math inline">\([A, B]\)</span> and <span class="math inline">\(A \to B\)</span>, think <span class="math inline">\([A, B]\)</span> as 'first-class functions'. Okay, objects are second class in category theory, whatever.)</p>
+<p>Do pay special attention to the 'if this then that' involved and the 'types' of the arrows. They come into play later on when we interpret these in a logic setting.</p>
+<h2 id="from-stlc-to-ccc-and-back">From STLC to CCC (and back)</h2>
+<p>We can basically 'implement' STLC in a category with sufficient structure (has the objects we want so we can use them). For our needs what we want is the following:</p>
+<ul>
+<li>All products <span class="math inline">\(A \times B\)</span></li>
+<li>All coproducts <span class="math inline">\(A + B\)</span></li>
+<li>All exponentials <span class="math inline">\([A, B]\)</span></li>
+<li>Terminal object <span class="math inline">\(1\)</span></li>
+<li>Initial object <span class="math inline">\(0\)</span></li>
+</ul>
+<p>We also impose some relation between these objects so they actually work together. Then we can make an STLC out of it. For functions we can use de Bruijn indices. You can check out the Codewars kata <a href="https://www.codewars.com/kata/finally-tagless-interpreter">Finally tagless interpreter</a> where this is done. As the code is hidden behind the 'Train' button, while you read the description also read this code snipped related to lambda:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">class</span> <span class="dt">Language</span> r <span class="kw">where</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="ot">  here   ::</span> r (a, h) a</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="ot">  before ::</span> r h a <span class="ot">-&gt;</span> r (<span class="fu">any</span>, h) a</span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="ot">  lambda ::</span> r (a, h) b <span class="ot">-&gt;</span> r h (a <span class="ot">-&gt;</span> b)</span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="ot">  apply  ::</span> r h (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (r h a <span class="ot">-&gt;</span> r h b)</span>
+<span id="cb1-6"><a href="#cb1-6"></a></span>
+<span id="cb1-7"><a href="#cb1-7"></a>  <span class="co">-- Lots and lots and lots more...</span></span></code></pre></div>
+<p>Think <code>r a b</code> as <span class="math inline">\(a \to b\)</span> in the category <span class="math inline">\(r\)</span>. <code>a</code> is used as a 'context stack' like <code>(x, (y, (z, ())))</code> holding the variable types, and <code>b</code> is the 'result type'. The other types correspond more directly to the categorical objects and are sort of easier to integrate. You still need to work out how to implement these operations in terms of the definition of objects, which we haven't talked about. Whatever.</p>
+<p>An important note is that <code>r () a</code> represents a closed (i.e. no context) term of type <code>a</code>. Back to our category notation, this would be <span class="math inline">\(1 \to A\)</span>.</p>
+<p>What does that mean? It means that if there is an STLC term of type <span class="math inline">\(A\)</span>, then in every cartesian closed category with sum (CCC with sum), there is an arrow <span class="math inline">\(1 \to A&#39;\)</span>, where <span class="math inline">\(A&#39;\)</span> is the <span class="math inline">\(A\)</span> after 'translating' types to objects.</p>
+<p>(Actually, that wasn't very rigourous, because the STLC defined at the beginning is actually left open. If for example we add 'atom' types and 'atom' objects (opaque types/objects) just like atomic propositions, then translate say atom type <span class="math inline">\(T_i\)</span> to atom object <span class="math inline">\(O_i\)</span> for all <span class="math inline">\(i\)</span> and close the definition of STLC up, this would not be a problem.)</p>
+<p>Can we go the other way around? If <span class="math inline">\(1 \to A&#39;\)</span> exists in every CCC with sum, then it exists in the category of STLC functions, where objects are types and arrows are function values. <span class="math inline">\(A&#39;\)</span> doesn't need to <em>correspond</em> to a type because now it <em>is</em> the type. Just remove that useless '<span class="math inline">\(() \to\)</span>' and we're golden.</p>
+<p>Midway summary: <span class="math inline">\(\mathrm{term} : A\)</span> exists in STLC iff <span class="math inline">\(f : 1 \to A&#39;\)</span> exists in <em>every</em> CCC with sum.</p>
+<h2 id="going-to-logic-land">Going to logic land</h2>
+<p>Now we gradually move from computation to logic, where proof irrelevance rules the land. Now we stop distinguishing two arrows of the same type <span class="math inline">\(A \to B\)</span>; we just say they are equal. We now declare that <span class="math inline">\(A \to B\)</span> can also be a shorthand of 'An arrow of <span class="math inline">\(A \to B\)</span> exists'.</p>
+<p>Furthermore, if there are arrows <span class="math inline">\(A \to B\)</span> and <span class="math inline">\(B \to A\)</span> (<span class="math inline">\(A \leftrightarrow B\)</span>, you might say), then we stop distinguishing <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> (because objects are just tags which means <span class="math inline">\(X \to A\)</span> iff <span class="math inline">\(X \to B\)</span>, and <span class="math inline">\(A \to X\)</span> iff <span class="math inline">\(B \to X\)</span>, which make <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> indistinguishable in the arrow existence sense).</p>
+<p>Note that I have not changed the 'inhabitedness' of each arrow 'type' <span class="math inline">\(A \to B\)</span>. I just no longer care that two arrows of the same type are different.</p>
+<p>What do we get? Let's go through some examples. First, the very definition of a category.</p>
+<ul>
+<li><span class="math inline">\(\mathrm{id}_A : A \to A\)</span> turns into <span class="math inline">\(A \to A\)</span></li>
+<li>Composition means if <span class="math inline">\(B \to C\)</span> and <span class="math inline">\(A \to B\)</span>, then <span class="math inline">\(A \to C\)</span></li>
+<li>(We already said that if <span class="math inline">\(A \to B\)</span> and <span class="math inline">\(B \to A\)</span> then <span class="math inline">\(A = B\)</span>)</li>
+</ul>
+<p>Sounds like <span class="math inline">\(\to\)</span> is now a partial order. What about exponentials? Do recall the two properties:</p>
+<ul>
+<li><span class="math inline">\(eval : [A, B] \times A \to B\)</span> is now just <span class="math inline">\([A, B] \times A \to B\)</span></li>
+<li>'given <span class="math inline">\(m : X \times A \to B\)</span> get <span class="math inline">\(u(m) : X \to [A, B]\)</span>' is now just if <span class="math inline">\(X \times A \to B\)</span> then <span class="math inline">\(X \to [A, B]\)</span></li>
+</ul>
+<p>As it turns out, it means that <span class="math inline">\([A, B]\)</span> is the largest <span class="math inline">\(M\)</span> such that <span class="math inline">\(M \times A \to B\)</span> ('less than or equal to' is <span class="math inline">\(\to\)</span>) . Which actually turns out to be the relative complement or implication operator of a… Heyting algebra.</p>
+<p>The rest of the category theoretical objects and their required properties correspond to the requirement of a bounded lattice, the basis of a Heyting algebra.</p>
+<ul>
+<li>Product <span class="math inline">\(A \times B\)</span> turns into meet <span class="math inline">\(A \wedge B\)</span></li>
+<li>Coproduct <span class="math inline">\(A + B\)</span> turns into join <span class="math inline">\(A \vee B\)</span></li>
+<li>Terminal object <span class="math inline">\(1\)</span> turns into upper bound</li>
+<li>Initial object <span class="math inline">\(0\)</span> turns into lower bound</li>
+</ul>
+<p>Remember that <span class="math inline">\(1 \to A\)</span> thing? It is always the case that <span class="math inline">\(A \to 1\)</span>. So now it's equivalent to <span class="math inline">\(A = 1\)</span>. So an arrow of <span class="math inline">\(1 \to A\)</span> exists in a CCC with sum iff <span class="math inline">\(A = 1\)</span> in the corresponding Heyting algebra.</p>
+<p>But every Heyting algebra is a CCC with sum, because every requirement of a Heyting algebra <em>also</em> satisfies the corresponding object in a CCC with sum. Therefore, An arrow of <span class="math inline">\(1 \to A\)</span> exists in <em>every</em> CCC with sum, iff <span class="math inline">\(A = 1\)</span> in <em>every</em> Heyting algebra.</p>
+<h2 id="summing-up">Summing up</h2>
+<p>We already know about the Curry-Howard correspondence, so taking that into account we have the following: For a proposition <span class="math inline">\(P\)</span> in propositional logic. Let <span class="math inline">\([P]\)</span> mean <span class="math inline">\(P\)</span> translated according to context, then the following are equivalent:</p>
+<ul>
+<li><span class="math inline">\(P\)</span> is provable intuitionistically</li>
+<li>There is a term in STLC with type <span class="math inline">\([P]\)</span></li>
+<li>There is an arrow of <span class="math inline">\(1 \to [P]\)</span> in CCC with sum</li>
+<li><span class="math inline">\([P] = 1\)</span> in every Heyting algebra</li>
+</ul>
+<p>(Of course there's that pesky variable thing. You can either add opaque symbols or say stuff like 'under any valuation' or whatever. This isn't rigorous, but I hope it gets the idea across.)</p>
+<p>The equivalence of the first and last items are what I was seeking. But isn't the journey beautiful?</p>
+<h2 id="about-this-document">About this document</h2>
+<p>The source of this document can be found at <a href="heyting.md"><code>heyting.md</code></a>. Generate this HTML page with:</p>
+<pre class="console"><code>$ pandoc --mathjax -f markdown-smart &lt; heyting.md &gt; index.html</code></pre>
+</body>
+</html>
