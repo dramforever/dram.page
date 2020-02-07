@@ -145,7 +145,7 @@ We already know about the Curry-Howard correspondence, so taking that into accou
 
 - $P$ is provable intuitionistically
 - There is a term in STLC with type $[P]$
-- There is an arrow of $1 \to [P]$ in CCC with sum
+- There is an arrow of $1 \to [P]$ in every CCC with sum
 - $[P] = 1$ in every Heyting algebra
 
 (Of course there's that pesky variable thing. You can either add opaque symbols or say stuff like 'under any valuation' or whatever. This isn't rigorous, but I hope it gets the idea across.)
