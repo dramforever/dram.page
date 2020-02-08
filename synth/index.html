@@ -61,6 +61,8 @@
 
     const analyser = actx.createAnalyser();
 
+    let stopped = true;
+
     for (const wf of waveforms) {
         osc[wf] = actx.createOscillator();
         gain[wf] = actx.createGain();
@@ -78,6 +80,8 @@
     const freq = (note) => Math.pow(2, note / 12) * 440;
 
     function playNotes(notes) {
+        stopped = false;
+
         if (!oscStarted) {
             oscStarted = true;
             for (const wf of waveforms)
@@ -114,6 +118,12 @@
 
         for (const wf of waveforms)
             gain[wf].gain.setValueAtTime(0, t);
+
+        setTimeout(() => {
+            stopped = true;
+        }, t * 1000 + 1);
+
+        draw();
     }
 
     function parseNotes(str) {
@@ -160,7 +170,7 @@
             } else if ('><pq'.includes(str[pos])) {
                 const delta = { '>': 12, '<': -12, 'p': 1, 'q': -1 };
                 noteBase += delta[str[pos]];
-                pos ++;                
+                pos ++;
             } else if ('(' === str[pos]) {
                 // Comment
                 pos ++;
@@ -174,7 +184,7 @@
 
 
                 if (null === res) {
-                    // Unclosed    
+                    // Unclosed
                     result.push({
                         error: str[pos],
                         first: pos,
@@ -236,7 +246,7 @@
         return result;
     }
 
-    
+
     const startBtn = document.querySelector('#start');
     const stopBtn = document.querySelector('#stop');
     const notesBox = document.querySelector('#notes');
@@ -303,6 +313,8 @@ a>ccd<aga- ga>cd<aga-
     const dataArray = new Float32Array(bufferLength);
 
     function draw() {
+        if (stopped) return;
+
         analyser.getFloatTimeDomainData(dataArray);
 
         const threshold = -0.1;
@@ -343,7 +355,7 @@ a>ccd<aga- ga>cd<aga-
             vctx.clearRect(0, 0, vwidth, vheight);
             vctx.strokeStyle = '#000000';
             vctx.lineWidth = 2;
-            
+
             vctx.beginPath();
             vctx.moveTo(0, vheight / 2);
             vctx.lineTo(vwidth, vheight / 2);
@@ -352,6 +364,4 @@ a>ccd<aga- ga>cd<aga-
 
         requestAnimationFrame(draw);
     }
-
-    draw();
 </script>
