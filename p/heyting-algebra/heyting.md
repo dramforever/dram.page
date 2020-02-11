@@ -57,11 +57,11 @@ Category theory takes your algebraic structures into a whole new level, but let'
 
 One common pitfall: objects do not 'contain' anything! They are just tags. And also arrows aren't functions but it isn't uncommon to see function-like arrows.
 
-Objects can be related with one another. A common way is something like '$C$ is the product object of $A$ and $B$ iff something', but tracking the variables quickly gets unwieldy so we often say '$A \times B$ is the product object of $A$ and $B$ iff something'. Note that for convenience this might not actually well defined! But if a category 'has all binary products' it means there *is* an $A \times B$ for all $A$ and $B$.
+Objects can be related with one another. A common way is something like '$C$ is the product object of $A$ and $B$ iff something', but tracking the variables quickly gets unwieldy so we often say '$A \times B$ is the product object of $A$ and $B$ iff something'. Note that for convenience this might not actually be well defined! But if a category 'has all binary products' it means there *is* an $A \times B$ for all $A$ and $B$.
 
 Examples objects are the *product* $A \times B$ and *exponential* $[A, B]$, which you can think of as representing something like product types and function types. But remember, objects do not contain anything! Instead we must define them using arrows. Let's try the exponential.
 
-An **exponential** object $[A, B]$ of $A$ and $B$ in a category $\mathscr C$ is another object in $\mathscr C$ equipped with an arrow $eval : [A, B] \times A \to B$ such that, for any arrow $m : X \times A \to B$, there is a unique arrow $u(m) : X \to [A, B]$ such that $\mathrm{eval} \circ (u(m) \times \mathrm{id}_A) = m$. Graphically, this is shown as below (a 'commutative diagram' as they would call it):
+An **exponential** object $[A, B]$ of $A$ and $B$ in a category $\mathscr C$ is another object in $\mathscr C$ equipped with an arrow $\mathrm{eval} : [A, B] \times A \to B$ such that, for any arrow $m : X \times A \to B$, there is a unique arrow $u(m) : X \to [A, B]$ such that $\mathrm{eval} \circ (u(m) \times \mathrm{id}_A) = m$. Graphically, this is shown as below (a 'commutative diagram' as they would call it):
 
 ![Commutative diagram for exponential](exponential.svg){ style="width: 40%; margin: 0 30%;" }\
 
@@ -123,7 +123,7 @@ What do we get? Let's go through some examples. First, the very definition of a 
 
 Sounds like $\to$ is now a partial order. What about exponentials? Do recall the two properties:
 
-- $eval : [A, B] \times A \to B$ is now just $[A, B] \times A \to B$
+- $\mathrm{eval} : [A, B] \times A \to B$ is now just $[A, B] \times A \to B$
 - 'given $m : X \times A \to B$ get $u(m) : X \to [A, B]$' is now just if $X \times A \to B$ then $X \to [A, B]$
 
 As it turns out, it means that $[A, B]$ is the largest $M$ such that $M \times A \to B$ ('less than or equal to' is $\to$) . Which actually turns out to be the relative complement or implication operator of a&hellip; Heyting algebra.
