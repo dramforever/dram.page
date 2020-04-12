@@ -4,16 +4,16 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<style>
+<style style="display: block;" contenteditable="true">
     #demo {
-        display: inline-block;
+        display: block;
         font-family: monospace;
         white-space: pre;
-        overflow-x: scroll;
+        overflow-x: auto;
         border: 1px solid black;
-        margin: 3px;
+        margin: 5px;
         margin-top: 30px;
-        padding: 3px;
+        padding: 10px;
     }
 
     .prompt {
@@ -63,16 +63,16 @@ const proc = K.process((run) => {
         run(() => K.appendChildD(para, inp));
         run(() => K.appendChildD(container, para));
 
-        const prompt = run(() => K.pureS(document.createElement('p')));
-        run(() => K.setPropertyD(prompt, 'className', 'prompt'));
-        run(() => K.appendChildD(container, prompt));
-
         run(() => K.listenS(K.domEvent(inp, 'input')));
 
         if (inp.value !== i.toString()) {
-            if (inp.value !== '')
+            if (inp.value !== '') {
+                const prompt = run(() => K.pureS(document.createElement('p')));
+                run(() => K.setPropertyD(prompt, 'className', 'prompt'));
+                run(() => K.appendChildD(container, prompt));
                 run(() => K.setPropertyD(prompt, 'innerText',
                     `${inp.value} isn't right`));
+            }
             run(() => K.setPropertyD(inp, 'className', 'wrong'))
             return;
         } else {
