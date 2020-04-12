@@ -2,27 +2,51 @@
 
 <head>
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
     #demo {
         display: inline-block;
         font-family: monospace;
-        white-space: pre-wrap;
+        white-space: pre;
+        overflow-x: scroll;
         border: 1px solid black;
         margin: 3px;
+        margin-top: 30px;
         padding: 3px;
+    }
+
+    .prompt {
+        text-decoration: underline;
+    }
+
+    .ok {
+        border: 1px solid green;
+    }
+
+    .wrong {
+        border: 1px solid red;
+    }
+
+    input:focus {
+        outline: none;
+    }
+
+    body {
+        margin-bottom: 50px;
     }
 </style>
 
 </head>
 
-<body></body>
+<body>
+<div id="container"></div>
 
 <script id="demo">const K = Kagome;
 
-const proc = K.process((run) => {
-    const container = run(() => K.pureS(document.createElement('div')));
-    run(() => K.appendChildD(document.body, container));
+const container = document.querySelector('#container');
 
+const proc = K.process((run) => {
     for (let i = 0;; i ++) {
         const para = run(() => K.pureS(document.createElement('p')));
 
@@ -39,10 +63,21 @@ const proc = K.process((run) => {
         run(() => K.appendChildD(para, inp));
         run(() => K.appendChildD(container, para));
 
+        const prompt = run(() => K.pureS(document.createElement('p')));
+        run(() => K.setPropertyD(prompt, 'className', 'prompt'));
+        run(() => K.appendChildD(container, prompt));
+
         run(() => K.listenS(K.domEvent(inp, 'input')));
 
-        if (inp.value !== i.toString())
+        if (inp.value !== i.toString()) {
+            if (inp.value !== '')
+                run(() => K.setPropertyD(prompt, 'innerText',
+                    `${inp.value} isn't right`));
+            run(() => K.setPropertyD(inp, 'className', 'wrong'))
             return;
+        } else {
+            run(() => K.setPropertyD(inp, 'className', 'ok'))
+        }
     }
 });
 </script>
