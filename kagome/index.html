@@ -1,4 +1,4 @@
-<script src="dist/kagome.min.js"></script>
+<script src="dist/index.js"></script>
 
 <head>
 
@@ -46,7 +46,7 @@
 
 const container = document.querySelector('#container');
 
-const proc = K.process((run) => {
+K.toplevel((run) => {
     for (let i = 0;; i ++) {
         const para = run(() => K.pureS(document.createElement('p')));
 
@@ -63,17 +63,17 @@ const proc = K.process((run) => {
         run(() => K.appendChildD(para, inp));
         run(() => K.appendChildD(container, para));
 
+        const prompt = run(() => K.pureS(document.createElement('p')));
+        run(() => K.setPropertyD(prompt, 'className', 'prompt'));
+        run(() => K.appendChildD(container, prompt));
+
         run(() => K.listenS(K.domEvent(inp, 'input')));
 
         if (inp.value !== i.toString()) {
-            if (inp.value !== '') {
-                const prompt = run(() => K.pureS(document.createElement('p')));
-                run(() => K.setPropertyD(prompt, 'className', 'prompt'));
-                run(() => K.appendChildD(container, prompt));
+            run(() => K.setPropertyD(inp, 'className', 'wrong'))
+            if (inp.value !== '')
                 run(() => K.setPropertyD(prompt, 'innerText',
                     `${inp.value} isn't right`));
-            }
-            run(() => K.setPropertyD(inp, 'className', 'wrong'))
             return;
         } else {
             run(() => K.setPropertyD(inp, 'className', 'ok'))
