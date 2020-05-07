@@ -24,6 +24,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 var K = Kagome;
+K.debugConfig.debugProcessRun = true;
 var Input = function (_a) {
     var valueR = _a.valueR, rest = __rest(_a, ["valueR"]);
     return K.process(function (run) {
@@ -32,60 +33,83 @@ var Input = function (_a) {
         return inp;
     });
 };
-var Interact = function () { return K.process(function (run) {
-    var container = run(function () { return K.kagomeElement("div", null); });
-    var _loop_1 = function (i) {
-        var id = run(function () {
-            return K.pureS("inp-" + Math.random() * Math.pow(2, 52));
-        });
-        var classR = run(function () { return K.reg(undefined); });
-        var valueR = run(function () { return K.reg(''); });
-        var hidePromptR = run(function () { return K.reg(false); });
-        var hideInputR = run(function () { return K.reg(false); });
-        var extraMessageR = run(function () { return K.reg(''); });
-        var part = run(function () {
+var Interact = function (_a) {
+    var id = _a.id, blocks = _a.blocks;
+    return K.process(function (run) {
+        var removeSelf = function () {
+            var at = blocks.value.findIndex(function (id1) { return id == id1; });
+            if (at !== -1)
+                blocks.splice(at, 1);
+        };
+        var container = run(function () {
             return K.kagomeElement("div", null,
-                K.kagomeElement("label", { for: id },
-                    "Please type ",
-                    i,
-                    ": "),
-                K.kagomeElement(Input, { id: id, class: classR, valueR: valueR, hidden: hideInputR }),
-                K.kagomeElement("p", { class: "prompt", hidden: hidePromptR },
-                    valueR,
-                    " isn't right"),
-                K.kagomeElement("p", { class: "prompt", hidden: hidePromptR }, extraMessageR));
+                K.kagomeElement("button", { onclick: removeSelf },
+                    "Remove ",
+                    id));
         });
-        run(function () { return K.appendChildD(container, part); });
-        var value = run(function () { return valueR; });
-        if (value !== i.toString()) {
-            run(function () { return classR.setD('wrong'); });
-            if (value === undefined || value === '') {
-                // Input is empty
+        var _loop_1 = function (i) {
+            var id_1 = run(function () {
+                return K.pureS("inp-" + Math.random() * Math.pow(2, 52));
+            });
+            var classR = run(function () { return K.reg(undefined); });
+            var valueR = run(function () { return K.reg(''); });
+            var hidePromptR = run(function () { return K.reg(false); });
+            var hideInputR = run(function () { return K.reg(false); });
+            var extraMessageR = run(function () { return K.reg(''); });
+            var part = run(function () {
+                return K.kagomeElement("div", null,
+                    K.kagomeElement("label", { for: id_1 },
+                        "Please type ",
+                        i,
+                        ": "),
+                    K.kagomeElement(Input, { id: id_1, class: classR, valueR: valueR, hidden: hideInputR }),
+                    K.kagomeElement("p", { class: "prompt", hidden: hidePromptR },
+                        valueR,
+                        " isn't right"),
+                    K.kagomeElement("p", { class: "prompt", hidden: hidePromptR }, extraMessageR));
+            });
+            run(function () { return K.appendChildD(container, part); });
+            var value = run(function () { return valueR; });
+            if (value !== i.toString()) {
+                run(function () { return classR.setD('wrong'); });
+                if (value === undefined || value === '') {
+                    // Input is empty
+                    run(function () { return hidePromptR.setD(true); });
+                }
+                if (value.length - i.toString().length > 10) {
+                    run(function () { return hideInputR.setD(true); });
+                    run(function () { return extraMessageR.setD('Forget about it'); });
+                }
+                return "break";
+            }
+            else {
                 run(function () { return hidePromptR.setD(true); });
+                run(function () { return classR.setD('ok'); });
             }
-            if (value.length - i.toString().length > 10) {
-                run(function () { return hideInputR.setD(true); });
-                run(function () { return extraMessageR.setD('Forget about it'); });
-            }
-            return "break";
+        };
+        for (var i = 0;; i++) {
+            var state_1 = _loop_1(i);
+            if (state_1 === "break")
+                break;
         }
-        else {
-            run(function () { return hidePromptR.setD(true); });
-            run(function () { return classR.setD('ok'); });
-        }
-    };
-    for (var i = 0;; i++) {
-        var state_1 = _loop_1(i);
-        if (state_1 === "break")
-            break;
-    }
-    return container;
-}); };
+        return container;
+    });
+};
 K.toplevel(function (run) {
+    var blocks = run(function () { return K.array(); });
+    var blocksView = run(function () { return blocks.sfa(function (id) {
+        return K.kagomeElement(Interact, { id: id, blocks: blocks });
+    }); });
+    var counter = run(function () { return K.pureS({ value: 0 }); });
+    var addBlock = function () {
+        var id = counter.value++;
+        blocks.push(id);
+    };
     var app = run(function () {
         return K.kagomeElement("div", { class: "main" },
-            K.kagomeElement(Interact, null),
-            K.mapped([Interact(), K.kagomeElement(Interact, null)]));
+            K.kagomeElement("div", null,
+                K.kagomeElement("button", { onclick: addBlock }, "Add a block")),
+            blocksView);
     });
     run(function () { return K.appendChildD(document.body, app); });
 });

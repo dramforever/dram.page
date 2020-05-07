@@ -14,10 +14,21 @@ body {
 .main {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-start;
 }
 
 .main > div {
     border: 1px solid black;
     padding: 15px;
     margin: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+button {
+    background: none;
+    border: 1px solid black;
+    outline: none;
+    padding: 4px 10px;
+    width: 100%;
 }
