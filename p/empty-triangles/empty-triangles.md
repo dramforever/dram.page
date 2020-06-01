@@ -285,13 +285,13 @@ Therefore given the the first interval's starting point $l_{1} = 2$, the end of 
 
 By recursively computing $G$ as shown, memoizing using a hash table, we can achieve $O(n^{3/4})$ time complexity and $O(n^{1/2})$ space complexity. If we use a sieve to pre-compute the first $O(n^{2/3})$ terms of $G(n)$ we can achieve $O(n^{2/3})$ time and space complexity.
 
-The complexity proof: In the no-precomputation case very $G(\lfloor n / d \rfloor)$ is computed exactly once, each taking $O(\sqrt{\lfloor n / d \rfloor})$ time. As discussed earlier $\lfloor n / d \rfloor$ takes on the values $1, 2, \dots, \sqrt{n}$ and $n/1, n/2, ..., n/\sqrt{n}$ (We are talking asymptotics here so we'll just ignore the details.), therefore the total time is:
+The complexity proof: In the no-precomputation case every $G(\lfloor n / d \rfloor)$ is computed exactly once, each taking $O(\sqrt{\lfloor n / d \rfloor})$ time. As discussed earlier $\lfloor n / d \rfloor$ takes on the values $1, 2, \dots, \sqrt{n}$ and $n/1, n/2, ..., n/\sqrt{n}$ (We are talking asymptotics here so we'll just ignore the details.), therefore the total time is:
 $$
 \begin{align}
 T(n) &= \sum_{i = 1}^{\sqrt{n}} O\left( \sqrt{i} + \sqrt{\frac{n}{i}} \right) \\
 &= \sum_{i = 1}^{\sqrt{n}} O\left( i^{1/2} + i^{-1/2} \sqrt{n} \right) \\
 &= O((\sqrt{n})^{3/2}) + O((\sqrt{n})^{1/2}) \sqrt{n} \\
-&= O(\sqrt{n}^{3/4})
+&= O(n^{3/4})
 \end{align}
 $$
 If we can find the first $O(n^k)$ (where $1/2 \le k \le 3/4$) values of $g$ in $O(n^k)$ time we can accelerate the process. This is often possible for, for example, multiplicative functions where [Euler's sieve][wp-euler-sieve] can be used. For more detailed information check [this note on Codeforces][cf-euler-sieve]. The new execution time is
