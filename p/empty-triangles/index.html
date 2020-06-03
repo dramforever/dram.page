@@ -134,7 +134,7 @@ a(n, m) &amp;= \sum_{i = 1}^{n} \sum_{j = 1}^{m}
 <p>Note that in the last step I 'switched variables' <span class="math inline">\(i \leftarrow i/d\)</span> and <span class="math inline">\(j \leftarrow j/d\)</span>, and instead of looking for possible <span class="math inline">\(d\)</span> given <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>, I look for possible <span class="math inline">\(di\)</span> and <span class="math inline">\(dj\)</span> given <span class="math inline">\(d\)</span>, which is simpler because it does not involve a divisibility check.</p>
 <p>Let's split that up into three parts for easier handling later on: <span class="math display">\[
 \cdots = a_0(n, m) + a_1(n, m) + a_2(n, m)
-\]</span> Where: $$ <span class="math display">\[\begin{align}
+\]</span> Where:  <span class="math display">\[\begin{align}
 a_0(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d)
     (n + 1) (m + 1)
@@ -158,7 +158,7 @@ a_2(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d) d^2
     \mathsf{ID}(\lfloor \frac{n}{d} \rfloor)
     \mathsf{ID}(\lfloor \frac{m}{d} \rfloor)
-\end{align}\]</span> $$</p>
+\end{align}\]</span> </p>
 <p>Where <span class="math inline">\(\mathsf{ID}(n)\)</span> is the sum of <span class="math inline">\(\mathsf{id}(n) = n\)</span>, that is <span class="math inline">\(\mathsf{ID}(n) = n (n + 1) / 2\)</span>.</p>
 <p>The three parts have a common pattern: <span class="math display">\[
 \begin{align}
@@ -190,7 +190,7 @@ G(n) = \frac{1}{f(1)} \left(\sum_{i = 1}^{n} (f * g)(i) - \sum_{c = 1}^{n} f(c) 
 <li>about <span class="math inline">\(\sqrt{n}, \sqrt{n} - 1, \dots, 1\)</span>, for <span class="math inline">\(c &gt; \sqrt{n}\)</span></li>
 </ul>
 <p>The sum over <span class="math inline">\(c\)</span> from <span class="math inline">\(1\)</span> to <span class="math inline">\(n\)</span> is now broken up into <span class="math inline">\(O(\sqrt{n})\)</span> segments where <span class="math inline">\(\lfloor n / c \rfloor\)</span> is equal, and <span class="math inline">\(G(\lfloor n / c \rfloor)\)</span> only needs to be calculated once per segment.</p>
-<p>Given <span class="math inline">\(x\)</span>, we want to solve for <span class="math inline">\(j\)</span> in <span class="math inline">\(\lfloor n / j \rfloor = x\)</span>, which shall give us the form of each segment. $$ <span class="math display">\[\begin{gather}
+<p>Given <span class="math inline">\(x\)</span>, we want to solve for <span class="math inline">\(j\)</span> in <span class="math inline">\(\lfloor n / j \rfloor = x\)</span>, which shall give us the form of each segment.  <span class="math display">\[\begin{gather}
 x = \lfloor \frac{n}{j} \rfloor \\
 
 x \le \frac{n}{j} &lt; x + 1 \\
@@ -200,7 +200,7 @@ x \le \frac{n}{j} &lt; x + 1 \\
 \le j
 \le \left\lfloor \frac{n}{x} \right\rfloor
 
-\end{gather}\]</span> $$ Therefore given the the first interval's starting point <span class="math inline">\(l_{1} = 2\)</span>, the end of this interval is <span class="math inline">\(r_{1} = \lfloor n / \lfloor n / 2 \rfloor \rfloor\)</span>, and then the next interval starts at <span class="math inline">\(l_{2} = r_{1} + 1\)</span> and ends at <span class="math inline">\(r_2 = \lfloor n / \lfloor n / l_{2} \rfloor \rfloor\)</span>, etc until <span class="math inline">\(n\)</span> is reached. In each interval <span class="math inline">\([l_i, r_i]\)</span> the sum is <span class="math inline">\((F(r_i) - F(l_i)) G(\lfloor n / l_i \rfloor)\)</span>.</p>
+\end{gather}\]</span>  Therefore given the the first interval's starting point <span class="math inline">\(l_{1} = 2\)</span>, the end of this interval is <span class="math inline">\(r_{1} = \lfloor n / \lfloor n / 2 \rfloor \rfloor\)</span>, and then the next interval starts at <span class="math inline">\(l_{2} = r_{1} + 1\)</span> and ends at <span class="math inline">\(r_2 = \lfloor n / \lfloor n / l_{2} \rfloor \rfloor\)</span>, etc until <span class="math inline">\(n\)</span> is reached. In each interval <span class="math inline">\([l_i, r_i]\)</span> the sum is <span class="math inline">\((F(r_i) - F(l_i)) G(\lfloor n / l_i \rfloor)\)</span>.</p>
 <p>By recursively computing <span class="math inline">\(G\)</span> as shown, memoizing using a hash table, we can achieve <span class="math inline">\(O(n^{3/4})\)</span> time complexity and <span class="math inline">\(O(n^{1/2})\)</span> space complexity. If we use a sieve to pre-compute the first <span class="math inline">\(O(n^{2/3})\)</span> terms of <span class="math inline">\(G(n)\)</span> we can achieve <span class="math inline">\(O(n^{2/3})\)</span> time and space complexity.</p>
 <p>The complexity proof: In the no-precomputation case every <span class="math inline">\(G(\lfloor n / d \rfloor)\)</span> is computed exactly once, each taking <span class="math inline">\(O(\sqrt{\lfloor n / d \rfloor})\)</span> time. As discussed earlier <span class="math inline">\(\lfloor n / d \rfloor\)</span> takes on the values <span class="math inline">\(1, 2, \dots, \sqrt{n}\)</span> and <span class="math inline">\(n/1, n/2, ..., n/\sqrt{n}\)</span> (We are talking asymptotics here so we'll just ignore the details.), therefore the total time is: <span class="math display">\[
 \begin{align}
@@ -249,7 +249,7 @@ s_{k, u}(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
 </figure>
 <p>Apply the exact same strategy as before: For the first interval, the start is <span class="math inline">\(l_1 = 1\)</span>, and end is <span class="math inline">\(r_1 = \min\{\lfloor n / \lfloor n / l_1 \rfloor \rfloor, \lfloor m / \lfloor m / l_1 \rfloor \rfloor\}\)</span>, then for the second interval <span class="math inline">\(l_2 = r_1 + 1\)</span> and <span class="math inline">\(r_2 = \min\{\lfloor n / \lfloor n / l_2 \rfloor \rfloor, \lfloor m / \lfloor m / l_2 \rfloor \rfloor\}\)</span> and so on until <span class="math inline">\(\min\{n, m\}\)</span>. The sum in each interval is then <span class="math inline">\((M_k(r_i) - M_k(l_i - 1))f(\lfloor n / l_i \rfloor, \lfloor m / l_i \rfloor)\)</span>.</p>
 <p>We can see that each <span class="math inline">\(r_i\)</span> and <span class="math inline">\(l_i - 1\)</span> is either of the form <span class="math inline">\(\lfloor n / d \rfloor\)</span> or <span class="math inline">\(\lfloor m / d \rfloor\)</span> or <span class="math inline">\(0\)</span>. For the algorithm to work, <span class="math inline">\(M_k(0)\)</span> should be the natural choice of sum of no numbers, <span class="math inline">\(0\)</span>. Therefore if we compute all <span class="math inline">\(M_k(\lfloor n / d \rfloor)\)</span> and <span class="math inline">\(M_k(\lfloor m / d \rfloor)\)</span> in <span class="math inline">\(O(\max\{n, m\}^{2/3})\)</span> time, we can use <span class="math inline">\(O(\sqrt{n})\)</span> time to combine them into our answer <span class="math inline">\(s_{k, f}(n, m)\)</span> (provided that <span class="math inline">\(f\)</span> is available in <span class="math inline">\(O(1)\)</span>, which is the case.)</p>
-<p>Applying this template to the three parts of the sum, which as a reminder are: $$ <span class="math display">\[\begin{align}
+<p>Applying this template to the three parts of the sum, which as a reminder are:  <span class="math display">\[\begin{align}
 a_0(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d)
     (n + 1) (m + 1)
@@ -273,7 +273,7 @@ a_2(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d) d^2
     \mathsf{ID}(\lfloor \frac{n}{d} \rfloor)
     \mathsf{ID}(\lfloor \frac{m}{d} \rfloor)
-\end{align}\]</span> $$ We can have our answer <span class="math inline">\(4 (a_0(n, m) + a_1(n, m) + a_2(n, m))\)</span> in <span class="math inline">\(O(\min\{n, m\}^{2/3})\)</span> time and <span class="math inline">\(O(\min\{n, m\}^{2/3})\)</span> space.</p>
+\end{align}\]</span>  We can have our answer <span class="math inline">\(4 (a_0(n, m) + a_1(n, m) + a_2(n, m))\)</span> in <span class="math inline">\(O(\min\{n, m\}^{2/3})\)</span> time and <span class="math inline">\(O(\min\{n, m\}^{2/3})\)</span> space.</p>
 <p>Phew, that was a whopping three thousand words according to Typora. Admittedly though it does count words in LaTeX code, which may or may not represent the effort needed to read math notation.</p>
 <h2 id="a-few-more-details">A few more details</h2>
 <p>The problem requires modulo arithmetic, otherwise word-sized integers won't hold such large numbers. A supporting class <code>mo</code> is used for this purpose. I worried that it would hinder optimization, but casually playing around on <a href="https://godbolt.org" class="uri">https://godbolt.org</a> shows that it works exactly the same as using functions while not wrapping the number in a class.</p>
