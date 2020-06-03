@@ -44,3 +44,16 @@ figure * {
 figure figcaption {
     font-style: italic;
 }
+
+article p a[href]::before {
+    display: inline-block;
+    height: 16px;
+    width: 16px;
+    position: relative;
+    bottom: -3px;
+    content: "";
+    background-size: contain;
+    color: gray;
+    text-decoration: none;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cGF0aCBkPSJNMTQuNzggMy42NTNhMy45MzYgMy45MzYgMCAxMTUuNTY3IDUuNTY3bC0zLjYyNyAzLjYyN2EzLjkzNiAzLjkzNiAwIDAxLTUuODgtLjM1My43NS43NSAwIDAwLTEuMTguOTI4IDUuNDM2IDUuNDM2IDAgMDA4LjEyLjQ4NmwzLjYyOC0zLjYyOGE1LjQzNiA1LjQzNiAwIDEwLTcuNjg4LTcuNjg4bC0zIDNhLjc1Ljc1IDAgMDAxLjA2IDEuMDYxbDMtM3oiPjwvcGF0aD48cGF0aCBkPSJNNy4yOCAxMS4xNTNhMy45MzYgMy45MzYgMCAwMTUuODguMzUzLjc1Ljc1IDAgMDAxLjE4LS45MjggNS40MzYgNS40MzYgMCAwMC04LjEyLS40ODZMMi41OTIgMTMuNzJhNS40MzYgNS40MzYgMCAxMDcuNjg4IDcuNjg4bDMtM2EuNzUuNzUgMCAxMC0xLjA2LTEuMDZsLTMgM2EzLjkzNiAzLjkzNiAwIDAxLTUuNTY3LTUuNTY4bDMuNjI3LTMuNjI3eiI+PC9wYXRoPjwvc3ZnPgo=");
+}
