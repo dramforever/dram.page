@@ -230,7 +230,7 @@ s_{k, u}(n, m) &= \sum_{d = 1}^{\min\{n, m\}}
 	u(\lfloor \frac{n}{d} \rfloor, \lfloor \frac{m}{d} \rfloor)
 \end{align}
 $$
-Where $f$ is trivially computable. If we figure out how to compute that, we're set.
+Where $u$ is trivially computable. If we figure out how to compute $s_{k, u}$, we're set.
 
 ## Intermission: Number-theoretic summation trick
 
@@ -281,7 +281,7 @@ x \le \frac{n}{j} < x + 1 \\
 
 \end{gather}
 $$
-Therefore given the the first interval's starting point $l_{1} = 2$, the end of this interval is $r_{1} = \lfloor n / \lfloor n / 2 \rfloor \rfloor$, and then the next interval starts at $l_{2} = r_{1} + 1$ and ends at $r_2 = \lfloor n / \lfloor n / l_{2} \rfloor \rfloor$, etc until $n$ is reached. In each interval $[l_i, r_i]$ the sum is $(F(r_i) - F(l_i)) G(\lfloor n / l_i \rfloor)$.
+Therefore given the the first interval's starting point $l_{1} = 2$, the end of this interval is $r_{1} = \lfloor n / \lfloor n / 2 \rfloor \rfloor$, and then the next interval starts at $l_{2} = r_{1} + 1$ and ends at $r_2 = \lfloor n / \lfloor n / l_{2} \rfloor \rfloor$, etc. until $n$ is reached. In each interval $[l_i, r_i]$ the sum is $(F(r_i) - F(l_i)) G(\lfloor n / l_i \rfloor)$.
 
 By recursively computing $G$ as shown, memoizing using a hash table, we can achieve $O(n^{3/4})$ time complexity and $O(n^{1/2})$ space complexity. If we use a sieve to pre-compute the first $O(n^{2/3})$ terms of $G(n)$ we can achieve $O(n^{2/3})$ time and space complexity.
 
@@ -352,9 +352,9 @@ s_{k, u}(n, m) &= \sum_{d = 1}^{\min\{n, m\}}
 	u(\lfloor \frac{n}{d} \rfloor, \lfloor \frac{m}{d} \rfloor)
 \end{align}
 $$
-This is eerily familiar. In fact this is almost what we did in the intermission. But now $f$ takes two arguments.
+This is eerily familiar. In fact this is almost what we did in the intermission, but now $u$ takes two arguments.
 
-How many values can the pair $(\lfloor n / d \rfloor, \lfloor m / d \rfloor)$ take on? As $d$ increases, $\lfloor n / d \rfloor$ decreases, and it will take about $2 \sqrt{n}$ steps doing so, and similarly for $\lfloor n / d \rfloor$, therefore $(\lfloor n / d \rfloor, \lfloor m / d \rfloor)$ takes on about $2 (\sqrt{n} + \sqrt{m})$ steps. For example for $n = 10$ and $m = 3$, the combined steps like this (open the image in a new tab if it's too small for you):
+How many values can the pair $(\lfloor n / d \rfloor, \lfloor m / d \rfloor)$ take on? As $d$ increases, $\lfloor n / d \rfloor$ decreases, and it will take about $2 \sqrt{n}$ steps doing so, and similarly for $\lfloor n / d \rfloor$, therefore $(\lfloor n / d \rfloor, \lfloor m / d \rfloor)$ takes on a maximum of about $2 (\sqrt{n} + \sqrt{m})$ steps (not a simple sum because the steps can overlap). For example for $n = 10$ and $m = 3$, the combined steps like this (open the image in a new tab if it's too small for you):
 
 ![Steps of change compared](images/pairs-values.svg){ width=90% }
 
@@ -390,13 +390,13 @@ a_2(n, m) &= \sum_{d = 1}^{\min\{n, m\}}
 	\mathsf{ID}(\lfloor \frac{m}{d} \rfloor)
 \end{align}
 $$
-We can have our answer $4 (a_0(n, m) + a_1(n, m) + a_2(n, m))$ in $O(\min\{n, m\}^{2/3})$ time and $O(\min\{n, m\}^{2/3})$ space.
+We can have our answer $4 (a_0(n, m) + a_1(n, m) + a_2(n, m))$ in $O(\max\{n, m\}^{2/3})$ time and $O(\max\{n, m\}^{2/3})$ space.
 
 Phew, that was a whopping three thousand words according to Typora. Admittedly though it does count words in LaTeX code, which may or may not represent the effort needed to read math notation.
 
 ## A few more details
 
-The problem requires modulo arithmetic, otherwise word-sized integers won't hold such large numbers. A supporting class `mo` is used for this purpose. I worried that it would hinder optimization, but casually playing around on <https://godbolt.org> shows that it works exactly the same as using functions while not wrapping the number in a class.
+The problem requires modulo arithmetic, otherwise word-sized integers won't hold such large numbers. In my code supporting class `mo` is used for this purpose. I worried that it would hinder optimization, but casually playing around on <https://godbolt.org> shows that it works exactly the same as using functions while not wrapping the number in a class.
 
 Since this method requires calculating three things at once, I wrote this tiny function that 'vectorizes' a function to multiple `std::array` 'vectors'. It comes into play quite a few times in my code and cleans up the code quite a bit. It seems to optimize well, with the loop unrolled and function properly inlined at least when tested under recent Clang. Quite a bit of what I learned while solving this kata is actually for writing this.
 
