@@ -3,7 +3,7 @@
 <html>
 
 <head>
-    <title>Untitled router -- dramforever</title>
+    <title>Untitled router：一个路由器的故事 -- dramforever</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../../styles/default.css">
@@ -21,12 +21,12 @@
 
 <article>
 <div id="post-title">
-    <h1 id="post-title-main">Untitled router</h1>
-    <span id="post-title-sub">2020-??-??</span>
+    <h1 id="post-title-main">Untitled router：一个路由器的故事</h1>
+    <span id="post-title-sub">2020-12-31</span>
 </div>
 ```
 
-*(UNRELASED VERSION, WORK IN PROGRESS)*
+（大概是这一年里做的还算有意义的一件事）
 
 ## 一次命运转折的约饭
 
@@ -130,6 +130,16 @@ CPU 与路由器的集(feng)成(he)从把 CPU 的总线和基于 AXI Stream 的�
 ## 最终答辩
 
 最终的答辩计划在 2021 年 1 月 12 号进行，那时可能会进行组间的联通测试。没准这次可以做到 10 个路由器连成一个环？
+
+到时候可能也不会有太多新的想法了吧，再说了……
+
+## 关于本文
+
+本文使用 [Pandoc](https://pandoc.org/) 从 [Markdown 原始文件生成](untitled-router.md)，命令为：
+
+```console
+$ pandoc --mathjax -f markdown-auto_identifiers -t html < untitled-router.md > index.html
+```
 
 ```{=html}
 </article>
