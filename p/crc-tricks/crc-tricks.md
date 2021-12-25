@@ -31,8 +31,8 @@
 
 A friend of mine bought a motorized adjustable desk a long time ago and recently
 got the idea to hook up the controller to the Internet for some reason. They
-hooked up some wires to a logic analyzer and was able to capture some packets,
-hexdumps shown:
+tapped the wire coming from the controls panel with a logic analyzer and was
+able to capture some packets, hexdumps shown:
 
 ```
 AAFF 0040 2EEC
@@ -146,7 +146,7 @@ degree than $b(x)$, and:
 $$ a(x) = b(x) q(x) + r(x) $$
 
 The algorithm to figure out $q(x)$ and $r(x)$ is a variation on the integer long
-ivision algorithm. In particular, we don't usually care about $r(x)$, so it is
+division algorithm. In particular, we don't usually care about $q(x)$, so it is
 fairly easy to 'reduce' $a(x)$ with multiples of $b(x)$ until the degree is
 strictly less than $b(x)$. Moreover, since the only possible non-zero
 coefficient is $1$, we don't even need a division to figure out the scalar to
@@ -369,7 +369,7 @@ force our way through a billion numbers to find a match.
 Nobody with even a tiny bit of sanity would think that's a reasonable way to
 hide a number... Right?
 
-Right?
+(Right? I suppose that's a story for another time...)
 
 To reverse the digit string out of the CRC, we can do a [meet-in-the-middle
 attack][mitm], matching up strings like `123\0\0\0` (that's `123` then 3 NUL
@@ -496,8 +496,8 @@ Pairing them up arbitrarily give these polynomials:
 
 $$
 \begin{aligned}
-(m_1 x^{16} + r_1) + (m_1 x^{16} + r_2) &= x^{18} + x^{15} + x^{14} + x^{13} + x^{4} + x^{0} \\
-(m_1 x^{16} + r_1) + (m_2 x^{16} + r_3) &= x^{19} + x^{15} + x^{13} + x^{5} + x^{2} + x^{1} + x^{0}
+(m_1 x^{16} + r_1) + (m_2 x^{16} + r_2) &= x^{18} + x^{15} + x^{14} + x^{13} + x^{4} + x^{0} \\
+(m_1 x^{16} + r_1) + (m_3 x^{16} + r_3) &= x^{19} + x^{15} + x^{13} + x^{5} + x^{2} + x^{1} + x^{0}
 \end{aligned}
 $$
 
@@ -598,8 +598,8 @@ Our target polynomial $((m_1 x^N + r_1) + (m_2 x^N + r_2)) \bmod P$ is `1101
 
 $$ x^{15} + x^{14} + x^{12} + x^{10} + x^{9} + x^{7} + x^{6} + x^{5} + x^{2} + x^{1} $$
 
-Solving for $a_k$, it turns out that every single $a_k$ is $1$, i.e. `init` is
-the all-ones `0xffff`.
+Solving for $a_k$, and we get that every single $a_k$ is $1$, i.e. `init` is the
+all-ones `0xffff`.
 
 # Solving for $F$
 
@@ -617,13 +617,16 @@ In other words, we can do a CRC calculation on something we know, assuming that
 value or `final`. In the case of this adjustable desk it turns out that `final`
 actually is just zero.
 
-Now we have:
+Now we have the complete set of parameters:
 
 ```
 tap   = 0xa006
 init  = 0xffff
 final = 0x0000
 ```
+
+This is not any standard CRC, as far as I know. I have no idea why the desk was
+programmed this way.
 
 I tried this process on some other samples including some CRC-32 ones and it
 seems to work fairly reliably given like 10 example pairs.

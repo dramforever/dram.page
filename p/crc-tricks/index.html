@@ -25,7 +25,7 @@
     <span id="post-title-sub">2021-12-25</span>
 </div>
 <h2 id="an-adjustable-desk">An adjustable desk</h2>
-<p>A friend of mine bought a motorized adjustable desk a long time ago and recently got the idea to hook up the controller to the Internet for some reason. They hooked up some wires to a logic analyzer and was able to capture some packets, hexdumps shown:</p>
+<p>A friend of mine bought a motorized adjustable desk a long time ago and recently got the idea to hook up the controller to the Internet for some reason. They tapped the wire coming from the controls panel with a logic analyzer and was able to capture some packets, hexdumps shown:</p>
 <pre><code>AAFF 0040 2EEC
 AAFF 0060 2964
 AAFF 0050 2B08
@@ -64,7 +64,7 @@ AAFF 070E02 978F
 <p>What we’re concerned here most, when working with CRCs, is polynomial division. It is defined analogously to integer division with remainder, except instead of comparing the magnitude of numbers, we compare the <em>degree</em> of polynomials.</p>
 <p>Given two polynomials <span class="math inline">\(a(x)\)</span> and <span class="math inline">\(b(x)\)</span> (where <span class="math inline">\(b(x) \ne 0\)</span>), there is only one <em>quotient</em> <span class="math inline">\(q(x)\)</span> and <em>remainder</em> <span class="math inline">\(r(x)\)</span> such that <span class="math inline">\(r(x)\)</span> has strictly smaller degree than <span class="math inline">\(b(x)\)</span>, and:</p>
 <p><span class="math display">\[ a(x) = b(x) q(x) + r(x) \]</span></p>
-<p>The algorithm to figure out <span class="math inline">\(q(x)\)</span> and <span class="math inline">\(r(x)\)</span> is a variation on the integer long ivision algorithm. In particular, we don’t usually care about <span class="math inline">\(r(x)\)</span>, so it is fairly easy to ‘reduce’ <span class="math inline">\(a(x)\)</span> with multiples of <span class="math inline">\(b(x)\)</span> until the degree is strictly less than <span class="math inline">\(b(x)\)</span>. Moreover, since the only possible non-zero coefficient is <span class="math inline">\(1\)</span>, we don’t even need a division to figure out the scalar to multiply <span class="math inline">\(b(x) x^k\)</span> by.</p>
+<p>The algorithm to figure out <span class="math inline">\(q(x)\)</span> and <span class="math inline">\(r(x)\)</span> is a variation on the integer long division algorithm. In particular, we don’t usually care about <span class="math inline">\(q(x)\)</span>, so it is fairly easy to ‘reduce’ <span class="math inline">\(a(x)\)</span> with multiples of <span class="math inline">\(b(x)\)</span> until the degree is strictly less than <span class="math inline">\(b(x)\)</span>. Moreover, since the only possible non-zero coefficient is <span class="math inline">\(1\)</span>, we don’t even need a division to figure out the scalar to multiply <span class="math inline">\(b(x) x^k\)</span> by.</p>
 <pre><code>a = <em>(polynomial dividend)</em>
 b = <em>(polynomial divisor)</em>
 
@@ -184,7 +184,7 @@ AAFF 070E02 978F</code></pre>
 <pre><code>crc(&quot;123456&quot;) = 0x0972d361</code></pre>
 <p>The number can range up to 10 digits, so they’re hoping that we can’t brute force our way through a billion numbers to find a match.</p>
 <p>Nobody with even a tiny bit of sanity would think that’s a reasonable way to hide a number… Right?</p>
-<p>Right?</p>
+<p>(Right? I suppose that’s a story for another time…)</p>
 <p>To reverse the digit string out of the CRC, we can do a <a href="https://en.wikipedia.org/wiki/Meet-in-the-middle_attack">meet-in-the-middle attack</a>, matching up strings like <code>123\0\0\0</code> (that’s <code>123</code> then 3 NUL bytes) with <code>\0\0\0456</code>. The details are not that hard, and it takes milliseconds to ‘crack’ each hash (if memory serves). For collisions we also get every solution.</p>
 <p>However in our case of the adjustable desk, we don’t actually know the parameters used. We must dig deeper. But before that, let’s take a detour into how CRCs are transmitted:</p>
 <h2 id="messages-with-crc-appended">Messages with CRC appended</h2>
@@ -236,8 +236,8 @@ m3, r3 = AAFF 0050 2B08</code></pre>
 <p>Pairing them up arbitrarily give these polynomials:</p>
 <p><span class="math display">\[
 \begin{aligned}
-(m_1 x^{16} + r_1) + (m_1 x^{16} + r_2) &amp;= x^{18} + x^{15} + x^{14} + x^{13} + x^{4} + x^{0} \\
-(m_1 x^{16} + r_1) + (m_2 x^{16} + r_3) &amp;= x^{19} + x^{15} + x^{13} + x^{5} + x^{2} + x^{1} + x^{0}
+(m_1 x^{16} + r_1) + (m_2 x^{16} + r_2) &amp;= x^{18} + x^{15} + x^{14} + x^{13} + x^{4} + x^{0} \\
+(m_1 x^{16} + r_1) + (m_3 x^{16} + r_3) &amp;= x^{19} + x^{15} + x^{13} + x^{5} + x^{2} + x^{1} + x^{0}
 \end{aligned}
 \]</span></p>
 <p>They should both be a multiple of <span class="math inline">\(P\)</span>, so taking the polynomial GCD should give us a multiple of <span class="math inline">\(P\)</span> of lower degree, hopefully <span class="math inline">\(P\)</span> itself.</p>
@@ -290,17 +290,18 @@ m2, r2 = AAFF 040E02 0450</code></pre>
 15 | 1011 0000 0111 0100</code></pre>
 <p>Our target polynomial <span class="math inline">\(((m_1 x^N + r_1) + (m_2 x^N + r_2)) \bmod P\)</span> is <code>1101 0110 1110 0110</code>, or:</p>
 <p><span class="math display">\[ x^{15} + x^{14} + x^{12} + x^{10} + x^{9} + x^{7} + x^{6} + x^{5} + x^{2} + x^{1} \]</span></p>
-<p>Solving for <span class="math inline">\(a_k\)</span>, it turns out that every single <span class="math inline">\(a_k\)</span> is <span class="math inline">\(1\)</span>, i.e. <code>init</code> is the all-ones <code>0xffff</code>.</p>
+<p>Solving for <span class="math inline">\(a_k\)</span>, and we get that every single <span class="math inline">\(a_k\)</span> is <span class="math inline">\(1\)</span>, i.e. <code>init</code> is the all-ones <code>0xffff</code>.</p>
 <h1 id="solving-for-f">Solving for <span class="math inline">\(F\)</span></h1>
 <p>Now the only thing remaining to figure out is the final value <span class="math inline">\(F\)</span>. Going back to this:</p>
 <p><span class="math display">\[ r \equiv m x^N + I x^L + F \pmod P \]</span></p>
 <p>Solving for <span class="math inline">\(F\)</span> is pretty easy now, given that we know everything else:</p>
 <p><span class="math display">\[ F \equiv m x^N + r + I x^L \pmod P \]</span></p>
 <p>In other words, we can do a CRC calculation on something we know, assuming that <code>final</code> is zero, and check the bitwise-xor with the real CRC to get the real value or <code>final</code>. In the case of this adjustable desk it turns out that <code>final</code> actually is just zero.</p>
-<p>Now we have:</p>
+<p>Now we have the complete set of parameters:</p>
 <pre><code>tap   = 0xa006
 init  = 0xffff
 final = 0x0000</code></pre>
+<p>This is not any standard CRC, as far as I know. I have no idea why the desk was programmed this way.</p>
 <p>I tried this process on some other samples including some CRC-32 ones and it seems to work fairly reliably given like 10 example pairs.</p>
 <h1 id="did-you-really-do-all-these-just-to-hack-into-a-desk">Did you really do all these just to hack into a desk?</h1>
 <p>No, I just wrote a program that went through all <span class="math inline">\(2^{16}\)</span> values of <code>tap</code>, assuming that <code>init = 0xffff</code> and <code>final = 0x0000</code> just like Modbus. I found <code>tap = 0x2006</code> works.</p>
