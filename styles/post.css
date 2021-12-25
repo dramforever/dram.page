@@ -65,3 +65,7 @@ blockquote {
     padding-bottom: 2px;
     padding-left: 18px;
 }
+
+.MJXc-display {
+    overflow: auto;
+}
