@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Magic tricks with CRC -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../styles/default.css">
+    <link rel="stylesheet" href="../../styles/post.css">
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Magic tricks with CRC</h1>
+    <span id="post-title-sub">2021-12-24</span>
+</div>
+<h2 id="an-adjustable-desk">An adjustable desk</h2>
+<p>A friend of mine bought a motorized adjustable desk a long time ago and recently got the idea to hook up the controller to the Internet for some reason. They hooked up some wires to a logic analyzer and was able to capture some packets, hexdumps shown:</p>
+<pre><code>AAFF 0040 2EEC
+AAFF 0060 2964
+AAFF 0050 2B08
+AAFF 040E02 0450
+AAFF 050E02 8EDA
+AAFF 060E02 1D05
+AAFF 070E02 978F
+... (and many more samples)</code></pre>
+<p>They were reasonably sure that the framing was correctly decoded, meaning that each line of hexdump is exactly one complete transmission. The message format of two bytes of (seemingly fixed) header, variable number of bytes of message, and two bytes of checksum resembles <a href="https://modbus.org/">Modbus</a> RTU.</p>
+<p>An implementation of the Modbus CRC-16, however, gives check sequences that don’t match up with what we see. It’s still suspiciously like some sort of CRC-16 though, so I decided to go though with the assumption that it is a CRC-16 variant waiting to be discovered.</p>
+<h2 id="but-what-is-a-crc-anyway">But what is a CRC anyway?</h2>
+<p>The <a href="https://en.wikipedia.org/wiki/Cyclic_redundancy_check"><em>cyclic redundancy check</em> (CRC)</a> is a family of error-checking codes that is widely used to detect inadvertent data corruption of data during transmission or in storage. The most common way a CRC is implemented is using a <em>linear feedback shift register</em> (LFSR), and the mathematical structure of it is taking the remainder of a polynomial division, where the polynomial is defined in <span class="math inline">\(\mathrm{GF}(2)\)</span>.</p>
+<p>Let’s go into details of how CRCs work in practice, in particular how the details of the algorithms maps to polynomials, and how we can manipulate CRCs using its properties, along with how I applied the ideas while reverse engineering the exact parameters used for my friend’s desk.</p>
+<h2 id="mathematical-basics">Mathematical basics</h2>
+<p>Just for a warm up, let’s go into some basics of how polynomials work. These things are immensely useful in various fields of computer science because they provide an interesting way to work with bit strings, so it can’t hurt to take a closer look.</p>
+<h3 id="the-galois-field-mathrmgf2">The Galois field <span class="math inline">\(\mathrm{GF}(2)\)</span></h3>
+<p><span class="math inline">\(GF(2)\)</span> might have a scary name, but it really is just the integers modulo <span class="math inline">\(2\)</span>. This field only has two elements, <span class="math inline">\(0\)</span> and <span class="math inline">\(1\)</span>. Thinking of them as logical bits, addition is exclusive-or (xor), and multiplication is logical ‘and’. Anything added with itself is gone, and subtraction is the same as addition:</p>
+<ul>
+<li><span class="math inline">\(a + a = 0\)</span></li>
+<li><span class="math inline">\(a + b = a - b\)</span></li>
+</ul>
+<p>Polynomials in <span class="math inline">\(\mathrm{GF}(2)\)</span>, in particular univariate polynomials in <span class="math inline">\(x\)</span>, called <span class="math inline">\(\mathrm{GF}(2)[x]\)</span>, is what we’re interested in here. In particular, since the coefficients of the terms are either <span class="math inline">\(0\)</span> or <span class="math inline">\(1\)</span>, we can write them as if each term just exists or doesn’t exist, like:</p>
+<p><span class="math display">\[ x^{16} + x^{3} + x^{1} + x^{0} \]</span></p>
+<p>(Side note: Polynomials are <em>not</em> polynomial functions. There are only <span class="math inline">\(4\)</span> functions of <span class="math inline">\(\mathrm{GF}(2) \to \mathrm{GF}(2)\)</span>, but if the term coefficients of two polynomials differ they are not the same polynomial, regardless of whether they correspond to the same function.)</p>
+<p>We can the coefficients of a polynomial into a bit string, highest power term first, omitting (the infinite sequence of) leading zeros. For example, the above example corresponds to:</p>
+<pre><code>1 0000 0000 0000 1011</code></pre>
+<p>We can then read that as an (unsigned) integer in binary, which is a convenient representation of <span class="math inline">\(\mathrm{GF}(2)[x]\)</span> polynomials in computers.</p>
+<h3 id="polynomial-addition-and-multiplication">Polynomial addition and multiplication</h3>
+<p>Addition and multiplications work exactly as we expect, if you take care that the coefficients should be calculated modulo 2. As we all know, <span class="math inline">\(2 = 0\)</span>, so each term will cancel with itself:</p>
+<p><span class="math display">\[ x^{n} + x^{n} = x^{n} - x^{n} = 0 \]</span></p>
+<p>So for example:</p>
+<p><span class="math display">\[ (x^{4} + x^{2}) + (x^{2} + x^{0}) = x^{4} + 2 x^{2} + x^{0} = x^{4} + x^{0}\]</span></p>
+<p>Addition and multiplication have the commutativity, associativity and distributivity properties we all know and love.</p>
+<p>Using the representation of polynomials as unsigned integers, polynomial addition is just bitwise-xor. Meanwhile, multiplication is known as ‘carry-less multiplication’, which is often available as dedicated instructions in modern CPUs for cryptographic applications.</p>
+<h3 id="polynomial-euclidean-division">Polynomial (Euclidean) division</h3>
+<p>What we’re concerned here most, when working with CRCs, is polynomial division. It is defined analogously to integer division with remainder, except instead of comparing the magnitude of numbers, we compare the <em>degree</em> of polynomials.</p>
+<p>Given two polynomials <span class="math inline">\(a(x)\)</span> and <span class="math inline">\(b(x)\)</span> (where <span class="math inline">\(b(x) \ne 0\)</span>), there is only one <em>quotient</em> <span class="math inline">\(q(x)\)</span> and <em>remainder</em> <span class="math inline">\(r(x)\)</span> such that <span class="math inline">\(r(x)\)</span> has strictly smaller degree than <span class="math inline">\(b(x)\)</span>, and:</p>
+<p><span class="math display">\[ a(x) = b(x) q(x) + r(x) \]</span></p>
+<p>The algorithm to figure out <span class="math inline">\(q(x)\)</span> and <span class="math inline">\(r(x)\)</span> is a variation on the integer long ivision algorithm. In particular, we don’t usually care about <span class="math inline">\(r(x)\)</span>, so it is fairly easy to ‘reduce’ <span class="math inline">\(a(x)\)</span> with multiples of <span class="math inline">\(b(x)\)</span> until the degree is strictly less than <span class="math inline">\(b(x)\)</span>. Moreover, since the only possible non-zero coefficient is <span class="math inline">\(1\)</span>, we don’t even need a division to figure out the scalar to multiply <span class="math inline">\(b(x) x^k\)</span> by.</p>
+<pre><code>a = <em>(polynomial dividend)</em>
+b = <em>(polynomial divisor)</em>
+
+<b>while</b> (degree of a) >= (degree of b):
+    a = a + b x^((degree of a) - (degree of b))
+
+<b>return</b> a</code></pre>
+<p>In Python for example, the <code>int.bit_length</code> method returns the length of an integer in binary representation, excluding leading zeros. It is one more than the polynomial’s degree, which is not important in our case:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> poly_mod(a, b):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> a.bit_length() <span class="op">&gt;=</span> b.bit_length():</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        a <span class="op">^=</span> b <span class="op">&lt;&lt;</span> (a.bit_length() <span class="op">-</span> b.bit_length())</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a</span></code></pre></div>
+<p>For convenience we can use <span class="math inline">\(a(x) \bmod b(x)\)</span> to refer to <span class="math inline">\(r(x)\)</span>.</p>
+<p>One notable thing is that adding two polynomials together doesn’t increase the degree, so:</p>
+<p><span class="math display">\[ (u + v) \bmod b = (u \bmod b) + (v \bmod b) \]</span></p>
+<h2 id="cyclic-redundancy-checks">Cyclic redundancy checks</h2>
+<h3 id="basic-crcs">Basic CRCs</h3>
+<p>For a message consisting of bytes, we can also convert it to a bit string, by putting each byte in order, and for each byte, put the <em>least significant</em> bit first. So <code>f0 30</code> becomes <code>0000 1111 0000 1100</code>.</p>
+<p>For simplicity, consider this CRC generation code, with a single parameter <code>tap</code>:</p>
+<pre><code>crc = 0
+
+<b>for each</b> bit b in message:
+    crc = crc ^ b
+    <b>if</b> least significant bit of crc is 1:
+        crc = (crc >> 1) ^ <em>tap</em>
+    <b>else</b>:
+        crc = crc >> 1
+
+<b>return</b> crc</code></pre>
+<p>This structure is called a linear feedback shift register, or LFSR. We can try to reverse engineer this in terms of polynomials in <span class="math inline">\(\mathrm{GF}(2)\)</span>.</p>
+<p>As the message is read in bit by bit, we can say that the ‘current polynomial’ starts at <span class="math inline">\(0\)</span>, and for each bit <span class="math inline">\(b\)</span> we read, we update the polynomial from <span class="math inline">\(m\)</span> to <span class="math inline">\(mx + b\)</span>. This continues until the message is completely read, and <span class="math inline">\(m\)</span> is the polynomial corresponding to the entire message.</p>
+<p>Since the <code>crc</code> ‘register’ is constantly being shifted to the <em>right</em>, it actually contains a ‘bit reversed’ polynomial. The least significant bit is actually the highest power term. So similarly, if <code>tap</code> were some polynomial, it should also be bit reversed. For convenience, say <code>crc</code> and <code>tap</code> are <span class="math inline">\(N\)</span>-bit integers.</p>
+<p>The ‘bit reversed’ part is not weird anymore if we write the integer <code>crc</code> as an <span class="math inline">\(N\)</span> bit integer in little endian as a bit string and find the corresponding polynomial. It <em>is</em> the correct polynomial we’re looking for.</p>
+<p>We can start interpret the bit operations taken:</p>
+<ul>
+<li>For each bit <span class="math inline">\(b\)</span> in message:
+<ul>
+<li><span class="math inline">\(\mathtt{crc} \leftarrow \mathtt{crc} + b x^{N - 1}\)</span></li>
+<li>If the <span class="math inline">\(x^{N - 1}\)</span> coefficient of <span class="math inline">\(\mathtt{crc}\)</span> is <span class="math inline">\(1\)</span>, then <span class="math inline">\(\mathtt{crc} \leftarrow \mathtt{crc} \cdot x + x^N + \mathtt{tap}\)</span></li>
+<li>Else: <span class="math inline">\(\mathtt{crc} \leftarrow \mathtt{crc} \cdot x\)</span></li>
+</ul></li>
+</ul>
+<p>A bit of distributing gives:</p>
+<ul>
+<li>For each bit <span class="math inline">\(b\)</span> in message:
+<ul>
+<li><span class="math inline">\(\mathtt{crc} \leftarrow \mathtt{crc} \cdot x + b x^N\)</span></li>
+<li>If the <span class="math inline">\(x^N\)</span> coefficient of <span class="math inline">\(\mathtt{crc}\)</span> is <span class="math inline">\(1\)</span>, then <span class="math inline">\(\mathtt{crc} \leftarrow \mathtt{crc} + x^N + \mathtt{tap}\)</span></li>
+</ul></li>
+</ul>
+<p>Each time a <span class="math inline">\(b\)</span> term is shifted into <span class="math inline">\(m\)</span>, <span class="math inline">\(m\)</span> turns into <span class="math inline">\(mx + b\)</span>, and, <span class="math inline">\(\mathtt{crc}\)</span> is turned into <span class="math inline">\(\mathtt{crc} \cdot x + b x^N\)</span>. If we don’t bother with the ‘if’ step, then after reading everything <span class="math inline">\(\mathtt{crc} = m x^N\)</span>.</p>
+<p>But after reading each bit, <span class="math inline">\(x^N + \mathtt{tap}\)</span> is either added or not. This means <span class="math inline">\(\mathtt{crc}\)</span> and <span class="math inline">\(m x^N\)</span> are actually only equal modulo <span class="math inline">\(x^N + \mathtt{tap}\)</span>. Also notice that <span class="math inline">\(\mathtt{crc}\)</span> has degree strictly smaller than <span class="math inline">\(N\)</span>. Therefore:</p>
+<p><span class="math display">\[ \mathtt{crc} = (m x^N) \bmod (\mathtt{tap} + x^N) \]</span></p>
+<h3 id="realistic-crcs">Realistic CRCs</h3>
+<p>Realistic CRCs have a few more parameters. I call them <code>init</code> and <code>final</code>.</p>
+<pre><code>crc = <em>init</em>
+
+<b>for each</b> bit b in message:
+    crc = crc ^ b
+    <b>if</b> least significant bit of crc is 1:
+        crc = (crc >> 1) ^ <em>tap</em>
+    <b>else</b>:
+        crc = crc >> 1
+
+<b>return</b> crc ^ <em>final</em></code></pre>
+<p>(Side note: A particular may also reverse or not reverse the order of the bits on input, and may reverse or not reverse the bit order of <code>crc</code>. In practice, these options have not shown up at least for me, and only takes 4 tries to brute force, so they’re not considered.)</p>
+<p>Just like before, we notice that if we don’t do the ‘reduction’ step, <span class="math inline">\(\mathtt{crc} = \mathtt{init} \cdot x^L + m x^N\)</span>, where <span class="math inline">\(L\)</span> is the length of the message, this time <em>counting</em> leading zeros. A <span class="math inline">\(\mathtt{final}\)</span> thing is added to the result.</p>
+<p>Suppose that <span class="math inline">\(\mathtt{init}\)</span> and <span class="math inline">\(\mathtt{final}\)</span> have degree less than <span class="math inline">\(N\)</span>, then:</p>
+<p><span class="math display">\[ \mathtt{crc} = (m x^N + \mathtt{init} \cdot x^L + \mathtt{final}) \bmod (\mathtt{tap} + x^N) \]</span></p>
+<p>We note that the previous zero-initialized CRC does not depend on <span class="math inline">\(L\)</span>, which means that it cannot detect extra/missing leading zeros. A non-zero <code>init</code> mitigates this. I have absolutely no idea what <code>final</code> is supposed to achieve, but it’s just there.</p>
+<p>From now on, we’ll use these symbols consistently:</p>
+<ul>
+<li><span class="math inline">\(L\)</span> (length) is the message length in bits</li>
+<li><span class="math inline">\(m\)</span> (message) is the message bit string as a polynomial</li>
+<li><span class="math inline">\(N\)</span> is the length of the CRC</li>
+<li><span class="math inline">\(r\)</span> (remainder) is <span class="math inline">\(\mathtt{crc}\)</span></li>
+<li><span class="math inline">\(F\)</span> is <span class="math inline">\(\mathtt{final}\)</span></li>
+<li><span class="math inline">\(I\)</span> is <span class="math inline">\(\mathtt{init}\)</span></li>
+<li><span class="math inline">\(P\)</span> (polynomial) is <span class="math inline">\(\mathtt{tap} + x^N\)</span></li>
+</ul>
+<p>Now the equation for a realistic CRC can be written:</p>
+<p><span class="math display">\[ r = (m x^N + I x^L + F) \bmod P \]</span></p>
+<p>The following one just means both sides are equal after doing a <span class="math inline">\(\bmod P\)</span>. If you’re familiar with modulo congruences in integers, it’s basically the same thing.</p>
+<p><span class="math display">\[ r \equiv m x^N + I x^L + F \pmod P \]</span></p>
+<h2 id="linearity-properties-of-crcs">Linearity properties of CRCs</h2>
+<h3 id="crcs-are-linear">CRCs are linear</h3>
+<p>(Or affine, if you’re pedantic)</p>
+<p>Suppose we have two messages <span class="math inline">\(m_1\)</span> and <span class="math inline">\(m_2\)</span> of the same length <span class="math inline">\(L\)</span>, with CRCs <span class="math inline">\(r_1\)</span> and <span class="math inline">\(r_2\)</span> respectively.</p>
+<p><span class="math display">\[
+\begin{aligned}
+r_1 &amp;\equiv m_1 x^N + I x^L + F  \pmod{P} \\
+r_2 &amp;\equiv m_2 x^N + I x^L + F  \pmod{P}
+\end{aligned}
+\]</span></p>
+<p>Adding the two equations together gives something quite nice (remember, anything added with itself equals zero):</p>
+<p><span class="math display">\[ r_1 + r_2 \equiv (m_1 + m_2) x^N  \pmod{P} \]</span></p>
+<p>Suppose that we have another pair of messages <span class="math inline">\(m_3\)</span> and <span class="math inline">\(m_4\)</span>, still with lengths <span class="math inline">\(L\)</span>, such that <span class="math inline">\(m_1 + m_2 = m_3 + m_4\)</span>, i.e. the four messages bitwise-xor to all zeros. Then we have:</p>
+<p><span class="math display">\[ r_1 + r_2 \equiv (m_1 + m_2) x^N \equiv (m_3 + m_4) x^N \equiv r_3 + r_4  \pmod{P} \]</span></p>
+<p>This is actually fairly common. For example, with consecutive numbers as strings:</p>
+<ul>
+<li><span class="math inline">\(m_1\)</span> is ASCII <code>10</code>, binary <code>1000 1100 0000 1100</code></li>
+<li><span class="math inline">\(m_2\)</span> is ASCII <code>11</code>, binary <code>1000 1100 1000 1100</code></li>
+<li><span class="math inline">\(m_3\)</span> is ASCII <code>12</code>, binary <code>0100 1100 1000 1100</code></li>
+<li><span class="math inline">\(m_4\)</span> is ASCII <code>13</code>, binary <code>1100 1100 1000 1100</code></li>
+</ul>
+<p>Or, taking these four message hexdumps from the samples:</p>
+<pre><code>AAFF 040E02 0450
+AAFF 050E02 8EDA
+AAFF 060E02 1D05
+AAFF 070E02 978F</code></pre>
+<p>The messages match up just like the consecutive numbers example above, and the check sequences also match up. That’s some encouraging confirmation that we’re indeed looking at a CRC.</p>
+<p>(I guess technically this kind of property should be called ‘affine’ instead of ‘linear’, but, meh…)</p>
+<h3 id="applications">Applications</h3>
+<p>This property is tremendously useful if we actually <em>know</em> the parameters of a certain CRC algorithm. For example, going back to bitwise land, if we have two messages <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> of the same length, and <span class="math inline">\(z\)</span> is the all-zeros messages of that length, then:</p>
+<p><span class="math display">\[ \mathrm{crc}(a \oplus b) = \mathrm{crc}(a) \oplus \mathrm{crc}(b) \oplus \mathrm{crc}(z)\]</span></p>
+<p>Suppose for some inexplicable reason, someone uses a CRC-32 as a hash function to hash string representations of integers, as an attempt to hide the original numbers:</p>
+<pre><code>crc(&quot;123456&quot;) = 0x0972d361</code></pre>
+<p>The number can range up to 10 digits, so they’re hoping that we can’t brute force our way through a billion numbers to find a match.</p>
+<p>Nobody with even a tiny bit of sanity would think that’s a reasonable way to hide a number… Right?</p>
+<p>Right?</p>
+<p>To reverse the digit string out of the CRC, we can do a <a href="https://en.wikipedia.org/wiki/Meet-in-the-middle_attack">meet-in-the-middle attack</a>, matching up strings like <code>123\0\0\0</code> (that’s <code>123</code> then 3 NUL bytes) with <code>\0\0\0456</code>. The details are not that hard, and it takes milliseconds to ‘crack’ each hash (if memory serves). For collisions we also get every solution.</p>
+<p>However in our case of the adjustable desk, we don’t actually know the parameters used. We must dig deeper. But before that, let’s take a detour into how CRCs are transmitted:</p>
+<h2 id="messages-with-crc-appended">Messages with CRC appended</h2>
+<p>There’s another thing about how CRCs are implemented. Take a look back at the ‘CRC equation’</p>
+<p><span class="math display">\[ r \equiv m x^N + I x^L + F \pmod P \]</span></p>
+<p>Let’s rearrange it a bit:</p>
+<p><span class="math display">\[ m^N + r \equiv I x^L + F \pmod P \]</span></p>
+<p>The right hand side only depends on the message length, and the left hand side… It’s the message with <span class="math inline">\(N\)</span> zeros appended, then bitwise-xor with the CRC, i.e. exactly the message and the CRC concatenated. If you like thinking of CRCs as integers, that’s the messages concatenated with the CRC in little endian.</p>
+<p>It is not a coincidence that CRCs are often concatenated after the message in this exact way. Due to this nice property, this concatenation simplifies CRC checking hardware, which need not keep track of a ‘state’ of whether it’s reading data or reading the CRC, and only need an end-of-stream signal. We’ll not go into detail on that, but just notice that each line in our hexdump:</p>
+<pre><code>AAFF 0040 2EEC</code></pre>
+<p>Is already the polynomial <span class="math inline">\(m x^N + r\)</span>.</p>
+<h2 id="messages-with-equal-length">Messages with equal length</h2>
+<p>In our case, we know several pairs of messages and their correct CRCs. We can work out a fair bit of information by comparing messages. We’ll first focus on pairs of messages with equal length.</p>
+<h3 id="comparing-several-equal-length-messages">Comparing several equal-length messages</h3>
+<p>Given two messages <span class="math inline">\(m_1\)</span> and <span class="math inline">\(m_2\)</span> with equal length <span class="math inline">\(L\)</span>, and known CRCs <span class="math inline">\(r_1\)</span> and <span class="math inline">\(r_2\)</span>,</p>
+<p><span class="math display">\[
+\begin{aligned}
+m_1 x^N + r_1 &amp;\equiv I x^L + F  \pmod{P} \\
+m_2 x^N + r_2 &amp;\equiv I x^L + F  \pmod{P}
+\end{aligned}
+\]</span></p>
+<p>Adding the two equations together give:</p>
+<p><span class="math display">\[ (m_1 x^N + r_1) + (m_2 x^N + r_2) \equiv 0  \pmod{P} \]</span></p>
+<p>Similarly, if we have more messages <span class="math inline">\(m_3\)</span>, <span class="math inline">\(m_4\)</span>, etc. still of length <span class="math inline">\(L\)</span>, we have:</p>
+<p><span class="math display">\[
+\begin{aligned}
+(m_1 x^N + r_1) + (m_3 x^N + r_3) \equiv 0  \pmod{P} \\
+(m_1 x^N + r_1) + (m_4 x^N + r_4) \equiv 0  \pmod{P}
+\end{aligned}
+\]</span></p>
+<p>Actually, it only matters that for each pair used in this adding, the messages have the same length. The pairs don’t have to be all <span class="math inline">\(L\)</span>. Let’s call <span class="math inline">\(d_{k,l} = (m_k x^N + r_k) + (m_l x^N + r_l)\)</span></p>
+<p>Since all the <span class="math inline">\(m_k x^N + r_k\)</span> directly correspond to the data we dumped, we actually know them <em>in full</em>, not just modulo something. So we know all <span class="math inline">\(d_{k, l}\)</span> in full. If <span class="math inline">\(m_k\)</span> and <span class="math inline">\(m_l\)</span> have the same length then for some unknown <span class="math inline">\(q_{k,l}\)</span>:</p>
+<p><span class="math display">\[ d_{k, l} = P \cdot q_{k, l} \]</span></p>
+<p>We have several multiples of <span class="math inline">\(P\)</span>. How can we find <span class="math inline">\(P\)</span> itself? This sounds like a job for…</p>
+<h3 id="polynomial-greatest-common-divisor-gcd">Polynomial greatest common divisor (GCD)</h3>
+<p>So if we can calculate the remainder of polynomial division, is there an analogous Euclidean algorithm to calculate the <a href="https://en.wikipedia.org/wiki/Polynomial_greatest_common_divisor">greatest common divisor (GCD) of two polynomials</a>? You bet:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> poly_gcd(a, b):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> b <span class="op">!=</span> <span class="dv">0</span>:</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        a, b <span class="op">=</span> b, poly_mod(a, b)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a</span></code></pre></div>
+<p>The GCD of two polynomials <span class="math inline">\(a(x)\)</span> and <span class="math inline">\(b(x)\)</span> is the polynomial <span class="math inline">\(g(x)\)</span> with the highest degree such that <span class="math inline">\(a(x)\)</span> and <span class="math inline">\(b(x)\)</span> are both the product <span class="math inline">\(g(x)\)</span> and another polynomial.</p>
+<p>The Euclidean algorithm for finding GCD works with polynomials, just like with integers.</p>
+<h3 id="finding-p-with-gcd">Finding <span class="math inline">\(P\)</span> with GCD</h3>
+<p>Since if we have examples of <span class="math inline">\(P \cdot q_{k, l}\)</span> available, even though all the <span class="math inline">\(q_{k, l}\)</span> are unknown, we should be able to take the GCD of all of them and hopefully get <span class="math inline">\(P\)</span>.</p>
+<p>So for example with these three message hexdumps:</p>
+<pre><code>m1, r1 = AAFF 0040 2EEC
+m2, r2 = AAFF 0060 2964
+m3, r3 = AAFF 0050 2B08</code></pre>
+<p>Pairing them up arbitrarily give these polynomials:</p>
+<p><span class="math display">\[
+\begin{aligned}
+(m_1 x^{16} + r_1) + (m_1 x^{16} + r_2) &amp;= x^{18} + x^{15} + x^{14} + x^{13} + x^{4} + x^{0} \\
+(m_1 x^{16} + r_1) + (m_2 x^{16} + r_3) &amp;= x^{19} + x^{15} + x^{13} + x^{5} + x^{2} + x^{1} + x^{0}
+\end{aligned}
+\]</span></p>
+<p>They should both be a multiple of <span class="math inline">\(P\)</span>, so taking the polynomial GCD should give us a multiple of <span class="math inline">\(P\)</span> of lower degree, hopefully <span class="math inline">\(P\)</span> itself.</p>
+<p>What we get is:</p>
+<p><span class="math display">\[ x^{16} + x^{14} + x^{13} + x^{2} + x^{0} \]</span></p>
+<p>Since we guessed that it’s a CRC-16, <span class="math inline">\(P\)</span> should have degree <span class="math inline">\(N = 16\)</span>, and this result does have degree <span class="math inline">\(16\)</span>. So that’s it, we found our polynomial <span class="math inline">\(P = x^{16} + \mathtt{tap}\)</span>.</p>
+<p>For use in code, <code>tap</code> should be the bit reversal of <code>0x6005</code>, i.e. <code>0xa006</code>.</p>
+<h2 id="messages-with-unequal-length">Messages with unequal length</h2>
+<h3 id="comparing-messages-with-unequal-length">Comparing messages with unequal length</h3>
+<p>Having figured out <span class="math inline">\(P\)</span>, we can try working on the rest of our parameters. We’ll pick two messages <span class="math inline">\(m_1\)</span> and <span class="math inline">\(m_2\)</span> with unequal lengths <span class="math inline">\(L_1\)</span> and <span class="math inline">\(L_2\)</span>, and known CRCs <span class="math inline">\(r_1\)</span> and <span class="math inline">\(r_2\)</span>,</p>
+<p><span class="math display">\[
+\begin{aligned}
+m_1 x^N + r_1 &amp;\equiv I x^{L_1} + F  \pmod{P} \\
+m_2 x^N + r_2 &amp;\equiv I x^{L_2} + F  \pmod{P}
+\end{aligned}
+\]</span></p>
+<p>Adding them this time gives:</p>
+<p><span class="math display">\[ (m_1 x^N + r_1) + (m_2 x^N + r_2) \equiv I (x^{L_1} + x^{L_2}) \pmod{P} \]</span></p>
+<p>Everything except <span class="math inline">\(I\)</span> is known here.</p>
+<h3 id="solving-for-i">Solving for <span class="math inline">\(I\)</span></h3>
+<p>Suppose that:</p>
+<p><span class="math display">\[ I = \sum_{k = 0}^{N - 1} a_k x^k \]</span></p>
+<p>Then:</p>
+<p><span class="math display">\[ I (x^{L_1} + x^{L_2}) \bmod P = \sum_{k = 0}^{N - 1} a_k \cdot (x^k (x^{L_1} + x^{L_2}) \bmod P) \]</span></p>
+<p>The left hand side is just <span class="math inline">\(((m_1 x^N + r_1) + (m_2 x^N + r_2)) \bmod P\)</span>. Each one of <span class="math inline">\(x^k (x^{L_1} + x^{L_2}) \bmod P\)</span> is also known.</p>
+<p>Note also that each of those is a polynomial of degree smaller than <span class="math inline">\(N\)</span>. These polynomials form a <em>vector space</em> over <span class="math inline">\(\mathrm{GF}(2)\)</span>. If we think in terms of vector spaces, the problem now is to figure out a linear combination of the base vectors <span class="math inline">\(x^k (x^{L_1} + x^{L_2}) \bmod P\)</span> that gives <span class="math inline">\(I (x^{L_1} + x^{L_2}) \bmod P\)</span>.</p>
+<p>In other words, we need to solve a linear equation. That’s a job for our beloved Gauss-Jordan elimination. But this time we work in <span class="math inline">\(\mathrm{GF}(2)\)</span>, so adding rows just means bitwise-xor, and there is no scaling involved.</p>
+<p>In the rare chance that we don’t get a unique solution, i.e. the base vectors aren’t actually linear independent, we can pick another message with a different length try again.</p>
+<p>If we go back to the real data we collected and pick these two messages:</p>
+<pre><code>m1, r1 = AAFF 0040 2EEC
+m2, r2 = AAFF 040E02 0450</code></pre>
+<p>The lengths are <span class="math inline">\(L_1 = 32\)</span> and <span class="math inline">\(L_2 = 40\)</span>, so the base vectors are (remember first bit is highest power):</p>
+<pre><code>k  | x^k (x^L1 + x^L2) mod P
+---|-------------------------
+0  | 0001 1011 1100 0010
+1  | 0011 0111 1000 0100
+2  | 0110 1111 0000 1000
+3  | 1101 1110 0001 0000
+4  | 1101 1100 0010 0101
+5  | 1101 1000 0100 1111
+6  | 1101 0000 1001 1011
+7  | 1100 0001 0011 0011
+8  | 1110 0010 0110 0011
+9  | 1010 0100 1100 0011
+10 | 0010 1001 1000 0011
+11 | 0101 0011 0000 0110
+12 | 1010 0110 0000 1100
+13 | 0010 1100 0001 1101
+14 | 0101 1000 0011 1010
+15 | 1011 0000 0111 0100</code></pre>
+<p>Our target polynomial <span class="math inline">\(((m_1 x^N + r_1) + (m_2 x^N + r_2)) \bmod P\)</span> is <code>1101 0110 1110 0110</code>, or:</p>
+<p><span class="math display">\[ x^{15} + x^{14} + x^{12} + x^{10} + x^{9} + x^{7} + x^{6} + x^{5} + x^{2} + x^{1} \]</span></p>
+<p>Solving for <span class="math inline">\(a_k\)</span>, it turns out that every single <span class="math inline">\(a_k\)</span> is <span class="math inline">\(1\)</span>, i.e. <code>init</code> is the all-ones <code>0xffff</code>.</p>
+<h1 id="solving-for-f">Solving for <span class="math inline">\(F\)</span></h1>
+<p>Now the only thing remaining to figure out is the final value <span class="math inline">\(F\)</span>. Going back to this:</p>
+<p><span class="math display">\[ r \equiv m x^N + I x^L + F \pmod P \]</span></p>
+<p>Solving for <span class="math inline">\(F\)</span> is pretty easy now, given that we know everything else:</p>
+<p><span class="math display">\[ F \equiv m x^N + r + I x^L \pmod P \]</span></p>
+<p>In other words, we can do a CRC calculation on something we know, assuming that <code>final</code> is zero, and check the bitwise-xor with the real CRC to get the real value or <code>final</code>. In the case of this adjustable desk it turns out that <code>final</code> actually is just zero.</p>
+<p>Now we have:</p>
+<pre><code>tap   = 0xa006
+init  = 0xffff
+final = 0x0000</code></pre>
+<p>I tried this process on some other samples including some CRC-32 ones and it seems to work fairly reliably given like 10 example pairs.</p>
+<h1 id="did-you-really-do-all-these-just-to-hack-into-a-desk">Did you really do all these just to hack into a desk?</h1>
+<p>No, I just wrote a program that went through all <span class="math inline">\(2^{16}\)</span> values of <code>tap</code>, assuming that <code>init = 0xffff</code> and <code>final = 0x0000</code> just like Modbus. I found <code>tap = 0x2006</code> works.</p>
+<p>Then they started talking about sending it into a solver like Z3 or something, in case brute force didn’t work (well, brute forcing 32-bit CRCs where you need to figure out both <code>init</code> and <code>tap</code> does seem to be intractable), but I was <em>so</em> sure that I can reverse engineer CRC without brute force or relying on solvers that I actually went ahead and did it. Got <a href="https://xkcd.com/356">nerd snipped</a>, I suppose.</p>
+<h2 id="about-this-document">About this document</h2>
+<p>This document was generated using <a href="https://pandoc.org/">Pandoc</a> from <a href="crc-tricks.md">the Markdown source</a>:</p>
+<pre class="console"><code>$ pandoc -f markdown --mathjax -t html &lt; crc-tricks.md &gt; index.html</code></pre>
+</body>
+</html>
