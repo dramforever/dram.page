@@ -191,7 +191,7 @@ AAFF 070E02 978F</code></pre>
 <p>There’s another thing about how CRCs are implemented. Take a look back at the ‘CRC equation’</p>
 <p><span class="math display">\[ r \equiv m x^N + I x^L + F \pmod P \]</span></p>
 <p>Let’s rearrange it a bit:</p>
-<p><span class="math display">\[ m^N + r \equiv I x^L + F \pmod P \]</span></p>
+<p><span class="math display">\[ m x^N + r \equiv I x^L + F \pmod P \]</span></p>
 <p>The right hand side only depends on the message length, and the left hand side… It’s the message with <span class="math inline">\(N\)</span> zeros appended, then bitwise-xor with the CRC, i.e. exactly the message and the CRC concatenated. If you like thinking of CRCs as integers, that’s the messages concatenated with the CRC in little endian.</p>
 <p>It is not a coincidence that CRCs are often concatenated after the message in this exact way. Due to this nice property, this concatenation simplifies CRC checking hardware, which need not keep track of a ‘state’ of whether it’s reading data or reading the CRC, and only need an end-of-stream signal. We’ll not go into detail on that, but just notice that each line in our hexdump:</p>
 <pre><code>AAFF 0040 2EEC</code></pre>

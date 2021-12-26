@@ -392,7 +392,7 @@ $$ r \equiv m x^N + I x^L + F \pmod P $$
 
 Let's rearrange it a bit:
 
-$$ m^N + r \equiv I x^L + F \pmod P $$
+$$ m x^N + r \equiv I x^L + F \pmod P $$
 
 The right hand side only depends on the message length, and the left hand
 side... It's the message with $N$ zeros appended, then bitwise-xor with the CRC,
