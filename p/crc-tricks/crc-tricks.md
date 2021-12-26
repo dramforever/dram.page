@@ -216,13 +216,18 @@ The 'bit reversed' part is not weird anymore if we write the integer `crc` as an
 $N$ bit integer in little endian as a bit string and find the corresponding
 polynomial. It *is* the correct polynomial we're looking for.
 
-We can start interpret the bit operations taken:
+We can start interpreting the bit operations taken:
 
 - For each bit $b$ in message:
   - $\mathtt{crc} \leftarrow \mathtt{crc} + b x^{N - 1}$
   - If the $x^{N - 1}$ coefficient of $\mathtt{crc}$ is $1$, then
     $\mathtt{crc} \leftarrow \mathtt{crc} \cdot x + x^N + \mathtt{tap}$
   - Else: $\mathtt{crc} \leftarrow \mathtt{crc} \cdot x$
+
+Noting that for the operation `crc >> 1`, it *discards* the least significant
+bit if it's zero. So in terms of polynomials, this means that a $x^N$ term
+cannot occur in $\mathtt{crc}$ and would be discarded. That's what adding (or
+really, subtracting) $x^n$ means.
 
 A bit of distributing gives:
 

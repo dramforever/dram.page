@@ -98,7 +98,7 @@ b = <em>(polynomial divisor)</em>
 <p>As the message is read in bit by bit, we can say that the ‘current polynomial’ starts at <span class="math inline">\(0\)</span>, and for each bit <span class="math inline">\(b\)</span> we read, we update the polynomial from <span class="math inline">\(m\)</span> to <span class="math inline">\(mx + b\)</span>. This continues until the message is completely read, and <span class="math inline">\(m\)</span> is the polynomial corresponding to the entire message.</p>
 <p>Since the <code>crc</code> ‘register’ is constantly being shifted to the <em>right</em>, it actually contains a ‘bit reversed’ polynomial. The least significant bit is actually the highest power term. So similarly, if <code>tap</code> were some polynomial, it should also be bit reversed. For convenience, say <code>crc</code> and <code>tap</code> are <span class="math inline">\(N\)</span>-bit integers.</p>
 <p>The ‘bit reversed’ part is not weird anymore if we write the integer <code>crc</code> as an <span class="math inline">\(N\)</span> bit integer in little endian as a bit string and find the corresponding polynomial. It <em>is</em> the correct polynomial we’re looking for.</p>
-<p>We can start interpret the bit operations taken:</p>
+<p>We can start interpreting the bit operations taken:</p>
 <ul>
 <li>For each bit <span class="math inline">\(b\)</span> in message:
 <ul>
@@ -107,6 +107,7 @@ b = <em>(polynomial divisor)</em>
 <li>Else: <span class="math inline">\(\mathtt{crc} \leftarrow \mathtt{crc} \cdot x\)</span></li>
 </ul></li>
 </ul>
+<p>Noting that for the operation <code>crc &gt;&gt; 1</code>, it <em>discards</em> the least significant bit if it’s zero. So in terms of polynomials, this means that a <span class="math inline">\(x^N\)</span> term cannot occur in <span class="math inline">\(\mathtt{crc}\)</span> and would be discarded. That’s what adding (or really, subtracting) <span class="math inline">\(x^n\)</span> means.</p>
 <p>A bit of distributing gives:</p>
 <ul>
 <li>For each bit <span class="math inline">\(b\)</span> in message:
