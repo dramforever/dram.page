@@ -69,3 +69,16 @@ blockquote {
 .MJXc-display {
     overflow: auto;
 }
+
+figure img {
+    max-width: 90%;
+}
+
+figure figcaption {
+    margin-top: 0.8em;
+}
+
+figure {
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
