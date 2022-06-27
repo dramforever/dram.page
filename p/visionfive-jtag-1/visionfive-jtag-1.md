@@ -23,7 +23,7 @@
 <article>
 <div id="post-title">
     <h1 id="post-title-main">VisionFive JTAG adventures, Part 1: JH7100 GPIO</h1>
-    <span id="post-title-sub">2022-06-25</span>
+    <span id="post-title-sub">2022-06-27</span>
 </div>
 ```
 
