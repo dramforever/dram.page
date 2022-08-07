@@ -40,6 +40,12 @@
   flex-shrink: 0;
 }
 
+.widget-item > .widget-item-full {
+  margin-left: auto;
+  margin-right: auto;
+  flex-shrink: 0;
+}
+
 #github-activity[data-state=loading]:before {
   padding-left: 5px;
   display: block;
