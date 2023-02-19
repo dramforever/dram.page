@@ -42,6 +42,7 @@ a {
     width: 100%;
     font-size: 120%;
     white-space: pre;
+    font-family: monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
