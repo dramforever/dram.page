@@ -1,0 +1,115 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+
+<header class="header">Interrupts</header>
+
+<table class="container">
+    <colgroup>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col class="col-desc">
+    </colgroup>
+
+    <thead>
+        <tr>
+            <th scope="row">Code</th>
+            <th scope="row">Hex</th>
+            <th scope="row">Mask</th>
+            <th scope="row">Abbr</th>
+            <th scope="row">Description</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr> <td>0</td> <td>0</td> <td><span class="zero-digits">00000</span>1<span class="zero-digits"></span></td> <td></td> <td></td> </tr>
+        <tr> <td>1</td> <td>1</td> <td><span class="zero-digits">00000</span>2<span class="zero-digits"></span></td> <td>SSI</td> <td>Supervisor software interrupt</td> </tr>
+        <tr> <td>2</td> <td>2</td> <td><span class="zero-digits">00000</span>4<span class="zero-digits"></span></td> <td>VSSI</td> <td>Virtual supervisor software interrupt</td> </tr>
+        <tr> <td>3</td> <td>3</td> <td><span class="zero-digits">00000</span>8<span class="zero-digits"></span></td> <td>MSI</td> <td>Machine software interrupt</td> </tr>
+        <tr> <td>4</td> <td>4</td> <td><span class="zero-digits">0000</span>1<span class="zero-digits">0</span></td> <td></td> <td></td> </tr>
+        <tr> <td>5</td> <td>5</td> <td><span class="zero-digits">0000</span>2<span class="zero-digits">0</span></td> <td>STI</td> <td>Supervisor timer interrupt</td> </tr>
+        <tr> <td>6</td> <td>6</td> <td><span class="zero-digits">0000</span>4<span class="zero-digits">0</span></td> <td>VSTI</td> <td>Virtual supervisor timer interrupt</td> </tr>
+        <tr> <td>7</td> <td>7</td> <td><span class="zero-digits">0000</span>8<span class="zero-digits">0</span></td> <td>MTI</td> <td>Machine timer interrupt</td> </tr>
+        <tr> <td>8</td> <td>8</td> <td><span class="zero-digits">000</span>1<span class="zero-digits">00</span></td> <td></td> <td></td> </tr>
+        <tr> <td>9</td> <td>9</td> <td><span class="zero-digits">000</span>2<span class="zero-digits">00</span></td> <td>SEI</td> <td>Supervisor external interrupt</td> </tr>
+        <tr> <td>10</td> <td>a</td> <td><span class="zero-digits">000</span>4<span class="zero-digits">00</span></td> <td>VSEI</td> <td>Virtual supervisor external interrupt</td> </tr>
+        <tr> <td>11</td> <td>b</td> <td><span class="zero-digits">000</span>8<span class="zero-digits">00</span></td> <td>MEI</td> <td>Machine external interrupt</td> </tr>
+        <tr> <td>12</td> <td>c</td> <td><span class="zero-digits">00</span>1<span class="zero-digits">000</span></td> <td>SGEI</td> <td>Supervisor guest external interrupt</td> </tr>
+        <tr> <td>13</td> <td>d</td> <td><span class="zero-digits">00</span>2<span class="zero-digits">000</span></td> <td>LCOFI</td> <td>Local counter overflow interrupt</td> </tr>
+        <tr> <td>14</td> <td>e</td> <td><span class="zero-digits">00</span>4<span class="zero-digits">000</span></td> <td></td> <td></td> </tr>
+        <tr> <td>15</td> <td>f</td> <td><span class="zero-digits">00</span>8<span class="zero-digits">000</span></td> <td></td> <td></td> </tr>
+    </tbody>
+</table>
+
+<div class="bitfields">
+    <div>0 = <span class="zero-digits">0</span> <span class="zero-digits">0</span> <span class="zero-digits">0</span> <span class="zero-digits">0</span></div>
+    <div>1 = <span class="zero-digits">0</span> <span class="zero-digits">0</span> <span class="zero-digits">0</span> 1</div>
+    <div>2 = <span class="zero-digits">0</span> <span class="zero-digits">0</span> 2 <span class="zero-digits">0</span></div>
+    <div>3 = <span class="zero-digits">0</span> <span class="zero-digits">0</span> 2 1</div>
+    <div>4 = <span class="zero-digits">0</span> 4 <span class="zero-digits">0</span> <span class="zero-digits">0</span></div>
+    <div>5 = <span class="zero-digits">0</span> 4 <span class="zero-digits">0</span> 1</div>
+    <div>6 = <span class="zero-digits">0</span> 4 2 <span class="zero-digits">0</span></div>
+    <div>7 = <span class="zero-digits">0</span> 4 2 1</div>
+    <div>8 = 8 <span class="zero-digits">0</span> <span class="zero-digits">0</span> <span class="zero-digits">0</span></div>
+    <div>9 = 8 <span class="zero-digits">0</span> <span class="zero-digits">0</span> 1</div>
+    <div>a = 8 <span class="zero-digits">0</span> 2 <span class="zero-digits">0</span></div>
+    <div>b = 8 <span class="zero-digits">0</span> 2 1</div>
+    <div>c = 8 4 <span class="zero-digits">0</span> <span class="zero-digits">0</span></div>
+    <div>d = 8 4 <span class="zero-digits">0</span> 1</div>
+    <div>e = 8 4 2 <span class="zero-digits">0</span></div>
+    <div>f = 8 4 2 1</div>
+</div>
+
+<header class="header">Exceptions</header>
+
+<table class="container">
+    <colgroup>
+        <col>
+        <col>
+        <col>
+        <col class="col-desc">
+    </colgroup>
+
+    <thead>
+        <tr>
+            <th scope="row">Code</th>
+            <th scope="row">Hex</th>
+            <th scope="row">Mask</th>
+            <th scope="row">Description</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr> <td>0</td> <td>0</td> <td><span class="zero-digits">00000</span>1<span class="zero-digits"></span></td> <td>Instruction address misaligned</td> </tr>
+        <tr> <td>1</td> <td>1</td> <td><span class="zero-digits">00000</span>2<span class="zero-digits"></span></td> <td>Instruction access fault</td> </tr>
+        <tr> <td>2</td> <td>2</td> <td><span class="zero-digits">00000</span>4<span class="zero-digits"></span></td> <td>Illegal instruction</td> </tr>
+        <tr> <td>3</td> <td>3</td> <td><span class="zero-digits">00000</span>8<span class="zero-digits"></span></td> <td>Breakpoint</td> </tr>
+        <tr> <td>4</td> <td>4</td> <td><span class="zero-digits">0000</span>1<span class="zero-digits">0</span></td> <td>Load address misaligned</td> </tr>
+        <tr> <td>5</td> <td>5</td> <td><span class="zero-digits">0000</span>2<span class="zero-digits">0</span></td> <td>Load access fault</td> </tr>
+        <tr> <td>6</td> <td>6</td> <td><span class="zero-digits">0000</span>4<span class="zero-digits">0</span></td> <td>Store/AMO address misaligned</td> </tr>
+        <tr> <td>7</td> <td>7</td> <td><span class="zero-digits">0000</span>8<span class="zero-digits">0</span></td> <td>Store/AMO access fault</td> </tr>
+        <tr> <td>8</td> <td>8</td> <td><span class="zero-digits">000</span>1<span class="zero-digits">00</span></td> <td>Environment call from U-mode or VU-mode</td> </tr>
+        <tr> <td>9</td> <td>9</td> <td><span class="zero-digits">000</span>2<span class="zero-digits">00</span></td> <td>Environment call from HS-mode</td> </tr>
+        <tr> <td>10</td> <td>a</td> <td><span class="zero-digits">000</span>4<span class="zero-digits">00</span></td> <td>Environment call from VS-mode</td> </tr>
+        <tr> <td>11</td> <td>b</td> <td><span class="zero-digits">000</span>8<span class="zero-digits">00</span></td> <td>Environment call from M-mode</td> </tr>
+        <tr> <td>12</td> <td>c</td> <td><span class="zero-digits">00</span>1<span class="zero-digits">000</span></td> <td>Instruction page fault</td> </tr>
+        <tr> <td>13</td> <td>d</td> <td><span class="zero-digits">00</span>2<span class="zero-digits">000</span></td> <td>Load page fault</td> </tr>
+        <tr> <td>14</td> <td>e</td> <td><span class="zero-digits">00</span>4<span class="zero-digits">000</span></td> <td></td> </tr>
+        <tr> <td>15</td> <td>f</td> <td><span class="zero-digits">00</span>8<span class="zero-digits">000</span></td> <td>Store/AMO page fault</td> </tr>
+        <tr> <td>16</td> <td>10</td> <td><span class="zero-digits">0</span>1<span class="zero-digits">0000</span></td> <td></td> </tr>
+        <tr> <td>17</td> <td>11</td> <td><span class="zero-digits">0</span>2<span class="zero-digits">0000</span></td> <td></td> </tr>
+        <tr> <td>18</td> <td>12</td> <td><span class="zero-digits">0</span>4<span class="zero-digits">0000</span></td> <td></td> </tr>
+        <tr> <td>19</td> <td>13</td> <td><span class="zero-digits">0</span>8<span class="zero-digits">0000</span></td> <td></td> </tr>
+        <tr> <td>20</td> <td>14</td> <td><span class="zero-digits"></span>1<span class="zero-digits">00000</span></td> <td>Instruction guest-page fault</td> </tr>
+        <tr> <td>21</td> <td>15</td> <td><span class="zero-digits"></span>2<span class="zero-digits">00000</span></td> <td>Load guest-page fault</td> </tr>
+        <tr> <td>22</td> <td>16</td> <td><span class="zero-digits"></span>4<span class="zero-digits">00000</span></td> <td>Virtual instruction</td> </tr>
+        <tr> <td>23</td> <td>17</td> <td><span class="zero-digits"></span>8<span class="zero-digits">00000</span></td> <td>Store/AMO guest-page fault</td> </tr>
+    </tbody>
+</table>
+
+<footer class="footer">
+    <div>RISC-V trap code cheatsheet</div>
+    <div>by <a href="https://github.com/dramforever">@dramforever</a> &centerdot; 🔗 <a href="https://dram.page/riscv-trap">https://dram.page/riscv-trap</a></div>
+    <div class="no-print">(For printing: Select A4 or Letter paper size, and set Margins to 'None')</div>
+</footer>

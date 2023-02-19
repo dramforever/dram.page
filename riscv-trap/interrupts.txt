@@ -1,0 +1,16 @@
+0	!	!
+1	SSI	Supervisor software interrupt
+2	VSSI	Virtual supervisor software interrupt
+3	MSI	Machine software interrupt
+4	!	!
+5	STI	Supervisor timer interrupt
+6	VSTI	Virtual supervisor timer interrupt
+7	MTI	Machine timer interrupt
+8	!	!
+9	SEI	Supervisor external interrupt
+10	VSEI	Virtual supervisor external interrupt
+11	MEI	Machine external interrupt
+12	SGEI	Supervisor guest external interrupt
+13	LCOFI	Local counter overflow interrupt
+14	!	!
+15	!	!
