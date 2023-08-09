@@ -45,7 +45,7 @@ figure figcaption {
     font-style: italic;
 }
 
-article a[href]:not([aria-hidden="true"]):before {
+article p a[href]:before {
     display: inline-block;
     height: 16px;
     width: 16px;
