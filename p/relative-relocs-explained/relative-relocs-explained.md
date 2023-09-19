@@ -101,7 +101,9 @@ struct {
 }
 ```
 
-`info` encodes the type of this entry and some other information. For our purposes the value is just a constant called `R_*_RELATIVE` (The name and value is architecture-dependent, like `R_X86_64_RELATIVE` or `R_RISCV_RELATIVE`).
+`info` encodes information. The low 8 (for 32-bit ELF) or 32 (for 64-bit ELF) bits encodes the type of relocation and higher bits is a symbol index. For our purposes the type is just `R_*_RELATIVE`, and since it's just an offset and there's no symbol, all the higher bits are 0.
+
+(In `elf.h` speak, `ELF*_R_INFO(sym, type)` encodes the symbol index and relocation type into `info` (`*` is `32` or `64`), and `ELF*_R_TYPE(info)`, `ELF*_R_SYM(info)` unpacks the fields back.)
 
 `offset` is the offset from the base address to which the entry applies to, and the addend is... the value to be added, in this case added to the base address.
 
@@ -112,7 +114,7 @@ To put everything together again, for each entry in the array, if `info == R_*_R
 ```
 uintptr_t base = ...;
 for (rela = ...) {
-    if (rela->info == R_*_RELATIVE) {
+    if (ELF*_R_TYPE(rela->info) == R_*_RELATIVE) {
         *(uintptr_t *)(base + rela->offset) = base + rela->addend;
     } else ...
 }
@@ -131,7 +133,7 @@ The `addend` field is gone from the table, and is just stashed into where `offse
 
 ```
 for (rel = ...) {
-    if (rel->info == R_*_RELATIVE) {
+    if (ELF*_R_TYPE(rela->info) == R_*_RELATIVE) {
         *(uintptr_t *)(base + rel->offset) += base;
     } else ...
 }
