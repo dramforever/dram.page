@@ -101,11 +101,16 @@ relocation is to just have a table of offsets. Like maybe an array of
     uintptr_t info;
     intptr_t addend;
 }</code></pre>
-<p><code>info</code> encodes the type of this entry and some other
-information. For our purposes the value is just a constant called
-<code>R_*_RELATIVE</code> (The name and value is architecture-dependent,
-like <code>R_X86_64_RELATIVE</code> or
-<code>R_RISCV_RELATIVE</code>).</p>
+<p><code>info</code> encodes information. The low 8 (for 32-bit ELF) or
+32 (for 64-bit ELF) bits encodes the type of relocation and higher bits
+is a symbol index. For our purposes the type is just
+<code>R_*_RELATIVE</code>, and since it’s just an offset and there’s no
+symbol, all the higher bits are 0.</p>
+<p>(In <code>elf.h</code> speak, <code>ELF*_R_INFO(sym, type)</code>
+encodes the symbol index and relocation type into <code>info</code>
+(<code>*</code> is <code>32</code> or <code>64</code>), and
+<code>ELF*_R_TYPE(info)</code>, <code>ELF*_R_SYM(info)</code> unpacks
+the fields back.)</p>
 <p><code>offset</code> is the offset from the base address to which the
 entry applies to, and the addend is… the value to be added, in this case
 added to the base address.</p>
@@ -119,7 +124,7 @@ of executable”. The algorithm to run to apply these relocations is also
 pretty simple:</p>
 <pre><code>uintptr_t base = ...;
 for (rela = ...) {
-    if (rela-&gt;info == R_*_RELATIVE) {
+    if (ELF*_R_TYPE(rela-&gt;info) == R_*_RELATIVE) {
         *(uintptr_t *)(base + rela-&gt;offset) = base + rela-&gt;addend;
     } else ...
 }</code></pre>
@@ -132,7 +137,7 @@ for (rela = ...) {
 stashed into where <code>offset</code> points. The meaning of entries is
 otherwise the same.</p>
 <pre><code>for (rel = ...) {
-    if (rel-&gt;info == R_*_RELATIVE) {
+    if (ELF*_R_TYPE(rela-&gt;info) == R_*_RELATIVE) {
         *(uintptr_t *)(base + rel-&gt;offset) += base;
     } else ...
 }</code></pre>
