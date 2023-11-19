@@ -30,49 +30,89 @@ a simple interpreter reading it and doing the actual thing.</p>
 <p>I hope what you were intending to implement is actually a programming
 language, not just something that got to the point of being accidentally
 Turing-complete. I wouldn’t judge either way though.</p>
+<h2 id="side-note-c-features-used-in-this-article">Side note: C features
+used in this article</h2>
+<p>I’m going to assume familiarity with the C language, but just to make
+easier for those less familiar with C, here are some explanations of
+less obvious constructs used in the code:</p>
+<h3 id="infinite-loop">Infinite loop</h3>
+<p><code>for (;;)</code> is an infinite loop.</p>
+<h3 id="stack-operations">Stack operations</h3>
+<p>We’re going to use arrays and pointers as stacks. The convention
+we’re going to use is:</p>
+<pre><code>uintptr_t stack_buf[STACK_SIZE];
+uintptr_t *sp = stack_buf;</code></pre>
+<ul>
+<li>The stack “grows up”, meaning that successive pushes go into higher
+indices.</li>
+<li>The stack pointer starts at the beginning of the underlying
+array.</li>
+<li>The stack pointer points to one element after the top element. So if
+the stack currently has <code>3</code> elements, then
+<code>sp = stack_buf + 3</code>.</li>
+<li>Using the semantics of C’s increment/decrement operators,
+<code>*(sp++) = foo</code> pushes <code>foo</code> on the stack, whereas
+<code>bar = *(--sp)</code> pops an element from the stack and assigns it
+to <code>bar</code>.</li>
+</ul>
+<h3 id="function-pointers">Function pointers</h3>
+<p>Later in the article we’re going to need to “store” functions as
+data. The way this is done is using a <em>function pointer</em>.</p>
+<p>It’s possible to declare function pointers directly, but I’m going to
+use a <code>typedef</code> for the sake of your sanity:</p>
+<pre><code>typedef void (*codeptr)(void);</code></pre>
+<p>This means <code>codeptr</code> is now a type alias for the type
+“function pointer to a function that takes no arguments and returns
+<code>void</code>”.</p>
+<p>(For historical reasons a parameter list of <code>(void)</code>, not
+<code>()</code>, means “takes no arguments” in C.)</p>
+<p>You can use this type in variables or members. The name of any
+function with the correct signature can be used as a value of type
+<code>codeptr</code>. To use a function pointer, just call it like any
+function.</p>
+<pre><code>void foo(void);
+codeptr p = foo;
+p(); // Calls foo</code></pre>
+<p>On most architectures a function pointer is represented by the
+address of the start of the code of a function.</p>
 <h2 id="bytecode">Bytecode</h2>
 <p>A “bytecode” is one of the obvious popular choices. Each instruction
 has, say, one byte of opcode and several bytes of operands. Let’s also
 say we’re using a stack machine, because it’s also an obvious popular
 choice. A bytecode program might look something like this:</p>
-<pre><code>enum opcode : uint8_t {
-    OP_PUSH,
-    OP_ADD,
-    // ...
-}
+<pre><code>#define OP_EXIT 0
+#define OP_PUSH 1
+#define OP_ADD 2
+#define OP_PRINT 3
+// ... more opcodes
 
 const uint8_t program[] = {
-    OP_PUSH, 1,
-    OP_PUSH, 2,
-    OP_ADD,
-    // ...
+    OP_PUSH, 1, OP_PUSH, 1, OP_ADD, OP_PRINT, OP_EXIT,
 };</code></pre>
 <p>And the interpreter would look something like this:</p>
-<pre><code>// Instruction pointer
-const uint8_t *ip = program;
+<pre><code>const uint8_t *ip = program;
 
-// Stack pointer
-uintptr_t *sp = malloc(STACK_SIZE);
+uintptr_t stack_buf[STACK_SIZE];
+uintptr_t *sp = stack_buf;
 
-for (;;) {
-    switch (*ip) {
-    case OP_PUSH:
-        ip ++;
-        uint8_t operand = *(ip ++);
-        // Push immediate operand
-        *(sp ++) = (uintptr_t) operand;
-        break;
+void interpreter(void) {
+    for (;;) {
+        switch (*ip) {
+        case OP_PUSH:
+            ip++;
+            uintptr_t operand = *(ip++);
+            *(sp++) = operand;
+            break;
 
-    case OP_ADD:
-        ip ++;
-        // Pop operands
-        uintptr_t b = *(-- sp);
-        uintptr_t a = *(-- sp);
-        // Push result
-        *(sp ++) = a + b;
-        break;
+        case OP_ADD:
+            ip++;
+            uintptr_t b = *(--sp);
+            uintptr_t a = *(--sp);
+            *(sp++) = a + b;
+            break;
 
-    // ... more opcodes
+        // ... more opcodes
+        }
     }
 }</code></pre>
 <h2 id="direct-threaded-code">Direct threaded code</h2>
@@ -80,40 +120,41 @@ for (;;) {
 into a jump table by the compiler. If you don’t need the program to be
 serializable, one thing you can do is to simply store function pointers
 in an array, skipping the table altogether:</p>
-<pre><code>struct state;
+<pre><code>typedef void (*codeptr)(void);
 
-typedef void (*insn)(struct state *);
+void code_one(void);
+// ... more functions
 
-struct state {
-    const insn *ip;
-    uintptr_t *sp;
-};
-
-const insn program[] = {
-    code_push_1,
-    code_push_2,
-    code_add,
-    // ...
+const codeptr program[] = {
+    code_one, code_one, code_add, code_print, code_exit,
 };</code></pre>
 <p>Instead of <code>case</code>s in a <code>switch</code> block, the
 individual opcodes are now individual functions</p>
-<pre><code>void code_push_1(struct state *s) { *(s-&gt;sp ++) = 1; s-&gt;ip ++; }
-void code_push_2(struct state *s) { *(s-&gt;sp ++) = 2; s-&gt;ip ++; }
+<pre><code>void code_one(void) {
+    ip++;
+    *(sp++) = 1;
+}
 
-void code_add(struct state *s) {
-    uintptr_t b = *(-- s-&gt;sp);
-    uintptr_t a = *(-- s-&gt;sp);
-    *(s-&gt;sp ++) = a + b;
-    s-&gt;ip ++;
+void code_add(void) {
+    ip++;
+    uintptr_t b = *(--sp);
+    uintptr_t a = *(--sp);
+    *(sp++) = a + b;
+}
+
+// ...</code></pre>
+<p>And the interpreter would simply repeatedly call the current function
+pointer. For simplicity’s sake, we’ll keep the interpreter state in
+global variables (for now).</p>
+<pre><code>const codeptr *ip = program; // Changed!
+
+uintptr_t stack_buf[STACK_SIZE];
+uintptr_t *sp = stack_buf;
+
+void interpreter(void) {
+    for (;;)
+        (*ip)();
 }</code></pre>
-<p>And the interpreter would simply repeatedly call the current
-function:</p>
-<pre><code>struct state s = {
-    .ip = program,
-    .sp = malloc(STACK_SIZE),
-};
-
-for (;;) *(s-&gt;ip)(&amp;s);</code></pre>
 <h2 id="indirect-threaded-code">Indirect threaded code</h2>
 <p>Instead of function pointers, the program can contain pointers to
 more complicated objects. An obvious example would be <em>other
@@ -123,42 +164,49 @@ would need a function pointer pointing to some code telling it what to
 do. Following it could be some payload. For simplicity, let’s say that
 the only possible payload is a subroutine.</p>
 <p>To handle subroutine calls and returns, we’d also need to add a
-return stack pointer (<code>rsp</code>) to our state.</p>
-<pre><code>struct state;
+return stack pointer (<code>rsp</code>) to our interpreter state. We’ll
+see how to handle it later.</p>
+<pre><code>typedef void (*codeptr)(void);
 
 struct object {
-    void (*code)(struct state *);
+    codeptr code;
     const struct object *payload[];
 };
 
-struct state {
-    const struct object * const *ip;
-    uintptr_t *sp;
-    const struct object * const **rsp;
-}</code></pre>
+const struct object *const *ip = ...; // Changed!
+
+uintptr_t stack_buf[16];
+uintptr_t *sp = stack_buf;
+
+// New: return stack
+const struct object *const *rstack_buf[16];
+const struct object *const **rsp = rstack_buf;</code></pre>
 <p>Primitive objects can have <code>code</code> with no
 <code>payload</code>:</p>
-<pre><code>void code_add(struct state *s) {
-    // ...
+<pre><code>void code_add(void) {
+    ip++;
+    uintptr_t b = *(--sp);
+    uintptr_t a = *(--sp);
+    *(sp++) = a + b;
 }
 
 const struct object o_add = { .code = code_add };</code></pre>
 <p>Within a <code>code</code>, you can get access to a pointer to the
-current object with <code>*(s-&gt;ip)</code>.</p>
+current object with <code>*ip</code>.</p>
 <p>Let’s see how we could handle subroutines. The code of a subroutine
 objects should bump the <code>ip</code> and push it on the return stack,
 and change <code>ip</code> to point to the payload. Each subroutine
 should end with a <code>return</code> primitive that pops the return
 address and change <code>ip</code> back:</p>
-<pre><code>void code_subroutine(struct state *s) {
-    const struct object *myself = *(s-&gt;ip);
-    s-&gt;ip ++;
-    *(s-&gt;rsp ++) = s-&gt;ip;
-    s-&gt;ip = myself-&gt;payload;
+<pre><code>void code_subroutine(void) {
+    const struct object *self = *ip;
+    ip++;
+    *(rsp++) = ip;
+    ip = self-&gt;payload;
 }
 
-void code_return(struct state *s) {
-    s-&gt;ip = *(-- s-&gt;rsp);
+void code_return(void) {
+    ip = *(--rsp);
 }
 
 const struct object o_return = { .code = code_return };</code></pre>
@@ -168,22 +216,19 @@ const struct object o_return = { .code = code_return };</code></pre>
     .payload = { &amp;o_one, &amp;o_one, &amp;o_add, &amp;o_return },
 };</code></pre>
 <p>The interpreter is largely unchanged, just with an additional
-dereferencing on <code>s-&gt;ip</code>. Starting the interpreter is
-slightly tricky. Where do you point <code>ip</code> initially?</p>
-<p>If you have an object that’s the “main program”, you can make up an
-array and start there. Be careful — the main program must not return
-because it has nowhere to return to.</p>
-<pre><code>extern const struct object o_main;
+dereferencing on <code>ip</code>. Starting the interpreter is slightly
+tricky. Where do you point <code>ip</code> initially?</p>
+<p>If you have an object that’s the “main program” <code>o_main</code>,
+you can store <code>&amp;o_main</code> in memory and let <code>ip</code>
+point to that. Be careful — the main program must not return because it
+has nowhere to return to.</p>
+<pre><code>const struct object *const start = &amp;o_main;
+const struct object *const *ip = &amp;start;
 
-const struct object start[] = { &amp;o_main };
-
-struct state s = {
-    .ip = start,
-    .sp = malloc(STACK_SIZE),
-    .rsp = malloc(RETURN_STACK_SIZE),
-};
-
-for (;;) *(s-&gt;ip)-&gt;code(&amp;s);</code></pre>
+void interpreter(void) {
+    for (;;)
+        (*ip)-&gt;code();
+}</code></pre>
 <h2 id="primitive-centric-threaded-code">Primitive-centric threaded
 code</h2>
 <p>There are two issues with indirect threaded code from the previous
@@ -197,94 +242,108 @@ reasons.</li>
 Anton Ertl, in implementing Gforth, used what was referred to as
 “primitive-centric threaded code”. It is essentially a fat pointer
 scheme:</p>
-<pre><code>struct state;
+<pre><code>typedef void (*codeptr)(uintptr_t);
 
 struct instr {
-    void (*code)(uintptr_t data, struct state *s);
+    codeptr code;
     uintptr_t data;
-};
-
-struct state {
-    const struct instr *ip;
-    uintptr_t *sp;
-    const struct instr **rsp;
-}</code></pre>
+};</code></pre>
 <p>Instead of requiring a dereference of a point to access an object,
 the program directly stores a function pointer and one pointer worth of
 extra data. When processing each “instruction” in the program, the
 interpreter provides the extra data to the function.</p>
-<pre><code>extern const struct instr i_main;
+<pre><code>const struct instr i_main = { ... };
+const struct instr *ip = &amp;i_main; // Changed!
 
-struct state s = {
-    .ip = &amp;i_main,
-    .sp = malloc(STACK_SIZE),
-    .rsp = malloc(RETURN_STACK_SIZE),
-}
+uintptr_t stack_buf[16];
+uintptr_t *sp = stack_buf;
 
-for (;;) {
-    struct instr ins = *s.ip;
-    ins.code(ins.data, &amp;s);
+// Changed to adapt to match the type of ip
+const struct instr *rstack_buf[16];
+const struct instr **rsp = rstack_buf;
+
+void interpreter(void) {
+    for (;;) {
+        struct instr ins = *ip;
+        ins.code(ins.data);
+    }
 }</code></pre>
 <p>It’s now possible again to make a generic “push”, without requiring
 separate code for every possible immediate value:</p>
-<pre><code>void code_push(uintptr_t data, struct state *s) {
-    *(s-&gt;sp ++) = data;
+<pre><code>void code_push(uintptr_t data) {
+    ip++;
+    *(sp++) = data;
 }
 
 const struct instr i_one = { .code = code_push, .data = 1 };
 const struct instr i_two = { .code = code_push, .data = 2 };</code></pre>
 <p>Subroutine calls can be made by making <code>data</code> point to an
 array of instructions making up the subroutines:</p>
-<pre><code>void code_subroutine(uintptr_t data, struct state *s) {
-    s-&gt;ip ++;
-    *(s-&gt;rsp ++) = s-&gt;ip;
-    s-&gt;ip = (const struct instr *) data;
+<pre><code>void code_subroutine(uintptr_t data) {
+    const struct instr *sr = (const struct instr *) data;
+    ip++;
+    *(rsp++) = ip;
+    ip = sr;
 }
 
-void code_return(uintptr_t, struct state *s) {
-    s-&gt;ip = *(-- s-&gt;rsp);
+void code_return(uintptr_t data) {
+    ip = *(--rsp);
 }
 
-const struct instr sr_one_plus_one[] = {
+const struct instr sr_three[] = {
     { .code = code_push, .data = 1 },
-    { .code = code_push, .data = 1 },
+    { .code = code_push, .data = 2 },
     { .code = code_add },
     { .code = code_return },
 };
 
-const struct instr sr_two_plus_two[] = {
-    { .code = code_subroutine, .data = (uintptr_t) sr_one_plus_one },
-    { .code = code_subroutine, .data = (uintptr_t) sr_one_plus_one },
+const struct instr sr_six[] = {
+    { .code = code_subroutine, .data = (uintptr_t) sr_three },
+    { .code = code_subroutine, .data = (uintptr_t) sr_three },
     { .code = code_add },
     { .code = code_return },
-}</code></pre>
-<h2 id="optimization-tail-calls">Optimization: Tail-calls</h2>
+};</code></pre>
+<h2 id="optimization">Optimization</h2>
 <p>We can leverage a few tricks to convince the compiler into keeping
-our interpreter <code>state</code> in registers, and avoid doing a
-function call and return for each step.</p>
+our interpreter state in registers, and avoid doing a function call and
+return for each step.</p>
 <p>Firstly, instead of using a loop to repeatedly call functions, we can
 instead make each piece of code tail call the next:</p>
-<pre><code>void code_foo(uintptr_t data, struct state *s) {
+<pre><code>void code_foo(uintptr_t data) {
     // ...
 
-    struct instr ins = *s.ip;
-    ins.code(ins.data, &amp;s);
+    struct instr ins = *ip;
+    ins.code(ins.data);
 }</code></pre>
 <p>Compile your code with optimizations on. Your compiler should
 recognize that this is a tail call, and compile this down to a simpler
 indirect jump.</p>
-<p>Next, explode the <code>struct state</code> into separate
-arguments:</p>
+<p>Next, instead of using global variables for the interpreter state,
+put them into arguments:</p>
 <pre><code>void code_foo(
     uintptr_t data,
     const struct instr *ip,
     uintptr_t *sp,
-    const struct instr **rsp,
+    const struct instr **rsp
 ) {
     // ...
 
     struct instr ins = *ip;
     ins.code(ins.data, ip, sp, rsp);
+}</code></pre>
+<p>Using some macros would reduce the boilerplate a bit</p>
+<pre><code>#define DECL_STATE \
+    const struct instr *ip, \
+    uintptr_t *sp, \
+    const struct instr **rsp
+
+#define STATE ip, sp, rsp
+
+void code_foo(uintptr_t data, DECL_STATE) {
+    // ...
+
+    struct instr ins = *ip;
+    ins.code(ins.data, STATE);
 }</code></pre>
 <p>On modern register-rich architectures (x86-64, ARM, RISC-V, MIPS, …),
 the arguments <code>ip</code>, <code>sp</code>, <code>rsp</code> would
@@ -297,12 +356,15 @@ experimented with this.)</p>
 <p>For threaded code, this is about as close as it gets to what you’d
 write in assembly. More native-code optimizations is possible, but would
 be out of the scope of (mostly) portable C.</p>
-<h2 id="references">References</h2>
-<ul>
-<li><a
-href="https://gforth.org/manual/Threading.html"><em>Threading</em></a>,
-Gforth manual</li>
-</ul>
+<h2 id="notes">Notes</h2>
+<p>The <a
+href="https://gforth.org/manual/Threading.html"><em>Threading</em></a>
+section from the Gforth manual was very helpful when writing this
+article. In particular, the concept of primitive-centric threaded code
+is described in detail.</p>
+<p>Complete demos corresponding to snippets in this article can be found
+on <a href="https://github.com/dramforever/threaded-code-demo">GitHub at
+dramforever/threaded-code-demo</a>.</p>
 <h2 id="about-this-document">About this document</h2>
 <p>This document was generated using <a
 href="https://pandoc.org/">Pandoc</a> from <a
