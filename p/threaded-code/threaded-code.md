@@ -22,7 +22,7 @@
 <article>
 <div id="post-title">
     <h1 id="post-title-main">Threaded code explained in C</h1>
-    <span id="post-title-sub">2023-11-??</span>
+    <span id="post-title-sub">2023-11-20</span>
 </div>
 ```
 
