@@ -175,11 +175,11 @@ struct object {
 
 const struct object *const *ip = ...; // Changed!
 
-uintptr_t stack_buf[16];
+uintptr_t stack_buf[STACK_SIZE];
 uintptr_t *sp = stack_buf;
 
 // New: return stack
-const struct object *const *rstack_buf[16];
+const struct object *const *rstack_buf[STACK_SIZE];
 const struct object *const **rsp = rstack_buf;</code></pre>
 <p>Primitive objects can have <code>code</code> with no
 <code>payload</code>:</p>
@@ -255,11 +255,11 @@ interpreter provides the extra data to the function.</p>
 <pre><code>const struct instr i_main = { ... };
 const struct instr *ip = &amp;i_main; // Changed!
 
-uintptr_t stack_buf[16];
+uintptr_t stack_buf[STACK_SIZE];
 uintptr_t *sp = stack_buf;
 
 // Changed to adapt to match the type of ip
-const struct instr *rstack_buf[16];
+const struct instr *rstack_buf[STACK_SIZE];
 const struct instr **rsp = rstack_buf;
 
 void interpreter(void) {
