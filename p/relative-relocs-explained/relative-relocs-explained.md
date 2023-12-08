@@ -154,9 +154,22 @@ The format of the dynamic array does not have an explicit size and is terminated
 
 - `tag` is `DT_RELA = 7`, `value` is offset of array of RELA entries
 - `tag` is `DT_RELASZ = 8`, `value` is total size in bytes of the array of RELA entries
-- `tag` is `DT_RELAENT = 9`, `value` is the size in bytes of one RELA entry, i.e. `3 * sizeof(uintptr_t)`
+- `tag` is `DT_RELAENT = 9`, `value` is the size in bytes of one RELA entry. If there ever is a future need for extending the contents RELA entry, this will grow larger.
 
 This allows us to find where the array of RELA entries is. We can just find `_DYNAMIC` and the base address using PC-relative addressing, and we can run the relocation algorithm from the previous section.
+
+```
+// Find these from _DYNAMIC
+size_t dt_rela, dt_relasz, dt_relaent;
+
+for (char *ptr = (char*)(dt_rela + base);
+    ptr < (char*)(base + dt_rela + dt_relasz);
+    ptr += dt_relaent) {
+    Rela *rela = (Rela*)ptr;
+
+    // Handle rela
+}
+```
 
 Perhaps just for convenience, the linker puts the `_DYNAMIC` array in a section called `.dynamic`, and the dynamic RELA relocations in `.rela.dyn`.
 
@@ -268,7 +281,7 @@ For the bitmap case, it might be more convenient to write it like this:
         next += sizeof(uintptr_t) * (8 * sizeof(uintptr_t) - 1);
 ```
 
-RELR uses `.relr.dyn` section and tags `DT_RELR = 36`, `DT_RELRSZ = 35`, `DT_RELRENT = 37`. (Note: The values aren't sequential!)
+RELR uses `.relr.dyn` section and tags `DT_RELR = 36`, `DT_RELRSZ = 35`, `DT_RELRENT = 37`. (Note: The values aren't sequential!) Contrary to RELA, and most struct arrays in ELF, for that matter, RELR doesn't seem to designed to be extensible, since it's just a compact form of REL.
 
 Since only dynamic relative relocations are represented in RELR, it does not replace RELA/REL. The proposal states that dynamic RELR relocations should be processed before REL/RELA.
 
