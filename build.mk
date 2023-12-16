@@ -28,5 +28,7 @@ extra-articles := \
   splay-lct \
   hello-world \
 
-extra-pages = p/index.html index.html
+extra-pages := \
+  p/index.html \
+  index.html \
 

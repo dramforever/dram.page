@@ -22,6 +22,6 @@ while IFS= read -r line; do
     if [[ "$line" == '\'* ]]; then
         eval "${line:1}"
     else
-        echo "$line"
+        printf "%s" "$line"
     fi
 done
