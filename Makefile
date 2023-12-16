@@ -8,10 +8,10 @@ articles := $(build-articles) $(extra-articles)
 
 export articles
 
-targets-posts := $(patsubst %,p/%/index.html,$(build-articles))
+targets-articles := $(patsubst %,p/%/index.html,$(hidden-articles) $(build-articles))
 
 .PHONY: all
-all: $(targets-posts) $(extra-pages)
+all: $(targets-articles) $(extra-pages)
 
 p/%/index.html: p/%/index.md
 	pandoc --data-dir . --template template/post.html -o $@ $<
