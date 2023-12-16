@@ -39,3 +39,177 @@ body {
     flex-direction: row-reverse;
     margin-right: 5px;
 }
+
+.widget-header {
+  font-size: 30px;
+  border-bottom: 2px solid black;
+  padding-left: 5px;
+  margin-top: 30px;
+}
+
+.widget-list {
+  list-style-position: outside;
+  padding: 0;
+  margin-top: 0;
+}
+
+.widget-list li {
+  display: block;
+  border-bottom: 1px dashed gray;
+  padding-left: 5px;
+}
+
+.widget-list li:hover {
+  background-color: #eeeeee;
+}
+
+.widget-item {
+  text-decoration: none;
+  display: flex;
+  align-content: center;
+  padding: 8px 2px;
+  position: relative;
+  font-size: 18px;
+}
+
+.widget-item > .widget-item-main {
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
+.widget-item > .widget-item-aux {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.widget-item > .widget-item-full {
+  margin-left: auto;
+  margin-right: auto;
+  flex-shrink: 0;
+}
+
+#github-activity[data-state=loading]:before {
+  padding-left: 5px;
+  display: block;
+  content: "Loading...";
+  color: gray;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed gray;
+}
+
+#github-activity[data-state=error]:before {
+  padding-left: 5px;
+  display: block;
+  content: "Error: " attr(data-error);
+  color: red;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed gray;
+}
+
+.octicon-commit:before {
+  display: inline-block;
+  height: 14px;
+  width: 14px;
+  content: "";
+  background-size: cover;
+  padding-right: 10px;
+  color: gray;
+  text-decoration: none;
+}
+
+#post-title
+{
+    margin-top: 20px;
+}
+
+#post-title-main
+{
+    display: block;
+    margin: 0;
+    font-weight: normal;
+    font-size: 30px;
+    border-bottom: 2px solid black;
+    margin-bottom: 3px;
+}
+
+#post-title-sub
+{
+    display: inline;
+    color: gray;
+    float: right;
+    font-size: 20px;
+}
+
+pre
+{
+    background-color: #f8f8f8;
+    overflow-x: auto;
+    padding: 5px;
+}
+
+:not(pre) > code
+{
+    background-color: #f8f8f8;
+    padding: 4px 10px;
+}
+
+figure * {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+figure figcaption {
+    font-style: italic;
+}
+
+article p a[href]:before {
+    display: inline-block;
+    height: 16px;
+    width: 16px;
+    position: relative;
+    bottom: -3px;
+    content: "";
+    background-size: contain;
+    color: gray;
+    text-decoration: none;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cGF0aCBkPSJNMTQuNzggMy42NTNhMy45MzYgMy45MzYgMCAxMTUuNTY3IDUuNTY3bC0zLjYyNyAzLjYyN2EzLjkzNiAzLjkzNiAwIDAxLTUuODgtLjM1My43NS43NSAwIDAwLTEuMTguOTI4IDUuNDM2IDUuNDM2IDAgMDA4LjEyLjQ4NmwzLjYyOC0zLjYyOGE1LjQzNiA1LjQzNiAwIDEwLTcuNjg4LTcuNjg4bC0zIDNhLjc1Ljc1IDAgMDAxLjA2IDEuMDYxbDMtM3oiPjwvcGF0aD48cGF0aCBkPSJNNy4yOCAxMS4xNTNhMy45MzYgMy45MzYgMCAwMTUuODguMzUzLjc1Ljc1IDAgMDAxLjE4LS45MjggNS40MzYgNS40MzYgMCAwMC04LjEyLS40ODZMMi41OTIgMTMuNzJhNS40MzYgNS40MzYgMCAxMDcuNjg4IDcuNjg4bDMtM2EuNzUuNzUgMCAxMC0xLjA2LTEuMDZsLTMgM2EzLjkzNiAzLjkzNiAwIDAxLTUuNTY3LTUuNTY4bDMuNjI3LTMuNjI3eiI+PC9wYXRoPjwvc3ZnPgo=");
+}
+
+blockquote {
+    border-left: 4px solid #888888;
+    margin-left: 18px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 18px;
+}
+
+.MJXc-display {
+    overflow: auto;
+}
+
+figure img {
+    max-width: 90%;
+}
+
+@media only screen and (max-width: 767px) {
+    figure img {
+        max-width: 100%;
+    }
+}
+figure figcaption {
+    margin-top: 0.8em;
+}
+
+figure {
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
+
+/* WARNING: Long data line ahead: Github Octicons */
+.octicon-commit:before {
+    background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iCiAgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIxMDI0IiB2aWV3UG9ydD0iMCAwIDEwMjQgMTAyNCI+CiAgICA8cGF0aCBkPSJNNjk1IDM4NGMtMjkgMTEwLTEyOCAxOTItMjQ3IDE5MnMtMjE4LTgyLTI0Ny0xOTJIMHYtMTI4aDIwMWMyOS0xMTAgMTI4LTE5MiAyNDctMTkyczIxOCA4MiAyNDcgMTkyaDIwMVYzODRINjk1ek00NDggMTc5Yy03OCAwLTE0MSA2My0xNDEgMTQxczYzIDE0MSAxNDEgMTQxIDE0MS02MyAxNDEtMTQxLTYzLTE0MS0xNDEtMTQxeiIgZmlsbD0iZ3JheSIgc3Ryb2tlPSJncmF5IiAvPgo8L3N2Zz4KCg==");
+  }
