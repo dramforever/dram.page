@@ -1,29 +1,7 @@
-```{=html}
-<!DOCTYPE html>
-<html>
-
-<head>
-    <title>Threaded code explained in C -- dramforever</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../../styles/default.css">
-</head>
-
-<body>
-
-<div id="site-title">
-    <h1 id="site-title-main"><a href="/">
-        dramforever
-    </a></h1>
-    <div id="site-title-sub">a row of my life</div>
-</div>
-
-<article>
-<div id="post-title">
-    <h1 id="post-title-main">Threaded code explained in C</h1>
-    <span id="post-title-sub">2023-11-20</span>
-</div>
-```
+---
+title: "Threaded code explained in C"
+date: 2023-11-20
+---
 
 At some point in your life you may have decided that it would be a good idea to represent something in term of a "virtual machine". You know, a relatively simple format of data that encodes things to do, and a simple interpreter reading it and doing the actual thing.
 
@@ -395,18 +373,3 @@ The [*Threading*][gforth-threading] section from the Gforth manual was very help
 Complete demos corresponding to snippets in this article can be found on [GitHub at dramforever/threaded-code-demo][threaded-code-demo].
 
 [threaded-code-demo]: https://github.com/dramforever/threaded-code-demo
-
-## About this document
-
-This document was generated using [Pandoc][pandoc] from [the Markdown source](threaded-code.md):
-
-[pandoc]: https://pandoc.org/
-
-```console
-$ pandoc -f markdown -t html < threaded-code.md > index.html
-```
-
-```{=html}
-</body>
-</html>
-```

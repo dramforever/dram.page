@@ -1,29 +1,7 @@
-```{=html}
-<!DOCTYPE html>
-<html>
-
-<head>
-    <title>ELF relative relocations explained -- dramforever</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../../styles/default.css">
-</head>
-
-<body>
-
-<div id="site-title">
-    <h1 id="site-title-main"><a href="/">
-        dramforever
-    </a></h1>
-    <div id="site-title-sub">a row of my life</div>
-</div>
-
-<article>
-<div id="post-title">
-    <h1 id="post-title-main">ELF relative relocations explained</h1>
-    <span id="post-title-sub">2023-09-18</span>
-</div>
-```
+---
+title: ELF relative relocations explained
+date: 2023-09-18
+---
 
 ## Background
 
@@ -308,18 +286,3 @@ The base address is actually `__executable_start - 0x80000000`. No idea why you 
 [maskray-relr]: https://maskray.me/blog/2021-10-31-relative-relocations-and-relr
 [arm64-linux-relr]: https://lore.kernel.org/all/20190801011842.199786-1-pcc@google.com/
 [solaris-linker]: https://docs.oracle.com/cd/E23824_01/html/819-0690/toc.html
-
-## About this document
-
-This document was generated using [Pandoc][pandoc] from [the Markdown source](relative-relocs-explained.md):
-
-[pandoc]: https://pandoc.org/
-
-```console
-$ pandoc -f markdown -t html < relative-relocs-explained.md > index.html
-```
-
-```{=html}
-</body>
-</html>
-```

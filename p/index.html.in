@@ -1,0 +1,10 @@
+\ do_template templates/site-header --variable it:"Index"
+
+<section>
+  <header class="widget-header">Index</header>
+  <ul class="widget-list">
+\ do_index_all
+  </ul>
+</section>
+
+\ do_template templates/site-footer
