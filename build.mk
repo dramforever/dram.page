@@ -34,4 +34,5 @@ extra-articles := \
 extra-pages := \
   p/index.html \
   index.html \
+  feed.xml \
 

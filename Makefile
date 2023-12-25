@@ -13,8 +13,11 @@ targets-articles := $(patsubst %,p/%/index.html,$(hidden-articles) $(build-artic
 .PHONY: all
 all: $(targets-articles) $(extra-pages)
 
-p/%/index.html: p/%/index.md
-	pandoc --data-dir . -s --toc --template template/post.html --variable name:"$*" -o $@ $<
+.PHONY: index
+index: $(extra-pages)
 
-%.html: %.html.in
+p/%/index.html: p/%/index.md
+	pandoc --data-dir . --defaults templates/variables.yaml -s --toc --template templates/post.html --variable name:"$*" -o $@ $<
+
+%: %.in
 	templates/do_html.sh < $< > $@

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>dramforever's blog</title>
+    <description>dramforever's blog</description>
+    <link>https://dram.page</link>
+    <ttl>3600</ttl>
+    <item>
+        <title>Threaded code explained in C</title>
+        <pubDate>Mon, 20 Nov 2023 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/threaded-code</guid>
+    </item>
+    <item>
+        <title>ELF relative relocations explained</title>
+        <pubDate>Mon, 18 Sep 2023 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/relative-relocs-explained</guid>
+    </item>
+    <item>
+        <title>VisionFive JTAG adventures, Part 1: JH7100 GPIO</title>
+        <pubDate>Mon, 27 Jun 2022 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/visionfive-jtag-1</guid>
+    </item>
+    <item>
+        <title>Magic tricks with CRC</title>
+        <pubDate>Sat, 25 Dec 2021 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/crc-tricks</guid>
+    </item>
+    <item>
+        <title>The with construct in nix-lang</title>
+        <pubDate>Wed, 19 May 2021 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/nix-lang-with</guid>
+    </item>
+    <item>
+        <title>Untitled router：一个路由器的故事</title>
+        <pubDate>Thu, 31 Dec 2020 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/untitled-router</guid>
+    </item>
+    <item>
+        <title>Counting empty triangles with number theory</title>
+        <pubDate>Sun, 31 May 2020 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/empty-triangles</guid>
+    </item>
+    <item>
+        <title>Heyting algebra made unnecessarily complex</title>
+        <pubDate>Thu, 06 Feb 2020 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/heyting-algebra</guid>
+    </item>
+    <item>
+        <title>What happens when you <code>foreign import “wrapper”</code>?</title>
+        <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/foreign-wrapper</guid>
+    </item>
+    <item>
+        <title>6 步搞懂 FFT</title>
+        <pubDate>Sun, 15 Sep 2019 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/fft-easy</guid>
+    </item>
+    <item>
+        <title>Stack-based Clash environment</title>
+        <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/clash-with-stack</guid>
+    </item>
+    <item>
+        <title>Bootstrapping Nix</title>
+        <pubDate>Thu, 24 Jan 2019 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/bootstrapping-nix</guid>
+    </item>
+    <item>
+        <title>用 2 盏灯也能实现群聊</title>
+        <pubDate>Fri, 18 May 2018 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/lampcomms</guid>
+    </item>
+    <item>
+        <title>CPS、ANF、Monad 和 Callback hell</title>
+        <pubDate>Tue, 28 Mar 2017 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/cps-anf-monad-callback</guid>
+    </item>
+    <item>
+        <title>Möbius 反演</title>
+        <pubDate>Sat, 18 Mar 2017 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/mobius-inversion</guid>
+    </item>
+    <item>
+        <title>有关 monad 的一些想法 (4)</title>
+        <pubDate>Wed, 25 Jan 2017 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/on-monad-4</guid>
+    </item>
+    <item>
+        <title>有关 monad 的一些想法 (3)</title>
+        <pubDate>Mon, 23 Jan 2017 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/on-monad-3</guid>
+    </item>
+    <item>
+        <title>C 语言注释的妙用</title>
+        <pubDate>Fri, 13 Jan 2017 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/comment-magic</guid>
+    </item>
+    <item>
+        <title>有关 monad 的一些想法 (2)</title>
+        <pubDate>Mon, 26 Dec 2016 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/on-monad-2</guid>
+    </item>
+    <item>
+        <title>有关 monad 的一些想法 (1)</title>
+        <pubDate>Fri, 02 Dec 2016 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/on-monad-1</guid>
+    </item>
+    <item>
+        <title>表达式归一化和 Traversable, Generics</title>
+        <pubDate>Thu, 02 Jun 2016 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/generic-unification</guid>
+    </item>
+    <item>
+        <title>表达式归一化与 Free Monad</title>
+        <pubDate>Sun, 22 May 2016 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/unification</guid>
+    </item>
+    <item>
+        <title>七树归一</title>
+        <pubDate>Wed, 10 Feb 2016 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/seven-trees</guid>
+    </item>
+    <item>
+        <title>Chair Trees (SPOJ MKTHNUM)</title>
+        <pubDate>Wed, 30 Dec 2015 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/chair-tree</guid>
+    </item>
+    <item>
+        <title>Splay 和 Link/cut tree (HDU 2475)</title>
+        <pubDate>Mon, 14 Dec 2015 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/splay-lct</guid>
+    </item>
+    <item>
+        <title>Hello World</title>
+        <pubDate>Sat, 22 Aug 2015 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/hello-world</guid>
+    </item>
+</channel>
+</rss>

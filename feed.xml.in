@@ -1,0 +1,3 @@
+\ do_template templates/rss-header.xml
+\ do_rss_all
+\ do_template templates/rss-footer.xml
