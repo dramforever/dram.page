@@ -9,131 +9,802 @@
         <title>Threaded code explained in C</title>
         <pubDate>Mon, 20 Nov 2023 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/threaded-code</guid>
+        <description><![CDATA[<p>At some point in your life you may have
+decided that it would be a good idea to represent something in term of a
+“virtual machine”. You know, a relatively simple format of data that
+encodes things to do, and a simple interpreter reading it and doing the
+actual thing.</p>
+<p>I hope what you were intending to implement is actually a programming
+language, not just something that got to the point of being accidentally
+Turing-complete. I wouldn’t judge either way though.</p>
+<h2 id="side-note-c-features-used-in-this-article">Side note: C features
+used in this article</h2>
+<p>I’m going to assume familiarity with the C language, but just to make
+easier for those less familiar with C, here are some explanations of
+less obvious constructs used in the code:</p>
+<h3 id="infinite-loop">Infinite loop</h3>
+<p><code>for (;;)</code> is an infinite loop.</p>
+<h3 id="stack-operations">Stack operations</h3>
+<p>We’re going to use arrays and pointers as stacks. The convention
+we’re going to use is:</p>
+<pre><code>uintptr_t stack_buf[STACK_SIZE];
+uintptr_t *sp = stack_buf;</code></pre>
+<ul>
+<li>The stack “grows up”, meaning that successive pushes go into higher
+indices.</li>
+<li>The stack pointer starts at the beginning of the underlying
+array.</li>
+<li>The stack pointer points to one element after the top element. So if
+the stack currently has <code>3</code> elements, then
+<code>sp = stack_buf + 3</code>.</li>
+<li>Using the semantics of C’s increment/decrement operators,
+<code>*(sp++) = foo</code> pushes <code>foo</code> on the stack, whereas
+<code>bar = *(--sp)</code> pops an element from the stack and assigns it
+to <code>bar</code>.</li>
+</ul>
+<h3 id="function-pointers">Function pointers</h3>
+<p>Later in the article we’re going to need to “store” functions as
+data. The way this is done is using a <em>function pointer</em>.</p>
+<p>It’s possible to declare function pointers directly, but I’m going to
+use a <code>typedef</code> for the sake of your sanity:</p>
+<pre><code>typedef void (*codeptr)(void);</code></pre>
+<p>This means <code>codeptr</code> is now a type alias for the type
+“function pointer to a function that takes no arguments and returns
+<code>void</code>”.</p>
+<p>(For historical reasons a parameter list of <code>(void)</code>, not
+<code>()</code>, means “takes no arguments” in C.)</p>
+<p>You can use this type in variables or members. The name of any
+function with the correct signature can be used as a value of type
+<code>codeptr</code>. To use a function pointer, just call it like any
+function.</p>
+<pre><code>void foo(void);
+codeptr p = foo;
+p(); // Calls foo</code></pre>
+<p>On most architectures a function pointer is represented by the
+address of the start of the code of a function.</p>
+<h2 id="bytecode">Bytecode</h2>
+<p>A “bytecode” is one of the obvious popular choices. Each instruction
+has, say, one byte of opcode and several bytes of operands. Let’s also
+say we’re using a stack machine, because it’s also an obvious popular
+choice. A bytecode program might look something like this:</p>
+<pre><code>#define OP_EXIT 0
+#define OP_PUSH 1
+#define OP_ADD 2
+#define OP_PRINT 3
+// ... more opcodes
+
+const uint8_t program[] = {
+    OP_PUSH, 1, OP_PUSH, 1, OP_ADD, OP_PRINT, OP_EXIT,
+};</code></pre>
+<p>And the interpreter would look something like this:</p>
+<pre><code>const uint8_t *ip = program;
+
+uintptr_t stack_buf[STACK_SIZE];
+uintptr_t *sp = stack_buf;
+
+void interpreter(void) {
+    for (;;) {
+        switch (*ip) {
+        case OP_PUSH:
+            ip++;
+            uintptr_t operand = *(ip++);
+            *(sp++) = operand;
+            break;
+
+        case OP_ADD:
+            ip++;
+            uintptr_t b = *(--sp);
+            uintptr_t a = *(--sp);
+            *(sp++) = a + b;
+            break;
+
+        // ... more opcodes
+        }
+    }
+}</code></pre>
+<h2 id="direct-threaded-code">Direct threaded code</h2>
+<p>The <code>switch</code> statement above would probably be compiled
+into a jump table by the compiler. If you don’t need the program to be
+serializable, one thing you can do is to simply store function pointers
+in an array, skipping the table altogether:</p>
+<pre><code>typedef void (*codeptr)(void);
+
+void code_one(void);
+// ... more functions
+
+const codeptr program[] = {
+    code_one, code_one, code_add, code_print, code_exit,
+};</code></pre>
+<p>Instead of <code>case</code>s in a <code>switch</code> block, the
+individual opcodes are now individual functions</p>
+<pre><code>void code_one(void) {
+    ip++;
+    *(sp++) = 1;
+}
+
+void code_add(void) {
+    ip++;
+    uintptr_t b = *(--sp);
+    uintptr_t a = *(--sp);
+    *(sp++) = a + b;
+}
+
+// ...</code></pre>
+<p>And the interpreter would simply repeatedly call the current function
+pointer. For simplicity’s sake, we’ll keep the interpreter state in
+global variables (for now).</p>
+<pre><code>const codeptr *ip = program; // Changed!
+
+uintptr_t stack_buf[STACK_SIZE];
+uintptr_t *sp = stack_buf;
+
+void interpreter(void) {
+    for (;;)
+        (*ip)();
+}</code></pre>
+<h2 id="indirect-threaded-code">Indirect threaded code</h2>
+<p>Instead of function pointers, the program can contain pointers to
+more complicated objects. An obvious example would be <em>other
+programs</em>, as an implementation of subroutines.</p>
+<p>Since we want the handling of objects to remain uniform, each object
+would need a function pointer pointing to some code telling it what to
+do. Following it could be some payload. For simplicity, let’s say that
+the only possible payload is a subroutine.</p>
+<p>To handle subroutine calls and returns, we’d also need to add a
+return stack pointer (<code>rsp</code>) to our interpreter state. We’ll
+see how to handle it later.</p>
+<pre><code>typedef void (*codeptr)(void);
+
+struct object {
+    codeptr code;
+    const struct object *payload[];
+};
+
+const struct object *const *ip = ...; // Changed!
+
+uintptr_t stack_buf[STACK_SIZE];
+uintptr_t *sp = stack_buf;
+
+// New: return stack
+const struct object *const *rstack_buf[STACK_SIZE];
+const struct object *const **rsp = rstack_buf;</code></pre>
+<p>Primitive objects can have <code>code</code> with no
+<code>payload</code>:</p>
+<pre><code>void code_add(void) {
+    ip++;
+    uintptr_t b = *(--sp);
+    uintptr_t a = *(--sp);
+    *(sp++) = a + b;
+}
+
+const struct object o_add = { .code = code_add };</code></pre>
+<p>Within a <code>code</code>, you can get access to a pointer to the
+current object with <code>*ip</code>.</p>
+<p>Let’s see how we could handle subroutines. The code of a subroutine
+objects should bump the <code>ip</code> and push it on the return stack,
+and change <code>ip</code> to point to the payload. Each subroutine
+should end with a <code>return</code> primitive that pops the return
+address and change <code>ip</code> back:</p>
+<pre><code>void code_subroutine(void) {
+    const struct object *self = *ip;
+    ip++;
+    *(rsp++) = ip;
+    ip = self-&gt;payload;
+}
+
+void code_return(void) {
+    ip = *(--rsp);
+}
+
+const struct object o_return = { .code = code_return };</code></pre>
+<p>And now a subroutine could look like</p>
+<pre><code>const struct object o_two = {
+    .code = code_subroutine,
+    .payload = { &amp;o_one, &amp;o_one, &amp;o_add, &amp;o_return },
+};</code></pre>
+<p>The interpreter is largely unchanged, just with an additional
+dereferencing on <code>ip</code>. Starting the interpreter is slightly
+tricky. Where do you point <code>ip</code> initially?</p>
+<p>If you have an object that’s the “main program” <code>o_main</code>,
+you can store <code>&amp;o_main</code> in memory and let <code>ip</code>
+point to that. Be careful — the main program must not return because it
+has nowhere to return to.</p>
+<pre><code>const struct object *const start = &amp;o_main;
+const struct object *const *ip = &amp;start;
+
+void interpreter(void) {
+    for (;;)
+        (*ip)-&gt;code();
+}</code></pre>
+<h2 id="primitive-centric-threaded-code">Primitive-centric threaded
+code</h2>
+<p>There are two issues with indirect threaded code from the previous
+section:</p>
+<ul>
+<li>The extra pointer indirection might be unsatisfactory for efficiency
+reasons.</li>
+<li>There’s no easy way to encode an immediate operand.</li>
+</ul>
+<p>We can solve both problems with yet another spin on threaded code. M.
+Anton Ertl, in implementing Gforth, used what was referred to as
+“primitive-centric threaded code”. It is essentially a fat pointer
+scheme:</p>
+<pre><code>typedef void (*codeptr)(uintptr_t);
+
+struct instr {
+    codeptr code;
+    uintptr_t data;
+};</code></pre>
+<p>Instead of requiring a dereference of a point to access an object,
+the program directly stores a function pointer and one pointer worth of
+extra data. When processing each “instruction” in the program, the
+interpreter provides the extra data to the function.</p>
+<pre><code>const struct instr i_main = { ... };
+const struct instr *ip = &amp;i_main; // Changed!
+
+uintptr_t stack_buf[STACK_SIZE];
+uintptr_t *sp = stack_buf;
+
+// Changed to adapt to match the type of ip
+const struct instr *rstack_buf[STACK_SIZE];
+const struct instr **rsp = rstack_buf;
+
+void interpreter(void) {
+    for (;;) {
+        struct instr ins = *ip;
+        ins.code(ins.data);
+    }
+}</code></pre>
+<p>It’s now possible again to make a generic “push”, without requiring
+separate code for every possible immediate value:</p>
+<pre><code>void code_push(uintptr_t data) {
+    ip++;
+    *(sp++) = data;
+}
+
+const struct instr i_one = { .code = code_push, .data = 1 };
+const struct instr i_two = { .code = code_push, .data = 2 };</code></pre>
+<p>Subroutine calls can be made by making <code>data</code> point to an
+array of instructions making up the subroutines:</p>
+<pre><code>void code_subroutine(uintptr_t data) {
+    const struct instr *sr = (const struct instr *) data;
+    ip++;
+    *(rsp++) = ip;
+    ip = sr;
+}
+
+void code_return(uintptr_t data) {
+    ip = *(--rsp);
+}
+
+const struct instr sr_three[] = {
+    { .code = code_push, .data = 1 },
+    { .code = code_push, .data = 2 },
+    { .code = code_add },
+    { .code = code_return },
+};
+
+const struct instr sr_six[] = {
+    { .code = code_subroutine, .data = (uintptr_t) sr_three },
+    { .code = code_subroutine, .data = (uintptr_t) sr_three },
+    { .code = code_add },
+    { .code = code_return },
+};</code></pre>
+<h2 id="optimization">Optimization</h2>
+<p>We can leverage a few tricks to convince the compiler into keeping
+our interpreter state in registers, and avoid doing a function call and
+return for each step.</p>
+<p>Firstly, instead of using a loop to repeatedly call functions, we can
+instead make each piece of code tail call the next:</p>
+<pre><code>void code_foo(uintptr_t data) {
+    // ...
+
+    struct instr ins = *ip;
+    ins.code(ins.data);
+}</code></pre>
+<p>Compile your code with optimizations on. Your compiler should
+recognize that this is a tail call, and compile this down to a simpler
+indirect jump.</p>
+<p>Next, instead of using global variables for the interpreter state,
+put them into arguments:</p>
+<pre><code>void code_foo(
+    uintptr_t data,
+    const struct instr *ip,
+    uintptr_t *sp,
+    const struct instr **rsp
+) {
+    // ...
+
+    struct instr ins = *ip;
+    ins.code(ins.data, ip, sp, rsp);
+}</code></pre>
+<p>Using some macros would reduce the boilerplate a bit</p>
+<pre><code>#define DECL_STATE \
+    const struct instr *ip, \
+    uintptr_t *sp, \
+    const struct instr **rsp
+
+#define STATE ip, sp, rsp
+
+void code_foo(uintptr_t data, DECL_STATE) {
+    // ...
+
+    struct instr ins = *ip;
+    ins.code(ins.data, STATE);
+}</code></pre>
+<p>On modern register-rich architectures (x86-64, ARM, RISC-V, MIPS, …),
+the arguments <code>ip</code>, <code>sp</code>, <code>rsp</code> would
+be passed in registers. Since <code>ins.code</code> expect these in the
+same registers, if your code leaves some of those state variables
+unchanged, there’s no cost to simply passing it on.</p>
+<p>(On 32-bit x86, it might be possible with some non-portable
+<code>__attribute__((regparm(4)))</code> magic. I have not yet
+experimented with this.)</p>
+<p>For threaded code, this is about as close as it gets to what you’d
+write in assembly. More native-code optimizations is possible, but would
+be out of the scope of (mostly) portable C.</p>
+<h2 id="notes">Notes</h2>
+<p>The <a
+href="https://gforth.org/manual/Threading.html"><em>Threading</em></a>
+section from the Gforth manual was very helpful when writing this
+article. In particular, the concept of primitive-centric threaded code
+is described in detail.</p>
+<p>Complete demos corresponding to snippets in this article can be found
+on <a href="https://github.com/dramforever/threaded-code-demo">GitHub at
+dramforever/threaded-code-demo</a>.</p>]]></description>
     </item>
     <item>
         <title>ELF relative relocations explained</title>
         <pubDate>Mon, 18 Sep 2023 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/relative-relocs-explained</guid>
+        <description><![CDATA[<h2 id="background">Background</h2>
+<p>Consider this code, where one piece of global data is a pointer to
+another piece of global data:</p>
+<pre><code>void *foo;
+void *bar = &amp;foo;</code></pre>
+<p>During program execution, the memory at <code>bar</code> contains an
+address of <code>foo</code>. One way to achieve this is to require all
+the data to be loaded at a certain address. Then the linker can simply
+pre-calculate the address at link time and fill in the address for
+<code>bar</code>.</p>
+<p>Having a program runnable from only one fixed address may be
+undesirable, however:</p>
+<ul>
+<li>If we’re a shared library, this would require a global registry of
+library addresses to avoid collision, and would be a massive pain.</li>
+<li>ASLR by definition requires randomized addresses and is in direct
+conflict of fixed addresses.</li>
+<li>In early boot scenarios such as bootloaders or EFI applications or
+drivers, virtual memory is not available, and it’s desirable to place
+executables out of the way of one another at runtime.</li>
+</ul>
+<p>If something can work at any (suitably aligned) address, it is
+<em>position-independent</em>. Otherwise it’s
+<em>position-dependent</em>.</p>
+<p>By compiling code to use PC-relative addressing, executable code can
+be made position-independent <em>relatively</em> easily. (Ha!) However
+the problem with global pointers is more fundamental. Again, take a look
+back at the code:</p>
+<pre><code>void *foo;
+void *bar = &amp;foo;</code></pre>
+<p>If we don’t want to change the representation of a
+<code>void *</code>, and the address of global data is only known at
+runtime, something has to, <em>at runtime</em>, figure out the address
+of <code>foo</code> and put it in <code>bar</code> before user code can
+see it.</p>
+<h2 id="relative-relocations">Relative relocations</h2>
+<p>On ELF systems, this problem is handled with <em>dynamic
+relocations</em>. We’ll tackle the most simple case here: relative
+relocations.</p>
+<p>We’ll handle the simplest case and assume everything (code, data) in
+an executable must still be contiguous and cannot move relative to one
+another. The entire executable will move as a whole to some “base
+address” that is only known at runtime. Then everything in the
+executable will be at a fixed offset from the base address.</p>
+<p>We will also not need to link to dynamic shared libraries, and
+everything we need is in the executable. This is known as a
+statically-linked position-independent executable, or
+<em>static-pie</em>.</p>
+<p>Conceptually, the three major steps that occur to make the code
+example work are:</p>
+<ol type="1">
+<li><p>Compiler: Generates a relocatable file (object file) with static
+relocations saying this:</p>
+<pre><code>(8 bytes) // foo
+(8 bytes) // bar, Please fill in the address of foo</code></pre></li>
+<li><p>Linker: Places everything the compiler says to place at offsets
+from the base and generates a static-pie with dynamic relocations:</p>
+<pre><code>offset       contents
+0x100        (8 bytes)
+0x108        (8 bytes) // Please fill in value of (base + 0x100)</code></pre></li>
+<li><p>Startup code: Figures out <code>base</code>, looks at the dynamic
+relocations, and fills in the correct addresses:</p>
+<pre><code>addr         contents
+0xabc100     0
+0xabc108     0xabc100</code></pre></li>
+</ol>
+<p>We’ll ignore the relocatable file and focus on the static-pie.</p>
+<h2 id="rela-and-rel">RELA and REL</h2>
+<p>An instruction like “please fill in value of
+<code>(base + one_offset)</code> at <code>another_offset</code>” is
+called a <em>relocation</em>. The most obvious way to encode such a
+relocation is to just have a table of offsets. Like maybe an array of
+“RELA” entries:</p>
+<pre><code>struct {
+    uintptr_t offset;
+    uintptr_t info;
+    intptr_t addend;
+}</code></pre>
+<p><code>info</code> encodes information. The low 8 (for 32-bit ELF) or
+32 (for 64-bit ELF) bits encodes the type of relocation and higher bits
+is a symbol index. For our purposes the type is just
+<code>R_*_RELATIVE</code>, and since it’s just an offset and there’s no
+symbol, all the higher bits are 0.</p>
+<p>(In <code>elf.h</code> speak, <code>ELF*_R_INFO(sym, type)</code>
+encodes the symbol index and relocation type into <code>info</code>
+(<code>*</code> is <code>32</code> or <code>64</code>), and
+<code>ELF*_R_TYPE(info)</code>, <code>ELF*_R_SYM(info)</code> unpacks
+the fields back.)</p>
+<p><code>offset</code> is the offset from the base address to which the
+entry applies to, and the addend is… the value to be added, in this case
+added to the base address.</p>
+<p>(<em>Note</em>: The same structure is used for static relocations but
+the meanings of fields are not identical. That’s irrelevant to this
+article.)</p>
+<p>To put everything together again, for each entry in the array, if
+<code>info == R_*_RELATIVE</code>, then it means “Please fill in the
+value of <code>(base + addend)</code> at <code>offset</code> from base
+of executable”. The algorithm to run to apply these relocations is also
+pretty simple:</p>
+<pre><code>uintptr_t base = ...;
+for (rela = ...) {
+    if (ELF*_R_TYPE(rela-&gt;info) == R_*_RELATIVE) {
+        *(uintptr_t *)(base + rela-&gt;offset) = base + rela-&gt;addend;
+    } else ...
+}</code></pre>
+<p>On some architectures a simplified structure “REL” is used, like:</p>
+<pre><code>struct {
+    uintptr_t offset;
+    uintptr_t info;
+}</code></pre>
+<p>The <code>addend</code> field is gone from the table, and is just
+stashed into where <code>offset</code> points. The meaning of entries is
+otherwise the same.</p>
+<pre><code>for (rel = ...) {
+    if (ELF*_R_TYPE(rela-&gt;info) == R_*_RELATIVE) {
+        *(uintptr_t *)(base + rel-&gt;offset) += base;
+    } else ...
+}</code></pre>
+<h2 id="the-.rela.dyn-section-and-dt_rela">The <code>.rel[a].dyn</code>
+section, and <code>DT_REL[A]*</code></h2>
+<p>The linker synthesizes an array of tag-value pairs, and also
+synthesizes a symbol <code>_DYNAMIC</code> to point to the start of
+it:</p>
+<pre><code>struct {
+    uintptr_t tag;
+    uintptr_t value;
+} _DYNAMIC[];</code></pre>
+<p>The format of the dynamic array does not have an explicit size and is
+terminated by an entry with <code>tag</code> as
+<code>DT_NULL = 0</code>. The relevant tags for us are:</p>
+<ul>
+<li><code>tag</code> is <code>DT_RELA = 7</code>, <code>value</code> is
+offset of array of RELA entries</li>
+<li><code>tag</code> is <code>DT_RELASZ = 8</code>, <code>value</code>
+is total size in bytes of the array of RELA entries</li>
+<li><code>tag</code> is <code>DT_RELAENT = 9</code>, <code>value</code>
+is the size in bytes of one RELA entry. If there ever is a future need
+for extending the contents RELA entry, this will grow larger.</li>
+</ul>
+<p>This allows us to find where the array of RELA entries is. We can
+just find <code>_DYNAMIC</code> and the base address using PC-relative
+addressing, and we can run the relocation algorithm from the previous
+section.</p>
+<pre><code>// Find these from _DYNAMIC
+size_t dt_rela, dt_relasz, dt_relaent;
+
+for (char *ptr = (char*)(dt_rela + base);
+    ptr &lt; (char*)(base + dt_rela + dt_relasz);
+    ptr += dt_relaent) {
+    Rela *rela = (Rela*)ptr;
+
+    // Handle rela
+}</code></pre>
+<p>Perhaps just for convenience, the linker puts the
+<code>_DYNAMIC</code> array in a section called <code>.dynamic</code>,
+and the dynamic RELA relocations in <code>.rela.dyn</code>.</p>
+<p>(If you have an operating system giving you ELF auxillary vectors,
+you can look up the base address as <code>AT_BASE</code>, and look up
+where <code>_DYNAMIC</code> is by looking for <code>AT_PHDR</code> to
+find the <code>PT_DYNAMIC</code> segment. I suppose this is more
+portable.)</p>
+<p>A similar thing happens for REL, with the <code>.rel.dyn</code>
+section, and tags <code>DT_REL = 17</code>, <code>DT_RELSZ = 18</code>,
+<code>DT_RELENT = 19</code>. Not much more to say about those.</p>
+<h2 id="linker-script-trickery-for-the-.rela.dyn-section">Linker script
+trickery for the <code>.rel[a].dyn</code> section</h2>
+<p>If you’re building a bootloader or something and just want to, you
+don’t <em>have</em> to use <code>_DYNAMIC</code>. You can just use the
+linker script to give you symbols that bound the <code>.rel[a]</code>
+array.</p>
+<pre><code>.rela.dyn : {
+    __rela_start = .;
+    *(.rela*)
+    __rela_end = .;
+}</code></pre>
+<h2 id="relr">RELR</h2>
+<p>The RELA format is grossly inefficient space-wise at representing
+relocations. REL is 1/3 better but is only really a thing on some
+architectures. Can we do even better?</p>
+<p>For position independent executables it is often the case that there
+are a lot of contiguous addresses needing relative relocation. For
+example, this is one relocation per every string:</p>
+<pre><code>const char *string_table = {
+    &quot;one string&quot;,
+    &quot;another string&quot;,
+    &quot;a third string&quot;,
+    ...
+};</code></pre>
+<p>RELR is a new packed format to store dynamic relative relocations
+more efficiently with bitmaps. From what I can tell it’s not really well
+documented, but support exists in e.g. glibc and musl. The linker LLD
+supports it fully. BFD ld supports it for x86 only.</p>
+<p>The closest to an official documentation is <a
+href="https://groups.google.com/g/generic-abi/c/bX460iggiKg/m/YT2RrjpMAwAJ">one
+email on the general-abi mailing list</a> that is a proposal for the
+RELR format.</p>
+<p>The idea originates from Google for their Android stuff, but the
+format eventually settled on is this:</p>
+<ul>
+<li>Each entry is <code>uintptr_t</code> long.</li>
+<li>If an entry is even, it means the <code>uintptr_t</code> at this
+address needs relocating.</li>
+<li>If an entry is odd, the bits except the least significant bit, from
+lowest to highest, is a bitmap encoding which of the
+<code>sizeof(uintptr_t) * 8 - 1</code> <code>uintptr_t</code> values
+after the last address handled needs relocating.</li>
+</ul>
+<p>(It is simply assumed that all offsets needing relocation is
+aligned.)</p>
+<p>For example, on a 64-bit system, if we want 64 contiguous
+relocations, we can just represent it with two entries:</p>
+<pre><code>0x0000_0000_0001_0000   The one uintptr_t at offset 0x10000 needs relocating
+0xffff_ffff_ffff_ffff   The next 63 uintptr_t values after that needs relocating
+                        (Offset 0x10008 through 0x101f8)</code></pre>
+<p>The last address handled is <code>0x101f8</code>, so if the next
+entry is still a bitmap it would start from <code>0x10200</code>. If we
+want one more relocation, making it 65 instead of 64:</p>
+<pre><code>0x0000_0000_0000_0003   Of the next 63 words, only the first one needs relocating
+                        (Offset 0x10200)</code></pre>
+<p>(Remember that the least significant bit isn’t part of the
+bitmap.)</p>
+<p>Even though bitmap only has one bit set, it still handles 63
+<code>uintptr_t</code> values, so if the next entry is still a bitmap it
+would start from <code>0x103f8</code>.</p>
+<p>If we want to skip to another address, just put in the address. In
+fact if you want to be lazy and don’t want to figure out how to generate
+bitmaps, you can skip this altogether and just put down a list of
+addresses, and it’s still valid.</p>
+<p>As simple as RELR is, the savings are remarkable. For our example, 65
+relocations are represented with 24 bytes with RELR. In RELA that’s 1560
+bytes. This is a space saving of 98%. According to <a
+href="https://groups.google.com/g/generic-abi/c/bX460iggiKg/m/s8AOWvPaCAAJ">some
+measurements</a> this saves around 5% to 20% of binary size for PIEs. On
+most modern computers it is likely that the more compact in-memory
+representation is also faster due to less memory accesses.</p>
+<p>The algorithm in more detail is like this:</p>
+<pre><code>uintptr_t next; // Next address to relocate
+for (uintptr_t entry ...) {
+    if ((entry &amp; 1) == 0) {
+        *(uintptr_t *)(base + entry) += base; // Like REL
+
+        // Next to relocate is the word after the one pointed to by entry
+        next = base + entry + sizeof(uintptr_t);
+    } else {
+        // The bitmap handles the next (sizeof(uintptr_t) * 8 - 1) words
+        for (i = 0; i &lt; sizeof(uintptr_t) * 8 - 1; i ++) {
+            if ((entry &gt;&gt; (i + 1)) &amp; 1) {
+                // If bit (i + 1) is set, word i needs relocating
+                *(uintptr_t *)(next + sizeof(uintptr_t) * i) += base;
+            }
+        }
+
+        // Next to relocate is after that
+        next += sizeof(uintptr_t) * (8 * sizeof(uintptr_t) - 1);
+    }
+}</code></pre>
+<p>For the bitmap case, it might be more convenient to write it like
+this:</p>
+<pre><code>        uintptr_t tmp = next;
+        for (; entry &gt;&gt;= 1; tmp += sizeof(uintptr_t)) {
+            if (entry &amp; 1) {
+                *(uintptr_t *)tmp += base;
+            }
+        }
+
+        next += sizeof(uintptr_t) * (8 * sizeof(uintptr_t) - 1);</code></pre>
+<p>RELR uses <code>.relr.dyn</code> section and tags
+<code>DT_RELR = 36</code>, <code>DT_RELRSZ = 35</code>,
+<code>DT_RELRENT = 37</code>. (Note: The values aren’t sequential!)
+Contrary to RELA, and most struct arrays in ELF, for that matter, RELR
+doesn’t seem to designed to be extensible, since it’s just a compact
+form of REL.</p>
+<p>Since only dynamic relative relocations are represented in RELR, it
+does not replace RELA/REL. The proposal states that dynamic RELR
+relocations should be processed before REL/RELA.</p>
+<h2 id="a-note-on-base-address">A note on “base address”</h2>
+<p>The base address mentioned above is not actually the start of the
+binary, but the address to which the address <code>0</code> is moved to.
+Since PIEs are usually linked to starting at <code>0</code> this checks
+out. If your linker script links everything starting at somewhere else,
+like:</p>
+<pre><code>SECTIONS {
+    . = 0x80000000;
+    __executable_start = .;
+
+    // ...
+}</code></pre>
+<p>The base address is actually
+<code>__executable_start - 0x80000000</code>. No idea why you would do
+that though, since the whole point of PIE is to not have a fixed start
+address…</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a
+href="https://maskray.me/blog/2021-10-31-relative-relocations-and-relr">Relative
+relocations and RELR</a> by MaskRay</li>
+<li><a
+href="https://lore.kernel.org/all/20190801011842.199786-1-pcc@google.com/">arm64:
+Add support for relocating the kernel with RELR relocations</a> by Peter
+Collingbourne</li>
+<li><a
+href="https://docs.oracle.com/cd/E23824_01/html/819-0690/toc.html">Linker
+and Libraries Guide, Oracle Solaris 11 Information Library</a></li>
+</ul>]]></description>
     </item>
     <item>
         <title>VisionFive JTAG adventures, Part 1: JH7100 GPIO</title>
         <pubDate>Mon, 27 Jun 2022 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/visionfive-jtag-1</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Magic tricks with CRC</title>
         <pubDate>Sat, 25 Dec 2021 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/crc-tricks</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>The with construct in nix-lang</title>
         <pubDate>Wed, 19 May 2021 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/nix-lang-with</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Untitled router：一个路由器的故事</title>
         <pubDate>Thu, 31 Dec 2020 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/untitled-router</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Counting empty triangles with number theory</title>
         <pubDate>Sun, 31 May 2020 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/empty-triangles</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Heyting algebra made unnecessarily complex</title>
         <pubDate>Thu, 06 Feb 2020 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/heyting-algebra</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>What happens when you <code>foreign import “wrapper”</code>?</title>
         <pubDate>Wed, 29 Jan 2020 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/foreign-wrapper</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>6 步搞懂 FFT</title>
         <pubDate>Sun, 15 Sep 2019 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/fft-easy</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Stack-based Clash environment</title>
         <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/clash-with-stack</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Bootstrapping Nix</title>
         <pubDate>Thu, 24 Jan 2019 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/bootstrapping-nix</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>用 2 盏灯也能实现群聊</title>
         <pubDate>Fri, 18 May 2018 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/lampcomms</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>CPS、ANF、Monad 和 Callback hell</title>
         <pubDate>Tue, 28 Mar 2017 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/cps-anf-monad-callback</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Möbius 反演</title>
         <pubDate>Sat, 18 Mar 2017 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/mobius-inversion</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>有关 monad 的一些想法 (4)</title>
         <pubDate>Wed, 25 Jan 2017 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/on-monad-4</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>有关 monad 的一些想法 (3)</title>
         <pubDate>Mon, 23 Jan 2017 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/on-monad-3</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>C 语言注释的妙用</title>
         <pubDate>Fri, 13 Jan 2017 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/comment-magic</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>有关 monad 的一些想法 (2)</title>
         <pubDate>Mon, 26 Dec 2016 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/on-monad-2</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>有关 monad 的一些想法 (1)</title>
         <pubDate>Fri, 02 Dec 2016 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/on-monad-1</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>表达式归一化和 Traversable, Generics</title>
         <pubDate>Thu, 02 Jun 2016 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/generic-unification</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>表达式归一化与 Free Monad</title>
         <pubDate>Sun, 22 May 2016 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/unification</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>七树归一</title>
         <pubDate>Wed, 10 Feb 2016 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/seven-trees</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Chair Trees (SPOJ MKTHNUM)</title>
         <pubDate>Wed, 30 Dec 2015 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/chair-tree</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Splay 和 Link/cut tree (HDU 2475)</title>
         <pubDate>Mon, 14 Dec 2015 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/splay-lct</guid>
+        <description><![CDATA[]]></description>
     </item>
     <item>
         <title>Hello World</title>
         <pubDate>Sat, 22 Aug 2015 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/hello-world</guid>
+        <description><![CDATA[]]></description>
     </item>
 </channel>
 </rss>

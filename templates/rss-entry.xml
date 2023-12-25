@@ -2,4 +2,5 @@
         <title>$title/nowrap$</title>
         <pubDate>$date_std/nowrap$</pubDate>
         <guid isPermaLink="true">$site_root$/p/$name/nowrap$</guid>
+        <description><![CDATA[$body$]]></description>
     </item>
