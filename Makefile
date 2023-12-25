@@ -17,7 +17,7 @@ all: $(targets-articles) $(extra-pages)
 index: $(extra-pages)
 
 p/%/index.html: p/%/index.md
-	pandoc --data-dir . --defaults templates/variables.yaml -s --toc --template templates/post.html --variable name:"$*" -o $@ $<
+	pandoc --data-dir . --defaults templates/variables.yaml --katex -s --toc --template templates/post.html --variable name:"$*" -o $@ $<
 
 %: %.in
 	templates/do_html.sh < $< > $@

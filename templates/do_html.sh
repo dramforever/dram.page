@@ -21,7 +21,7 @@ do_index_all() {
 do_rss_all() {
     for a in "${articles[@]}"; do
         # Stolen from https://github.com/chambln/pandoc-rss/blob/52227544480facb729315ade500f77d6e5cc7657/bin/pandoc-rss#L74-L82
-        date="$(pandoc --data-dir . --template templates/date.xml "p/$a/index.md")"
+        date="$(pandoc --data-dir . --defaults templates/variables.yaml --template templates/date.xml "p/$a/index.md")"
         date_std="$(LANG=C TZ=UTC date --date "$date" +'%a, %d %b %Y %T +0000')"
         pandoc --data-dir . --defaults templates/variables.yaml --template templates/rss-entry.xml "p/$a/index.md" --variable name:"$a" --variable date_std:"$date_std"
     done

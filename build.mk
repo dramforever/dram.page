@@ -4,13 +4,13 @@ hidden-articles := \
 build-articles := \
   threaded-code \
   relative-relocs-explained \
-
-extra-articles := \
   visionfive-jtag-1 \
   crc-tricks \
   nix-lang-with \
   untitled-router \
   empty-triangles \
+
+extra-articles := \
   heyting-algebra \
   foreign-wrapper \
   fft-easy \

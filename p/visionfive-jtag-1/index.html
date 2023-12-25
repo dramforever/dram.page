@@ -1,12 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html prefix="og: https://ogp.me/ns#">
 
 <head>
-    <title>VisionFive JTAG adventures, Part 1: JH7100 GPIO -- dramforever</title>
+    <title>VisionFive JTAG adventures, Part 1: JH7100
+GPIO -- dramforever</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../../styles/default.css">
-    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <meta property="og:url" content="https://dram.page/p/visionfive-jtag-1">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="VisionFive JTAG adventures, Part 1: JH7100 GPIO">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
 </head>
 
 <body>
@@ -17,12 +22,13 @@
     </a></h1>
     <div id="site-title-sub">a row of my life</div>
 </div>
-
 <article>
 <div id="post-title">
-    <h1 id="post-title-main">VisionFive JTAG adventures, Part 1: JH7100 GPIO</h1>
+    <h1 id="post-title-main">VisionFive JTAG adventures, Part 1: JH7100
+GPIO</h1>
     <span id="post-title-sub">2022-06-27</span>
 </div>
+
 <h2 id="background">Background</h2>
 <p>The research that went into this article began as a simple technical
 question: How do I connect to the JTAG debug port on the VisionFive?</p>
@@ -501,10 +507,28 @@ class="citation" data-cites="luojia65">@luojia65</span></a>)</li>
 <li>Icenowy (GitHub: <a href="https://github.com/Icenowy"><span
 class="citation" data-cites="Icenowy">@Icenowy</span></a>)</li>
 </ul>
-<h2 id="about-this-document">About this document</h2>
-<p>This document was generated using <a
-href="https://pandoc.org/">Pandoc</a> from <a
-href="visionfive-jtag-1.md">the Markdown source</a>:</p>
-<pre class="console"><code>$ pandoc -f markdown -t html &lt; visionfive-jtag-1.md &gt; index.html</code></pre>
+
+</article>
+
 </body>
+
+<script>
+    // For Pandoc-generated KaTeX elements
+    document.addEventListener("DOMContentLoaded", function () {
+        var mathElements = document.getElementsByClassName("math");
+        var macros = [];
+        for (var i = 0; i < mathElements.length; i++) {
+            var texText = mathElements[i].firstChild;
+            if (mathElements[i].tagName == "SPAN") {
+                katex.render(texText.data, mathElements[i], {
+                    displayMode: mathElements[i].classList.contains('display'),
+                    throwOnError: false,
+                    macros: macros,
+                    fleqn: false
+                });
+            }
+        }
+    });
+</script>
+
 </html>

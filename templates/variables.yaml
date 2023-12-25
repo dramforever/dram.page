@@ -1,2 +1,5 @@
 variables:
   site_root: "https://dram.page"
+
+html-math-method:
+  method: mathml

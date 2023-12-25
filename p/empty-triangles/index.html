@@ -1,12 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html prefix="og: https://ogp.me/ns#">
 
 <head>
-    <title>Counting empty triangles with number theory -- dramforever</title>
+    <title>Counting empty triangles with number
+theory -- dramforever</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../../styles/default.css">
-    <script type="text/javascript" async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <meta property="og:url" content="https://dram.page/p/empty-triangles">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Counting empty triangles with number theory">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
 </head>
 
 <body>
@@ -17,104 +22,259 @@
     </a></h1>
     <div id="site-title-sub">a row of my life</div>
 </div>
-
 <article>
 <div id="post-title">
-    <h1 id="post-title-main">Counting empty triangles with number theory</h1>
+    <h1 id="post-title-main">Counting empty triangles with number
+theory</h1>
     <span id="post-title-sub">2020-05-31</span>
 </div>
-<p><em>This is a writeup of the Codewars kata <a href="https://www.codewars.com/kata/count-empty-triangles-in-the-future/">'Count Empty Triangles in the Future'</a>. You can see <a href="https://www.codewars.com/kata/reviews/5c77022ab9e5260001c6eaee/groups/5ed20453b5d4a00001e0270d">the solution code I submitted</a> if you solve it in C++ (or forfeit…).</em></p>
+
+<p><em>This is a writeup of the Codewars kata <a
+href="https://www.codewars.com/kata/count-empty-triangles-in-the-future/">‘Count
+Empty Triangles in the Future’</a>. You can see <a
+href="https://www.codewars.com/kata/reviews/5c77022ab9e5260001c6eaee/groups/5ed20453b5d4a00001e0270d">the
+solution code I submitted</a> if you solve it in C++ (or
+forfeit…).</em></p>
 <h2 id="the-problem-statement">The problem statement</h2>
-<p>On a grid with width <span class="math inline">\(m\)</span> and height <span class="math inline">\(n\)</span>, how many triangles have lattice points as vertices but otherwise have no lattice points on the edges and interiors? (Such triangles are called 'empty'.) Find the answer modulo <span class="math inline">\(10^9 + 7\)</span>.</p>
-<p>For example, for <span class="math inline">\(m = 1\)</span> and <span class="math inline">\(n = 2\)</span>, the <span class="math inline">\(12\)</span> empty triangles by shape and multiplicity are given below: (Image from kata description.)</p>
+<p>On a grid with width <span class="math inline">m</span> and height
+<span class="math inline">n</span>, how many triangles have lattice
+points as vertices but otherwise have no lattice points on the edges and
+interiors? (Such triangles are called ‘empty’.) Find the answer modulo
+<span class="math inline">10^9 + 7</span>.</p>
+<p>For example, for <span class="math inline">m = 1</span> and <span
+class="math inline">n = 2</span>, the <span
+class="math inline">12</span> empty triangles by shape and multiplicity
+are given below: (Image from kata description.)</p>
 <figure>
-<img src="images/example.png" style="width:90.0%" alt="" /><figcaption>Example from kata</figcaption>
+<img src="images/example.png" style="width:90.0%"
+alt="Example from kata" />
+<figcaption aria-hidden="true">Example from kata</figcaption>
 </figure>
 <h2 id="geometry-part">Geometry part</h2>
-<p>According to <a href="https://en.wikipedia.org/wiki/Pick%27s_theorem">Pick's theorem</a>, a triangle with lattice point vertices has area: <span class="math display">\[
+<p>According to <a
+href="https://en.wikipedia.org/wiki/Pick%27s_theorem">Pick’s
+theorem</a>, a triangle with lattice point vertices has area: <span
+class="math display">
 A =i + \frac{e}{2} + \frac{1}{2}
-\]</span> Where <span class="math inline">\(i\)</span> is the number of lattice points on the interior (not counting edges), and <span class="math inline">\(e\)</span> is the number of points on the edges (not counting vertices). Therefore triangle is empty iff its area is <span class="math inline">\(1/2\)</span> and its vertices are lattice points. (For the sake of brevity we always work with lattice points from now on.)</p>
-<p>Intuitively, empty triangles have a relatively 'thin' shape. The longer edges get, the 'thinner' the triangle gets. An exact useful bound in the 'thickness' of an empty triangle be encapsulated in this lemma:</p>
-<p><strong>Lemma</strong>: For an empty triangle, two of its vertices coincide with opposite corners of its bounding box.</p>
-<p><em>Proof</em>: Pick the leftmost point <span class="math inline">\(A\)</span> and rightmost point <span class="math inline">\(B\)</span> of a triangle. (If there is a tie, pick an arbitrary one.)</p>
+</span> Where <span class="math inline">i</span> is the number of
+lattice points on the interior (not counting edges), and <span
+class="math inline">e</span> is the number of points on the edges (not
+counting vertices). Therefore triangle is empty iff its area is <span
+class="math inline">1/2</span> and its vertices are lattice points. (For
+the sake of brevity we always work with lattice points from now on.)</p>
+<p>Intuitively, empty triangles have a relatively ‘thin’ shape. The
+longer edges get, the ‘thinner’ the triangle gets. An exact useful bound
+in the ‘thickness’ of an empty triangle be encapsulated in this
+lemma:</p>
+<p><strong>Lemma</strong>: For an empty triangle, two of its vertices
+coincide with opposite corners of its bounding box.</p>
+<p><em>Proof</em>: Pick the leftmost point <span
+class="math inline">A</span> and rightmost point <span
+class="math inline">B</span> of a triangle. (If there is a tie, pick an
+arbitrary one.)</p>
 <figure>
-<img src="images/bounding-box.svg" style="width:80.0%" alt="" /><figcaption>A triangle in its bounding box</figcaption>
+<img src="images/bounding-box.svg" style="width:80.0%"
+alt="A triangle in its bounding box" />
+<figcaption aria-hidden="true">A triangle in its bounding
+box</figcaption>
 </figure>
-<p>Without loss of generality, we assume that <span class="math inline">\(B\)</span> is higher than or level with <span class="math inline">\(A\)</span>, and <span class="math inline">\(C\)</span> is above the line segment <span class="math inline">\(AB\)</span>. Construct a vertical line through <span class="math inline">\(C\)</span>, intersecting <span class="math inline">\(AB\)</span> at <span class="math inline">\(D\)</span> as shown. Let <span class="math inline">\(h = \left|CD\right|\)</span> and let <span class="math inline">\(m\)</span> be the horizontal distance between <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span>. Then the area of <span class="math inline">\(\triangle ABC\)</span> is <span class="math inline">\(hm/2\)</span>. This can be shown by constructing a horizontal line through <span class="math inline">\(D\)</span> intersecting the bounding box on the side of <span class="math inline">\(A\)</span> at <span class="math inline">\(E\)</span>, and on the side of <span class="math inline">\(B\)</span> at <span class="math inline">\(F\)</span>, then <span class="math inline">\(\triangle CDE = \triangle CDA\)</span> and <span class="math inline">\(\triangle CDF = \triangle CDB\)</span>. Then:</p>
-<p><span class="math display">\[
+<p>Without loss of generality, we assume that <span
+class="math inline">B</span> is higher than or level with <span
+class="math inline">A</span>, and <span class="math inline">C</span> is
+above the line segment <span class="math inline">AB</span>. Construct a
+vertical line through <span class="math inline">C</span>, intersecting
+<span class="math inline">AB</span> at <span
+class="math inline">D</span> as shown. Let <span class="math inline">h =
+\left|CD\right|</span> and let <span class="math inline">m</span> be the
+horizontal distance between <span class="math inline">A</span> and <span
+class="math inline">B</span>. Then the area of <span
+class="math inline">\triangle ABC</span> is <span
+class="math inline">hm/2</span>. This can be shown by constructing a
+horizontal line through <span class="math inline">D</span> intersecting
+the bounding box on the side of <span class="math inline">A</span> at
+<span class="math inline">E</span>, and on the side of <span
+class="math inline">B</span> at <span class="math inline">F</span>, then
+<span class="math inline">\triangle CDE = \triangle CDA</span> and <span
+class="math inline">\triangle CDF = \triangle CDB</span>. Then:</p>
+<p><span class="math display">
 \begin{split}
 \triangle ABC &amp;= \triangle CDA + \triangle CDB \\
 &amp;= \triangle CDE + \triangle CDF \\
 &amp;= \triangle CEF \\
 &amp;= hm/2
 \end{split}
-\]</span></p>
-<p>(Where clear from context <span class="math inline">\(\triangle XYZ\)</span> represents the triangle's area)</p>
-<p>Therefore if <span class="math inline">\(\triangle ABC\)</span> is empty, then <span class="math inline">\(hm = 1\)</span>. If <span class="math inline">\(C\)</span> is within the rectangle with <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> as corners (including boundaries), then it satisfies the desired conclusion.</p>
-<p>Otherwise <span class="math inline">\(C\)</span> is above <span class="math inline">\(B\)</span>, and since they are lattice points, <span class="math inline">\(C\)</span> must be at least <span class="math inline">\(1\)</span> unit higher than <span class="math inline">\(B\)</span>, therefore <span class="math inline">\(h \ge 1\)</span>. But we already have <span class="math inline">\(m \ge 1\)</span>, so it must be the case that <span class="math inline">\(h = m = 1\)</span>. Then one of <span class="math inline">\(CA\)</span> and <span class="math inline">\(CB\)</span> is vertical.</p>
+</span></p>
+<p>(Where clear from context <span class="math inline">\triangle
+XYZ</span> represents the triangle’s area)</p>
+<p>Therefore if <span class="math inline">\triangle ABC</span> is empty,
+then <span class="math inline">hm = 1</span>. If <span
+class="math inline">C</span> is within the rectangle with <span
+class="math inline">A</span> and <span class="math inline">B</span> as
+corners (including boundaries), then it satisfies the desired
+conclusion.</p>
+<p>Otherwise <span class="math inline">C</span> is above <span
+class="math inline">B</span>, and since they are lattice points, <span
+class="math inline">C</span> must be at least <span
+class="math inline">1</span> unit higher than <span
+class="math inline">B</span>, therefore <span class="math inline">h \ge
+1</span>. But we already have <span class="math inline">m \ge 1</span>,
+so it must be the case that <span class="math inline">h = m = 1</span>.
+Then one of <span class="math inline">CA</span> and <span
+class="math inline">CB</span> is vertical.</p>
 <ul>
-<li>If <span class="math inline">\(CA\)</span> is vertical, then <span class="math inline">\(\left|CA\right| = h = 1\)</span>. We are now constrained in a <span class="math inline">\(1 \times 1\)</span> box, in which the only possible triangle shape of edge lengths <span class="math inline">\((1, 1, \sqrt{2})\)</span> indeed has two vertices as corners of its bounding box.</li>
-<li>If <span class="math inline">\(CB\)</span> is vertical, then <span class="math inline">\(A\)</span> and <span class="math inline">\(C\)</span> are corners of the bounding box of <span class="math inline">\(\triangle ABC\)</span></li>
+<li>If <span class="math inline">CA</span> is vertical, then <span
+class="math inline">\left|CA\right| = h = 1</span>. We are now
+constrained in a <span class="math inline">1 \times 1</span> box, in
+which the only possible triangle shape of edge lengths <span
+class="math inline">(1, 1, \sqrt{2})</span> indeed has two vertices as
+corners of its bounding box.</li>
+<li>If <span class="math inline">CB</span> is vertical, then <span
+class="math inline">A</span> and <span class="math inline">C</span> are
+corners of the bounding box of <span class="math inline">\triangle
+ABC</span></li>
 </ul>
 <p>Thus concludes the proof of this lemma.</p>
-<p>Now we only need to find, for each possible bounding box size, the number of empty triangles that fits exactly into this bounding box. There are four completely symmetric ways to fit an empty triangle into its, depending which diagonal the triangle's two points 'outer' points sit on, and on which side the third 'inner' point lies. Here's the four cases illustrated, where in each case the shown diagonal is one edge of the triangle, and the other vertex is in the shaded region.</p>
+<p>Now we only need to find, for each possible bounding box size, the
+number of empty triangles that fits exactly into this bounding box.
+There are four completely symmetric ways to fit an empty triangle into
+its, depending which diagonal the triangle’s two points ‘outer’ points
+sit on, and on which side the third ‘inner’ point lies. Here’s the four
+cases illustrated, where in each case the shown diagonal is one edge of
+the triangle, and the other vertex is in the shaded region.</p>
 <figure>
-<img src="images/rectangle-cut.svg" style="width:90.0%" alt="" /><figcaption>The four cases</figcaption>
+<img src="images/rectangle-cut.svg" style="width:90.0%"
+alt="The four cases" />
+<figcaption aria-hidden="true">The four cases</figcaption>
 </figure>
-<p>Therefore we can just calculate one case and multiply the answer by four. Let's put one case at the origin like this:</p>
+<p>Therefore we can just calculate one case and multiply the answer by
+four. Let’s put one case at the origin like this:</p>
 <figure>
-<img src="images/intersect.svg" style="width:70.0%" alt="" /><figcaption>Solving for a certain size</figcaption>
+<img src="images/intersect.svg" style="width:70.0%"
+alt="Solving for a certain size" />
+<figcaption aria-hidden="true">Solving for a certain size</figcaption>
 </figure>
-<p>Supposed the rectangle has width <span class="math inline">\(m\)</span> and height <span class="math inline">\(n\)</span>. Similar to what has been shown while proving the lemma, for the area of <span class="math inline">\(\triangle ABC\)</span> to be <span class="math inline">\(1/2\)</span>, <span class="math inline">\(C\)</span> must lie on a line that is <span class="math inline">\(AB\)</span> shifted down by <span class="math inline">\(1/m\)</span>, and it must also be a lattice point. The equation of line <span class="math inline">\(AB\)</span> is: <span class="math display">\[
+<p>Supposed the rectangle has width <span class="math inline">m</span>
+and height <span class="math inline">n</span>. Similar to what has been
+shown while proving the lemma, for the area of <span
+class="math inline">\triangle ABC</span> to be <span
+class="math inline">1/2</span>, <span class="math inline">C</span> must
+lie on a line that is <span class="math inline">AB</span> shifted down
+by <span class="math inline">1/m</span>, and it must also be a lattice
+point. The equation of line <span class="math inline">AB</span> is:
+<span class="math display">
 \frac{x}{m} + \frac{y}{n} = 1
-\]</span> And therefore that of the shifted line is: <span class="math display">\[
+</span> And therefore that of the shifted line is: <span
+class="math display">
 \begin{align}
 \frac{x}{m} + \frac{y + 1/m}{n} &amp;= 1 \\
 nx + my + 1 &amp;= mn \\
 m(n - y) + n(- x) &amp;= 1
 \end{align}
-\]</span> <a href="https://en.wikipedia.org/wiki/B%C3%A9zout%27s_identity">Bézout's identity</a> tells us that there are solutions if and only if <span class="math inline">\(\gcd(m, n) = 1\)</span>. We are interested in only solutions in the region <span class="math inline">\(0 \le x &lt; m\)</span> and <span class="math inline">\(0 \le y &lt; n\)</span>. Given one solution <span class="math inline">\((x=x_{0},y=y_{0})\)</span>, the general solution is <span class="math inline">\((x = x_0 + km,y = y_0 - kn)\)</span> where <span class="math inline">\(k\)</span> is any integer. There is a unique solution <span class="math inline">\((x = x_0 + \lfloor y_0 / n \rfloor m, y = y_0 \bmod n)\)</span> that lies within the region. This can be shown first by noting that euclidean division of integers gives a unique <span class="math inline">\(0 \le y &lt; n\)</span> such that for some integer <span class="math inline">\(k\)</span>, <span class="math inline">\(y_0 = kn+y\)</span>. Then we verify that <span class="math inline">\(x \ge 0\)</span>, which shows that the solution is inside the region we want:</p>
-<p><span class="math display">\[
+</span> <a
+href="https://en.wikipedia.org/wiki/B%C3%A9zout%27s_identity">Bézout’s
+identity</a> tells us that there are solutions if and only if <span
+class="math inline">\gcd(m, n) = 1</span>. We are interested in only
+solutions in the region <span class="math inline">0 \le x &lt; m</span>
+and <span class="math inline">0 \le y &lt; n</span>. Given one solution
+<span class="math inline">(x=x_{0},y=y_{0})</span>, the general solution
+is <span class="math inline">(x = x_0 + km,y = y_0 - kn)</span> where
+<span class="math inline">k</span> is any integer. There is a unique
+solution <span class="math inline">(x = x_0 + \lfloor y_0 / n \rfloor m,
+y = y_0 \bmod n)</span> that lies within the region. This can be shown
+first by noting that euclidean division of integers gives a unique <span
+class="math inline">0 \le y &lt; n</span> such that for some integer
+<span class="math inline">k</span>, <span class="math inline">y_0 =
+kn+y</span>. Then we verify that <span class="math inline">x \ge
+0</span>, which shows that the solution is inside the region we
+want:</p>
+<p><span class="math display">
 \begin{split}
 x &amp;= x_0 + \lfloor \frac{y_0}{n} \rfloor m \\
 &amp;= \frac{m(n - y_0) - 1}{n} + \lfloor \frac{y_0}{n} \rfloor m \\
-&amp;= m(1 + \lfloor \frac{y_0}{n} \rfloor - \frac{y_0}{n}) - \frac{1}{n} \\
+&amp;= m(1 + \lfloor \frac{y_0}{n} \rfloor - \frac{y_0}{n}) -
+\frac{1}{n} \\
 &amp;\ge m \cdot \frac{1}{n} - \frac{1}{n} \\
 &amp;= \frac{m - 1}{n} \\
 &amp;\ge 0
 \end{split}
-\]</span> (In the middle inequality step, note that since <span class="math inline">\(y_0\)</span> is a integer, <span class="math inline">\(y_0 / n\)</span> is some integer plus <span class="math inline">\(k / n\)</span>, where <span class="math inline">\(k\)</span> is a integer such that <span class="math inline">\(0 \le k &lt; n\)</span>.)</p>
-<p>Therefore an <span class="math inline">\(m \times n\)</span> bounding box has four empty triangles if <span class="math inline">\(\gcd(m, n) = 1\)</span>, and none otherwise.</p>
-<p>We however need to consider all bounding box sizes from <span class="math inline">\(1 \times 1\)</span> up to <span class="math inline">\(m \times n\)</span>, instead of just one size. A size <span class="math inline">\(j \times i\)</span> rectangle fits into a size <span class="math inline">\(m \times n\)</span> rectangle <span class="math inline">\((n + 1 - i)(m + 1 - j)\)</span> times. So the answer is: <span class="math display">\[
+</span> (In the middle inequality step, note that since <span
+class="math inline">y_0</span> is a integer, <span
+class="math inline">y_0 / n</span> is some integer plus <span
+class="math inline">k / n</span>, where <span
+class="math inline">k</span> is a integer such that <span
+class="math inline">0 \le k &lt; n</span>.)</p>
+<p>Therefore an <span class="math inline">m \times n</span> bounding box
+has four empty triangles if <span class="math inline">\gcd(m, n) =
+1</span>, and none otherwise.</p>
+<p>We however need to consider all bounding box sizes from <span
+class="math inline">1 \times 1</span> up to <span class="math inline">m
+\times n</span>, instead of just one size. A size <span
+class="math inline">j \times i</span> rectangle fits into a size <span
+class="math inline">m \times n</span> rectangle <span
+class="math inline">(n + 1 - i)(m + 1 - j)</span> times. So the answer
+is: <span class="math display">
 4\sum_{i = 1}^{n} \sum_{j = 1}^{m}
     [\gcd(i, j) = 1] (n + 1 - i) (m + 1 - j)
-\]</span></p>
-<p>(<span class="math inline">\([P]\)</span> is the <a href="https://en.wikipedia.org/wiki/Iverson_bracket">Iverson bracket</a>, which is <span class="math inline">\(1\)</span> when <span class="math inline">\(P\)</span> is true and <span class="math inline">\(0\)</span> otherwise.)</p>
-<p>(Note 1: I'm doing this weird transposition of coordinate thing (just once here) because we don't use coordinates consistently between geometry and, shall we say, discrete mathematics. In geometry to refer to a point we have <span class="math inline">\(x\)</span> before <span class="math inline">\(y\)</span>, and <span class="math inline">\(y\)</span> positive goes up, but if we refer to an entry in a matrix we have row number before column number, and successive rows goes down. Things are completely symmetric anyway, so the best way to deal with this inconsistency is to forget that you noticed it or that I told you it.)</p>
-<p>(Note 2: This function without the factor <span class="math inline">\(4\)</span> can be found as <a href="http://oeis.org/A114999">A114999</a> on OEIS.)</p>
-<p><strong>Current progress</strong>: We know that we need to find <span class="math inline">\(4 \times a(n, m)\)</span> where <span class="math display">\[
+</span></p>
+<p>(<span class="math inline">[P]</span> is the <a
+href="https://en.wikipedia.org/wiki/Iverson_bracket">Iverson
+bracket</a>, which is <span class="math inline">1</span> when <span
+class="math inline">P</span> is true and <span
+class="math inline">0</span> otherwise.)</p>
+<p>(Note 1: I’m doing this weird transposition of coordinate thing (just
+once here) because we don’t use coordinates consistently between
+geometry and, shall we say, discrete mathematics. In geometry to refer
+to a point we have <span class="math inline">x</span> before <span
+class="math inline">y</span>, and <span class="math inline">y</span>
+positive goes up, but if we refer to an entry in a matrix we have row
+number before column number, and successive rows goes down. Things are
+completely symmetric anyway, so the best way to deal with this
+inconsistency is to forget that you noticed it or that I told you
+it.)</p>
+<p>(Note 2: This function without the factor <span
+class="math inline">4</span> can be found as <a
+href="http://oeis.org/A114999">A114999</a> on OEIS.)</p>
+<p><strong>Current progress</strong>: We know that we need to find <span
+class="math inline">4 \times a(n, m)</span> where <span
+class="math display">
 a(n, m) = \sum_{i = 1}^{n} \sum_{j = 1}^{m}
     [\gcd(i, j) = 1] (n + 1 - i) (m + 1 - j)
-\]</span></p>
+</span></p>
 <h2 id="number-theory-part">Number theory part</h2>
-<p><span class="math display">\[
+<p><span class="math display">
 \begin{split}
 a(n, m) &amp;= \sum_{i = 1}^{n} \sum_{j = 1}^{m}
     [\gcd(i, j) = 1] (n + 1 - i) (m + 1 - j) \\
 &amp;= \sum_{i = 1}^{n} \sum_{j = 1}^{m}
     [\gcd(i, j) = 1] ((n + 1) (m + 1) - (m + 1) i - (n + 1) j + ij) \\
 \end{split}
-\]</span></p>
-<p><a href="https://en.wikipedia.org/wiki/Möbius_inversion">Möbius inversion</a> is an application of the inclusion-exclusion principle. A function is defined as follows:</p>
-<p><span class="math display">\[
+</span></p>
+<p><a href="https://en.wikipedia.org/wiki/Möbius_inversion">Möbius
+inversion</a> is an application of the inclusion-exclusion principle. A
+function is defined as follows:</p>
+<p><span class="math display">
 \mu(n) = \begin{cases}
 (-1)^{k} &amp; \text{if $n$ factorizes to $k$ distinct primes} \\
 0 &amp; \text{otherwise}
 \end{cases}
-\]</span> This function has this important property: <span class="math display">\[
+</span> This function has this important property: <span
+class="math display">
 \sum_{d | n} \mu(d)=[n=1]
-\]</span> (Where <span class="math inline">\(d|n\)</span> means for each positive divisor of <span class="math inline">\(n\)</span> including <span class="math inline">\(1\)</span> and <span class="math inline">\(n\)</span>, of course not counting twice if <span class="math inline">\(n\)</span> is <span class="math inline">\(1\)</span>.)</p>
-<p>We can use this equation to replace <span class="math inline">\([\gcd(i, j) = 1]\)</span> with <span class="math inline">\(\sum_{d|\!\gcd(i, j)} \mu(d)\)</span>, which allows us to 'unleash' the properties of <span class="math inline">\(\gcd(i, j)\)</span>, namely that the set of divisors of <span class="math inline">\(\gcd(i, j)\)</span> is the set of common divisors of <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span> (which I write as summing over <span class="math inline">\(d | i, d | j\)</span> below), which in turn allows us to rewrite out summations: <span class="math display">\[
+</span> (Where <span class="math inline">d|n</span> means for each
+positive divisor of <span class="math inline">n</span> including <span
+class="math inline">1</span> and <span class="math inline">n</span>, of
+course not counting twice if <span class="math inline">n</span> is <span
+class="math inline">1</span>.)</p>
+<p>We can use this equation to replace <span
+class="math inline">[\gcd(i, j) = 1]</span> with <span
+class="math inline">\sum_{d|\!\gcd(i, j)} \mu(d)</span>, which allows us
+to ‘unleash’ the properties of <span class="math inline">\gcd(i,
+j)</span>, namely that the set of divisors of <span
+class="math inline">\gcd(i, j)</span> is the set of common divisors of
+<span class="math inline">i</span> and <span
+class="math inline">j</span> (which I write as summing over <span
+class="math inline">d | i, d | j</span> below), which in turn allows us
+to rewrite out summations: <span class="math display">
 \begin{split}
 \cdots &amp;= \sum_{i = 1}^{n}
     \sum_{j = 1}^{m}
@@ -129,11 +289,22 @@ a(n, m) &amp;= \sum_{i = 1}^{n} \sum_{j = 1}^{m}
     \sum_{j = 1}^{\lfloor m / d \rfloor}
     \mu(d) ((n + 1) (m + 1) - (m + 1) di - (n + 1) dj + d^2ij) \\
 \end{split}
-\]</span></p>
-<p>Note that in the last step I 'switched variables' <span class="math inline">\(i \leftarrow i/d\)</span> and <span class="math inline">\(j \leftarrow j/d\)</span>, and instead of looking for possible <span class="math inline">\(d\)</span> given <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>, I look for possible <span class="math inline">\(di\)</span> and <span class="math inline">\(dj\)</span> given <span class="math inline">\(d\)</span>, which is simpler because it does not involve a divisibility check.</p>
-<p>Let's split that up into three parts for easier handling later on: <span class="math display">\[
+</span></p>
+<p>Note that in the last step I ‘switched variables’ <span
+class="math inline">i \leftarrow i/d</span> and <span
+class="math inline">j \leftarrow j/d</span>, and instead of looking for
+possible <span class="math inline">d</span> given <span
+class="math inline">i</span> and <span class="math inline">j</span>, I
+look for possible <span class="math inline">di</span> and <span
+class="math inline">dj</span> given <span class="math inline">d</span>,
+which is simpler because it does not involve a divisibility check.</p>
+<p>Let’s split that up into three parts for easier handling later
+on:</p>
+<p><span class="math display">
 \cdots = a_0(n, m) + a_1(n, m) + a_2(n, m)
-\]</span> Where:  <span class="math display">\[\begin{align}
+</span></p>
+<p>Where:</p>
+<span class="math display">\begin{aligned}
 a_0(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d)
     (n + 1) (m + 1)
@@ -157,39 +328,76 @@ a_2(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d) d^2
     \mathsf{ID}(\lfloor \frac{n}{d} \rfloor)
     \mathsf{ID}(\lfloor \frac{m}{d} \rfloor)
-\end{align}\]</span> </p>
-<p>Where <span class="math inline">\(\mathsf{ID}(n)\)</span> is the sum of <span class="math inline">\(\mathsf{id}(n) = n\)</span>, that is <span class="math inline">\(\mathsf{ID}(n) = n (n + 1) / 2\)</span>.</p>
-<p>The three parts have a common pattern: <span class="math display">\[
+\end{aligned}</span>
+<p>Where <span class="math inline">\mathsf{ID}(n)</span> is the sum of
+<span class="math inline">\mathsf{id}(n) = n</span>, that is <span
+class="math inline">\mathsf{ID}(n) = n (n + 1) / 2</span>.</p>
+<p>The three parts have a common pattern: <span class="math display">
 \begin{align}
 s_{k, u}(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d) d^k
     u(\lfloor \frac{n}{d} \rfloor, \lfloor \frac{m}{d} \rfloor)
 \end{align}
-\]</span> Where <span class="math inline">\(u\)</span> is trivially computable. If we figure out how to compute <span class="math inline">\(s_{k, u}\)</span>, we're set.</p>
-<h2 id="intermission-number-theoretic-summation-trick">Intermission: Number-theoretic summation trick</h2>
+</span> Where <span class="math inline">u</span> is trivially
+computable. If we figure out how to compute <span
+class="math inline">s_{k, u}</span>, we’re set.</p>
+<h2 id="intermission-number-theoretic-summation-trick">Intermission:
+Number-theoretic summation trick</h2>
 <p>Now for something completely out of nowhere.</p>
-<p>The Dirichlet convolution of two functions is defined as: <span class="math display">\[
+<p>The Dirichlet convolution of two functions is defined as: <span
+class="math display">
 (f * g)(n) = \sum_{d | n} f(d) g(\frac{n}{d})
-\]</span> Let <span class="math inline">\(G(n) = \sum_{i = 1}^{n} g(i)\)</span>, and similarly let capital letter functions represent the sum of the corresponding lowercase letter functions. An observation is that if we sum a Dirichlet convolution, we get: (The sum over <span class="math inline">\(cd = i\)</span> means all positive integers <span class="math inline">\(c\)</span> and <span class="math inline">\(d\)</span> such that <span class="math inline">\(cd = i\)</span>, and the sum over <span class="math inline">\(cd \le n\)</span> works similarly) <span class="math display">\[
+</span> Let <span class="math inline">G(n) = \sum_{i = 1}^{n}
+g(i)</span>, and similarly let capital letter functions represent the
+sum of the corresponding lowercase letter functions. An observation is
+that if we sum a Dirichlet convolution, we get: (The sum over <span
+class="math inline">cd = i</span> means all positive integers <span
+class="math inline">c</span> and <span class="math inline">d</span> such
+that <span class="math inline">cd = i</span>, and the sum over <span
+class="math inline">cd \le n</span> works similarly) <span
+class="math display">
 \begin{split}
-\sum_{i = 1}^{n} (f * g)(i) &amp;= \sum_{i = 1}^{n} \sum_{d | i} f(d) g(\frac{i}{d}) \\
+\sum_{i = 1}^{n} (f * g)(i) &amp;= \sum_{i = 1}^{n} \sum_{d | i} f(d)
+g(\frac{i}{d}) \\
 &amp;= \sum_{i = 1}^{n} \sum_{cd = i} f(c) g(d) \\
 &amp;= \sum_{cd \le n} f(c) g(d) \\
-&amp;= \sum_{c = 1}^{n} f(c) \sum_{i = 1}^{\lfloor n / c \rfloor} g(i) \\
+&amp;= \sum_{c = 1}^{n} f(c) \sum_{i = 1}^{\lfloor n / c \rfloor} g(i)
+\\
 &amp;= \sum_{c = 1}^{n} f(c) G(\lfloor \frac{n}{c} \rfloor)
 \end{split}
-\]</span> Isolating the first term gives: <span class="math display">\[
-f(1) G(n) = \sum_{i = 1}^{n} (f * g)(i) - \sum_{c = 1}^{n} f(c) G(\lfloor \frac{n}{c} \rfloor)
-\]</span> If <span class="math inline">\(f(1) \ne\)</span> 0, then: <span class="math display">\[
-G(n) = \frac{1}{f(1)} \left(\sum_{i = 1}^{n} (f * g)(i) - \sum_{c = 1}^{n} f(c) G(\lfloor \frac{n}{c} \rfloor) \right)
-\]</span> Assume for now that <span class="math inline">\(f\)</span> is chosen such that <span class="math inline">\(F(i)\)</span> and <span class="math inline">\(\sum_{i = 1}^{n} (f * g)(i)\)</span> are efficiently computable, either directly via an <span class="math inline">\(O(1)\)</span> formula or indirectly via a 'recursive' application of this technique.</p>
-<p>Note that <span class="math inline">\(\lfloor n / c \rfloor\)</span> can only take on a maximum of about <span class="math inline">\(2 \sqrt{n}\)</span> values:</p>
+</span> Isolating the first term gives: <span class="math display">
+f(1) G(n) = \sum_{i = 1}^{n} (f * g)(i) - \sum_{c = 1}^{n} f(c)
+G(\lfloor \frac{n}{c} \rfloor)
+</span> If <span class="math inline">f(1) \ne</span> 0, then: <span
+class="math display">
+G(n) = \frac{1}{f(1)} \left(\sum_{i = 1}^{n} (f * g)(i) - \sum_{c =
+1}^{n} f(c) G(\lfloor \frac{n}{c} \rfloor) \right)
+</span> Assume for now that <span class="math inline">f</span> is chosen
+such that <span class="math inline">F(i)</span> and <span
+class="math inline">\sum_{i = 1}^{n} (f * g)(i)</span> are efficiently
+computable, either directly via an <span class="math inline">O(1)</span>
+formula or indirectly via a ‘recursive’ application of this
+technique.</p>
+<p>Note that <span class="math inline">\lfloor n / c \rfloor</span> can
+only take on a maximum of about <span class="math inline">2
+\sqrt{n}</span> values:</p>
 <ul>
-<li><span class="math inline">\(n/1, n/2,\dots,n/\sqrt{n}\)</span> (final term is approximate), for <span class="math inline">\(c \le \sqrt{n}\)</span></li>
-<li>about <span class="math inline">\(\sqrt{n}, \sqrt{n} - 1, \dots, 1\)</span>, for <span class="math inline">\(c &gt; \sqrt{n}\)</span></li>
+<li><span class="math inline">n/1, n/2,\dots,n/\sqrt{n}</span> (final
+term is approximate), for <span class="math inline">c \le
+\sqrt{n}</span></li>
+<li>about <span class="math inline">\sqrt{n}, \sqrt{n} - 1, \dots,
+1</span>, for <span class="math inline">c &gt; \sqrt{n}</span></li>
 </ul>
-<p>The sum over <span class="math inline">\(c\)</span> from <span class="math inline">\(1\)</span> to <span class="math inline">\(n\)</span> is now broken up into <span class="math inline">\(O(\sqrt{n})\)</span> segments where <span class="math inline">\(\lfloor n / c \rfloor\)</span> is equal, and <span class="math inline">\(G(\lfloor n / c \rfloor)\)</span> only needs to be calculated once per segment.</p>
-<p>Given <span class="math inline">\(x\)</span>, we want to solve for <span class="math inline">\(j\)</span> in <span class="math inline">\(\lfloor n / j \rfloor = x\)</span>, which shall give us the form of each segment.  <span class="math display">\[\begin{gather}
+<p>The sum over <span class="math inline">c</span> from <span
+class="math inline">1</span> to <span class="math inline">n</span> is
+now broken up into <span class="math inline">O(\sqrt{n})</span> segments
+where <span class="math inline">\lfloor n / c \rfloor</span> is equal,
+and <span class="math inline">G(\lfloor n / c \rfloor)</span> only needs
+to be calculated once per segment.</p>
+<p>Given <span class="math inline">x</span>, we want to solve for <span
+class="math inline">j</span> in <span class="math inline">\lfloor n / j
+\rfloor = x</span>, which shall give us the form of each segment.</p>
+<p><span class="math display">\begin{gather}
 x = \lfloor \frac{n}{j} \rfloor \\
 
 x \le \frac{n}{j} &lt; x + 1 \\
@@ -199,56 +407,176 @@ x \le \frac{n}{j} &lt; x + 1 \\
 \le j
 \le \left\lfloor \frac{n}{x} \right\rfloor
 
-\end{gather}\]</span>  Therefore given the the first interval's starting point <span class="math inline">\(l_{1} = 2\)</span>, the end of this interval is <span class="math inline">\(r_{1} = \lfloor n / \lfloor n / 2 \rfloor \rfloor\)</span>, and then the next interval starts at <span class="math inline">\(l_{2} = r_{1} + 1\)</span> and ends at <span class="math inline">\(r_2 = \lfloor n / \lfloor n / l_{2} \rfloor \rfloor\)</span>, etc. until <span class="math inline">\(n\)</span> is reached. In each interval <span class="math inline">\([l_i, r_i]\)</span> the sum is <span class="math inline">\((F(r_i) - F(l_i)) G(\lfloor n / l_i \rfloor)\)</span>.</p>
-<p>By recursively computing <span class="math inline">\(G\)</span> as shown, memoizing using a hash table, we can achieve <span class="math inline">\(O(n^{3/4})\)</span> time complexity and <span class="math inline">\(O(n^{1/2})\)</span> space complexity. If we use a sieve to pre-compute the first <span class="math inline">\(O(n^{2/3})\)</span> terms of <span class="math inline">\(G(n)\)</span> we can achieve <span class="math inline">\(O(n^{2/3})\)</span> time and space complexity.</p>
-<p>The complexity proof: In the no-precomputation case every <span class="math inline">\(G(\lfloor n / d \rfloor)\)</span> is computed exactly once, each taking <span class="math inline">\(O(\sqrt{\lfloor n / d \rfloor})\)</span> time. As discussed earlier <span class="math inline">\(\lfloor n / d \rfloor\)</span> takes on the values <span class="math inline">\(1, 2, \dots, \sqrt{n}\)</span> and <span class="math inline">\(n/1, n/2, ..., n/\sqrt{n}\)</span> (We are talking asymptotics here so we'll just ignore the details.), therefore the total time is: <span class="math display">\[
+\end{gather}</span></p>
+<p>Therefore given the the first interval’s starting point <span
+class="math inline">l_{1} = 2</span>, the end of this interval is <span
+class="math inline">r_{1} = \lfloor n / \lfloor n / 2 \rfloor
+\rfloor</span>, and then the next interval starts at <span
+class="math inline">l_{2} = r_{1} + 1</span> and ends at <span
+class="math inline">r_2 = \lfloor n / \lfloor n / l_{2} \rfloor
+\rfloor</span>, etc. until <span class="math inline">n</span> is
+reached. In each interval <span class="math inline">[l_i, r_i]</span>
+the sum is <span class="math inline">(F(r_i) - F(l_i)) G(\lfloor n / l_i
+\rfloor)</span>.</p>
+<p>By recursively computing <span class="math inline">G</span> as shown,
+memoizing using a hash table, we can achieve <span
+class="math inline">O(n^{3/4})</span> time complexity and <span
+class="math inline">O(n^{1/2})</span> space complexity. If we use a
+sieve to pre-compute the first <span
+class="math inline">O(n^{2/3})</span> terms of <span
+class="math inline">G(n)</span> we can achieve <span
+class="math inline">O(n^{2/3})</span> time and space complexity.</p>
+<p>The complexity proof: In the no-precomputation case every <span
+class="math inline">G(\lfloor n / d \rfloor)</span> is computed exactly
+once, each taking <span class="math inline">O(\sqrt{\lfloor n / d
+\rfloor})</span> time. As discussed earlier <span
+class="math inline">\lfloor n / d \rfloor</span> takes on the values
+<span class="math inline">1, 2, \dots, \sqrt{n}</span> and <span
+class="math inline">n/1, n/2, ..., n/\sqrt{n}</span> (We are talking
+asymptotics here so we’ll just ignore the details.), therefore the total
+time is: <span class="math display">
 \begin{align}
-T(n) &amp;= \sum_{i = 1}^{\sqrt{n}} O\left( \sqrt{i} + \sqrt{\frac{n}{i}} \right) \\
-&amp;= \sum_{i = 1}^{\sqrt{n}} O\left( i^{1/2} + i^{-1/2} \sqrt{n} \right) \\
+T(n) &amp;= \sum_{i = 1}^{\sqrt{n}} O\left( \sqrt{i} +
+\sqrt{\frac{n}{i}} \right) \\
+&amp;= \sum_{i = 1}^{\sqrt{n}} O\left( i^{1/2} + i^{-1/2} \sqrt{n}
+\right) \\
 &amp;= O((\sqrt{n})^{3/2}) + O((\sqrt{n})^{1/2}) \sqrt{n} \\
 &amp;= O(n^{3/4})
 \end{align}
-\]</span> If we can find the first <span class="math inline">\(O(n^k)\)</span> (where <span class="math inline">\(1/2 \le k \le 3/4\)</span>) values of <span class="math inline">\(g\)</span> in <span class="math inline">\(O(n^k)\)</span> time we can accelerate the process. This is often possible for, for example, multiplicative functions where <a href="https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes#Euler&#39;s_sieve">Euler's sieve</a> can be used. For more detailed information check <a href="https://codeforces.com/blog/entry/54090">this note on Codeforces</a>. The new execution time is</p>
-<p><span class="math display">\[
+</span> If we can find the first <span class="math inline">O(n^k)</span>
+(where <span class="math inline">1/2 \le k \le 3/4</span>) values of
+<span class="math inline">g</span> in <span
+class="math inline">O(n^k)</span> time we can accelerate the process.
+This is often possible for, for example, multiplicative functions where
+<a
+href="https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes#Euler&#39;s_sieve">Euler’s
+sieve</a> can be used. For more detailed information check <a
+href="https://codeforces.com/blog/entry/54090">this note on
+Codeforces</a>. The new execution time is</p>
+<p><span class="math display">
 \begin{align}
-T&#39;_k(n) &amp;= O(n^k) + \sum_{i = 1}^{n^{1 - k}} O(\sqrt{\frac{n}{i}}) \\
+T&#39;_k(n) &amp;= O(n^k) + \sum_{i = 1}^{n^{1 - k}}
+O(\sqrt{\frac{n}{i}}) \\
 &amp;= O(n^k + n^{(1 - k) / 2} \sqrt{n}) \\
 &amp;= O(n^k + n^{(2 - k) / 2})
 \end{align}
-\]</span></p>
-<p>Asymptotically, <span class="math inline">\(T&#39;_k(n)\)</span> is minimized when <span class="math inline">\(k = (2 - k) / 2\)</span>, which is <span class="math inline">\(k = 2/3\)</span>. In practice, the number of values to precompute is a tunable that will be set according to needs.</p>
-<p>To summarize, this means that if <span class="math inline">\(h = f * g\)</span>, and <span class="math inline">\(H\)</span> and <span class="math inline">\(F\)</span> can be computed efficiently either directly or 'recursively' by this technique, then <span class="math inline">\(G\)</span> can be computed efficiently.</p>
-<p>I could not find any authoritative reference on this method. The best I could find is this <a href="https://math.stackexchange.com/a/1740370">answer on math.SE</a>.</p>
-<p>The algorithm described above is often shown as a method to compute isolated values of <span class="math inline">\(G(n)\)</span>, but it actually computes <span class="math inline">\(G(\lfloor n / d \rfloor)\)</span> for all possible values of <span class="math inline">\(\lfloor n / d \rfloor\)</span>. This will become handy if, as alluded to earlier, <span class="math inline">\(F(n)\)</span> is still non-trivial but this method can apply, but we won't need this for now. We shall see how this helps us here in a minute, but first we need to find <span class="math inline">\(f\)</span> and <span class="math inline">\(h\)</span>.</p>
+</span></p>
+<p>Asymptotically, <span class="math inline">T&#39;_k(n)</span> is
+minimized when <span class="math inline">k = (2 - k) / 2</span>, which
+is <span class="math inline">k = 2/3</span>. In practice, the number of
+values to precompute is a tunable that will be set according to
+needs.</p>
+<p>To summarize, this means that if <span class="math inline">h = f *
+g</span>, and <span class="math inline">H</span> and <span
+class="math inline">F</span> can be computed efficiently either directly
+or ‘recursively’ by this technique, then <span
+class="math inline">G</span> can be computed efficiently.</p>
+<p>I could not find any authoritative reference on this method. The best
+I could find is this <a
+href="https://math.stackexchange.com/a/1740370">answer on
+math.SE</a>.</p>
+<p>The algorithm described above is often shown as a method to compute
+isolated values of <span class="math inline">G(n)</span>, but it
+actually computes <span class="math inline">G(\lfloor n / d
+\rfloor)</span> for all possible values of <span
+class="math inline">\lfloor n / d \rfloor</span>. This will become handy
+if, as alluded to earlier, <span class="math inline">F(n)</span> is
+still non-trivial but this method can apply, but we won’t need this for
+now. We shall see how this helps us here in a minute, but first we need
+to find <span class="math inline">f</span> and <span
+class="math inline">h</span>.</p>
 <h2 id="back-to-business">Back to business</h2>
-<p>In the definition of <span class="math inline">\(s_{k,f}\)</span>, we extract the 'difficult' part <span class="math inline">\(\mu(n) n^{k}\)</span> and we can define another function along with it: <span class="math display">\[
-\begin{align}m_k(n) &amp;= \mu(n) n^k \\\mathsf{id}^k(n) &amp;= n^k\end{align}
-\]</span> The Dirichlet convolution of the two is: <span class="math display">\[
-\begin{align}(m_{k} * \mathsf{id}^{k})(n) &amp;= \sum_{d|n} \mu(d) d^k (\frac{n}{d})^k \\&amp;= \sum_{d|n} \mu(d) n^k \\&amp;= (\sum_{d|n} \mu(d)) n^k \\&amp;= [n = 1] n^k \\&amp;= [n = 1]\end{align}
-\]</span> That's quite simple. This is no surprise, since <span class="math inline">\([n = 1]\)</span> is the identity of Dirichlet convolution, and <span class="math inline">\(m_{k}\)</span> is the Dirichlet inverse of <span class="math inline">\(\mathsf{id}^{k}\)</span>. Refer to <a href="https://en.wikipedia.org/wiki/Dirichlet_convolution#Other_formulas">Wikipedia</a> for details.</p>
-<p>Can we use the earlier technique to compute sums of <span class="math inline">\(m_k(n) = \mu(n) n^k\)</span>? The answer is yes, as the sum of the functions involved are either trivial or well-known: <span class="math display">\[
+<p>In the definition of <span class="math inline">s_{k,f}</span>, we
+extract the ‘difficult’ part <span class="math inline">\mu(n)
+n^{k}</span> and we can define another function along with it: <span
+class="math display">
+\begin{align}m_k(n) &amp;= \mu(n) n^k \\\mathsf{id}^k(n) &amp;=
+n^k\end{align}
+</span> The Dirichlet convolution of the two is: <span
+class="math display">
+\begin{align}(m_{k} * \mathsf{id}^{k})(n) &amp;= \sum_{d|n} \mu(d) d^k
+(\frac{n}{d})^k \\&amp;= \sum_{d|n} \mu(d) n^k \\&amp;= (\sum_{d|n}
+\mu(d)) n^k \\&amp;= [n = 1] n^k \\&amp;= [n = 1]\end{align}
+</span> That’s quite simple. This is no surprise, since <span
+class="math inline">[n = 1]</span> is the identity of Dirichlet
+convolution, and <span class="math inline">m_{k}</span> is the Dirichlet
+inverse of <span class="math inline">\mathsf{id}^{k}</span>. Refer to <a
+href="https://en.wikipedia.org/wiki/Dirichlet_convolution#Other_formulas">Wikipedia</a>
+for details.</p>
+<p>Can we use the earlier technique to compute sums of <span
+class="math inline">m_k(n) = \mu(n) n^k</span>? The answer is yes, as
+the sum of the functions involved are either trivial or well-known:
+<span class="math display">
 \begin{align}
 \sum_{i = 1}^{n} [i = 1] &amp;= 1 \\
 \sum_{i = 1}^{n} 1 &amp;= n \\
 \sum_{i = 1}^{n} i &amp;= \frac{i (i + 1)}{2} \\
 \sum_{i = 1}^{n} i^2 &amp;= \frac{i (i + 1) (2i + 1)}{6} \\
 \end{align}
-\]</span> Therefore it is possible to compute <span class="math inline">\(M_k(\lfloor n / d \rfloor)\)</span> for all possible values of <span class="math inline">\(\lfloor n / d \rfloor\)</span> in <span class="math inline">\(O(n^{3/4})\)</span> time. (Remember that uppercase means sum.)</p>
-<p>Can we use the faster <span class="math inline">\(O(n^{2/3})\)</span> method? The answer is yes because <span class="math inline">\(m_k\)</span> is multiplicative. I'll refer to the <a href="https://codeforces.com/blog/entry/54090">notes on Euler's sieve</a> mentioned earlier.</p>
-<p>Remind you, we want to compute this. <span class="math display">\[
+</span> Therefore it is possible to compute <span
+class="math inline">M_k(\lfloor n / d \rfloor)</span> for all possible
+values of <span class="math inline">\lfloor n / d \rfloor</span> in
+<span class="math inline">O(n^{3/4})</span> time. (Remember that
+uppercase means sum.)</p>
+<p>Can we use the faster <span class="math inline">O(n^{2/3})</span>
+method? The answer is yes because <span class="math inline">m_k</span>
+is multiplicative. I’ll refer to the <a
+href="https://codeforces.com/blog/entry/54090">notes on Euler’s
+sieve</a> mentioned earlier.</p>
+<p>Remind you, we want to compute this. <span class="math display">
 \begin{align}
 s_{k, u}(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     m_k(d)
     u(\lfloor \frac{n}{d} \rfloor, \lfloor \frac{m}{d} \rfloor)
 \end{align}
-\]</span> This is eerily familiar. In fact this is almost what we did in the intermission, but now <span class="math inline">\(u\)</span> takes two arguments.</p>
-<p>How many values can the pair <span class="math inline">\((\lfloor n / d \rfloor, \lfloor m / d \rfloor)\)</span> take on? As <span class="math inline">\(d\)</span> increases, <span class="math inline">\(\lfloor n / d \rfloor\)</span> decreases, and it will take about <span class="math inline">\(2 \sqrt{n}\)</span> steps doing so, and similarly for <span class="math inline">\(\lfloor n / d \rfloor\)</span>, therefore <span class="math inline">\((\lfloor n / d \rfloor, \lfloor m / d \rfloor)\)</span> takes on a maximum of about <span class="math inline">\(2 (\sqrt{n} + \sqrt{m})\)</span> steps (not a simple sum because the steps can overlap). For example for <span class="math inline">\(n = 10\)</span> and <span class="math inline">\(m = 3\)</span>, the combined steps like this (open the image in a new tab if it's too small for you):</p>
+</span> This is eerily familiar. In fact this is almost what we did in
+the intermission, but now <span class="math inline">u</span> takes two
+arguments.</p>
+<p>How many values can the pair <span class="math inline">(\lfloor n / d
+\rfloor, \lfloor m / d \rfloor)</span> take on? As <span
+class="math inline">d</span> increases, <span
+class="math inline">\lfloor n / d \rfloor</span> decreases, and it will
+take about <span class="math inline">2 \sqrt{n}</span> steps doing so,
+and similarly for <span class="math inline">\lfloor n / d
+\rfloor</span>, therefore <span class="math inline">(\lfloor n / d
+\rfloor, \lfloor m / d \rfloor)</span> takes on a maximum of about <span
+class="math inline">2 (\sqrt{n} + \sqrt{m})</span> steps (not a simple
+sum because the steps can overlap). For example for <span
+class="math inline">n = 10</span> and <span class="math inline">m =
+3</span>, the combined steps like this (open the image in a new tab if
+it’s too small for you):</p>
 <figure>
-<img src="images/pairs-values.svg" style="width:90.0%" alt="" /><figcaption>Steps of change compared</figcaption>
+<img src="images/pairs-values.svg" style="width:90.0%"
+alt="Steps of change compared" />
+<figcaption aria-hidden="true">Steps of change compared</figcaption>
 </figure>
-<p>Apply the exact same strategy as before: For the first interval, the start is <span class="math inline">\(l_1 = 1\)</span>, and end is <span class="math inline">\(r_1 = \min\{\lfloor n / \lfloor n / l_1 \rfloor \rfloor, \lfloor m / \lfloor m / l_1 \rfloor \rfloor\}\)</span>, then for the second interval <span class="math inline">\(l_2 = r_1 + 1\)</span> and <span class="math inline">\(r_2 = \min\{\lfloor n / \lfloor n / l_2 \rfloor \rfloor, \lfloor m / \lfloor m / l_2 \rfloor \rfloor\}\)</span> and so on until <span class="math inline">\(\min\{n, m\}\)</span>. The sum in each interval is then <span class="math inline">\((M_k(r_i) - M_k(l_i - 1))f(\lfloor n / l_i \rfloor, \lfloor m / l_i \rfloor)\)</span>.</p>
-<p>We can see that each <span class="math inline">\(r_i\)</span> and <span class="math inline">\(l_i - 1\)</span> is either of the form <span class="math inline">\(\lfloor n / d \rfloor\)</span> or <span class="math inline">\(\lfloor m / d \rfloor\)</span> or <span class="math inline">\(0\)</span>. For the algorithm to work, <span class="math inline">\(M_k(0)\)</span> should be the natural choice of sum of no numbers, <span class="math inline">\(0\)</span>. Therefore if we compute all <span class="math inline">\(M_k(\lfloor n / d \rfloor)\)</span> and <span class="math inline">\(M_k(\lfloor m / d \rfloor)\)</span> in <span class="math inline">\(O(\max\{n, m\}^{2/3})\)</span> time, we can use <span class="math inline">\(O(\sqrt{n})\)</span> time to combine them into our answer <span class="math inline">\(s_{k, f}(n, m)\)</span> (provided that <span class="math inline">\(f\)</span> is available in <span class="math inline">\(O(1)\)</span>, which is the case.)</p>
-<p>Applying this template to the three parts of the sum, which as a reminder are:  <span class="math display">\[\begin{align}
+<p>Apply the exact same strategy as before: For the first interval, the
+start is <span class="math inline">l_1 = 1</span>, and end is <span
+class="math inline">r_1 = \min\{\lfloor n / \lfloor n / l_1 \rfloor
+\rfloor, \lfloor m / \lfloor m / l_1 \rfloor \rfloor\}</span>, then for
+the second interval <span class="math inline">l_2 = r_1 + 1</span> and
+<span class="math inline">r_2 = \min\{\lfloor n / \lfloor n / l_2
+\rfloor \rfloor, \lfloor m / \lfloor m / l_2 \rfloor \rfloor\}</span>
+and so on until <span class="math inline">\min\{n, m\}</span>. The sum
+in each interval is then <span class="math inline">(M_k(r_i) - M_k(l_i -
+1))f(\lfloor n / l_i \rfloor, \lfloor m / l_i \rfloor)</span>.</p>
+<p>We can see that each <span class="math inline">r_i</span> and <span
+class="math inline">l_i - 1</span> is either of the form <span
+class="math inline">\lfloor n / d \rfloor</span> or <span
+class="math inline">\lfloor m / d \rfloor</span> or <span
+class="math inline">0</span>. For the algorithm to work, <span
+class="math inline">M_k(0)</span> should be the natural choice of sum of
+no numbers, <span class="math inline">0</span>. Therefore if we compute
+all <span class="math inline">M_k(\lfloor n / d \rfloor)</span> and
+<span class="math inline">M_k(\lfloor m / d \rfloor)</span> in <span
+class="math inline">O(\max\{n, m\}^{2/3})</span> time, we can use <span
+class="math inline">O(\sqrt{n})</span> time to combine them into our
+answer <span class="math inline">s_{k, f}(n, m)</span> (provided that
+<span class="math inline">f</span> is available in <span
+class="math inline">O(1)</span>, which is the case.)</p>
+<p>Applying this template to the three parts of the sum, which as a
+reminder are:</p>
+<p><span class="math display">\begin{align}
 a_0(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d)
     (n + 1) (m + 1)
@@ -272,22 +600,69 @@ a_2(n, m) &amp;= \sum_{d = 1}^{\min\{n, m\}}
     \mu(d) d^2
     \mathsf{ID}(\lfloor \frac{n}{d} \rfloor)
     \mathsf{ID}(\lfloor \frac{m}{d} \rfloor)
-\end{align}\]</span>  We can have our answer <span class="math inline">\(4 (a_0(n, m) + a_1(n, m) + a_2(n, m))\)</span> in <span class="math inline">\(O(\max\{n, m\}^{2/3})\)</span> time and <span class="math inline">\(O(\max\{n, m\}^{2/3})\)</span> space.</p>
-<p>Phew, that was a whopping three thousand words according to Typora. Admittedly though it does count words in LaTeX code, which may or may not represent the effort needed to read math notation.</p>
+\end{align}</span></p>
+<p>We can have our answer <span class="math inline">4 (a_0(n, m) +
+a_1(n, m) + a_2(n, m))</span> in <span class="math inline">O(\max\{n,
+m\}^{2/3})</span> time and <span class="math inline">O(\max\{n,
+m\}^{2/3})</span> space.</p>
+<p>Phew, that was a whopping three thousand words according to Typora.
+Admittedly though it does count words in LaTeX code, which may or may
+not represent the effort needed to read math notation.</p>
 <h2 id="a-few-more-details">A few more details</h2>
-<p>The problem requires modulo arithmetic, otherwise word-sized integers won't hold such large numbers. In my code supporting class <code>mo</code> is used for this purpose. I worried that it would hinder optimization, but casually playing around on <a href="https://godbolt.org" class="uri">https://godbolt.org</a> shows that it works exactly the same as using functions while not wrapping the number in a class.</p>
-<p>Since this method requires calculating three things at once, I wrote this tiny function that 'vectorizes' a function to multiple <code>std::array</code> 'vectors'. It comes into play quite a few times in my code and cleans up the code quite a bit. It seems to optimize well, with the loop unrolled and function properly inlined at least when tested under recent Clang. Quite a bit of what I learned while solving this kata is actually for writing this.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">template</span>&lt;<span class="kw">typename</span> Func, <span class="dt">size_t</span> N, <span class="kw">typename</span>... Args&gt;</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">decltype</span>(<span class="kw">auto</span>) arrf(Func f, <span class="bu">std::</span>array&lt;Args, N&gt;... args) {</span>
-<span id="cb1-3"><a href="#cb1-3"></a>    <span class="bu">std::</span>array&lt;<span class="kw">decltype</span>(f(args[<span class="dv">0</span>]...)), N&gt; res;</span>
-<span id="cb1-4"><a href="#cb1-4"></a>    <span class="cf">for</span> (<span class="dt">size_t</span> i = <span class="dv">0</span>; i != res.size(); i ++) {</span>
-<span id="cb1-5"><a href="#cb1-5"></a>        res[i] = f(args[i]...);</span>
-<span id="cb1-6"><a href="#cb1-6"></a>    }</span>
-<span id="cb1-7"><a href="#cb1-7"></a>    <span class="cf">return</span> res;</span>
-<span id="cb1-8"><a href="#cb1-8"></a>}</span></code></pre></div>
-<p>I also took the opportunity to enjoy many post-C++11 features such as initializer lists, <code>std::optional</code>, <code>std::array</code>, <code>std::unordered_map</code>, parameter packs <code>typename... Args</code>, and maybe some others I've missed. I did not get to use these features when I used to do competitive programming a few years ago because of the poor adoption of up-to-date compilers. It's a nice refresher doing these things at a slightly higher level of abstraction while sacrificing little to no efficiency, in a modernized language that is admittedly quite old but also more alive than ever.</p>
-<h2 id="about-this-document">About this document</h2>
-<p>The source of this document can be found at <a href="empty-triangles.md"><code>empty-triangles.md</code></a>. Generate this HTML page with:</p>
-<pre class="console"><code>$ pandoc --mathjax -f markdown-smart &lt; empty-triangles.md &gt; index.html</code></pre>
+<p>The problem requires modulo arithmetic, otherwise word-sized integers
+won’t hold such large numbers. In my code supporting class
+<code>mo</code> is used for this purpose. I worried that it would hinder
+optimization, but casually playing around on <a
+href="https://godbolt.org" class="uri">https://godbolt.org</a> shows
+that it works exactly the same as using functions while not wrapping the
+number in a class.</p>
+<p>Since this method requires calculating three things at once, I wrote
+this tiny function that ‘vectorizes’ a function to multiple
+<code>std::array</code> ‘vectors’. It comes into play quite a few times
+in my code and cleans up the code quite a bit. It seems to optimize
+well, with the loop unrolled and function properly inlined at least when
+tested under recent Clang. Quite a bit of what I learned while solving
+this kata is actually for writing this.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> Func<span class="op">,</span> <span class="dt">size_t</span> N<span class="op">,</span> <span class="kw">typename</span><span class="op">...</span> Args<span class="op">&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">decltype</span><span class="op">(</span><span class="kw">auto</span><span class="op">)</span> arrf<span class="op">(</span>Func f<span class="op">,</span> <span class="bu">std::</span>array<span class="op">&lt;</span>Args<span class="op">,</span> N<span class="op">&gt;...</span> args<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="kw">decltype</span><span class="op">(</span>f<span class="op">(</span>args<span class="op">[</span><span class="dv">0</span><span class="op">]...)),</span> N<span class="op">&gt;</span> res<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">size_t</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">!=</span> res<span class="op">.</span>size<span class="op">();</span> i <span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        res<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> f<span class="op">(</span>args<span class="op">[</span>i<span class="op">]...);</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> res<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>I also took the opportunity to enjoy many post-C++11 features such as
+initializer lists, <code>std::optional</code>, <code>std::array</code>,
+<code>std::unordered_map</code>, parameter packs
+<code>typename... Args</code>, and maybe some others I’ve missed. I did
+not get to use these features when I used to do competitive programming
+a few years ago because of the poor adoption of up-to-date compilers.
+It’s a nice refresher doing these things at a slightly higher level of
+abstraction while sacrificing little to no efficiency, in a modernized
+language that is admittedly quite old but also more alive than ever.</p>
+
+</article>
+
 </body>
+
+<script>
+    // For Pandoc-generated KaTeX elements
+    document.addEventListener("DOMContentLoaded", function () {
+        var mathElements = document.getElementsByClassName("math");
+        var macros = [];
+        for (var i = 0; i < mathElements.length; i++) {
+            var texText = mathElements[i].firstChild;
+            if (mathElements[i].tagName == "SPAN") {
+                katex.render(texText.data, mathElements[i], {
+                    displayMode: mathElements[i].classList.contains('display'),
+                    throwOnError: false,
+                    macros: macros,
+                    fleqn: false
+                });
+            }
+        }
+    });
+</script>
+
 </html>

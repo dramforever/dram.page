@@ -191,6 +191,16 @@ blockquote {
     overflow: auto;
 }
 
+.katex {
+    overflow-x: auto;
+    overflow-y: clip;
+}
+
+/* Get rid of equation numbering */
+.eqn-num {
+    display: none !important;
+}
+
 figure img {
     max-width: 90%;
 }
