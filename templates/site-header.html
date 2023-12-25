@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html prefix="og: https://ogp.me/ns#">
 
 <head>
-    <title>$it$$if(it)$ -- $endif$dramforever</title>
+    <title>$title$$if(title)$ -- $endif$dramforever</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+$if(name)$
+    <meta property="og:url" content="https://dram.page/p/$name/nowrap$">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="$title/nowrap$">
+$endif$
     <link rel="stylesheet" href="/styles/default.css">
 </head>
 

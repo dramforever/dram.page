@@ -1,4 +1,4 @@
-\ do_template templates/site-header
+\ do_template templates/site-header --variable title:
 
 <section>
   <header class="widget-header">Recent posts</header>

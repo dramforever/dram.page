@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Migrating my blog site to a Makefile -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/makefile-migration">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Migrating my blog site to a Makefile">
+    <link rel="stylesheet" href="/styles/default.css">
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Migrating my blog site to a Makefile</h1>
+    <span id="post-title-sub">2023-12-17</span>
+</div>
+
+<p>Until recently, I have mostly manually managed the HTML files of my
+blog with a Makefile. Every page you see on here in my “blog style” is
+managed by.</p>
+<p>I have enlisted the help of <a href="https://pandoc.org/">Pandoc</a>
+to generate convert the main article contents from Markdown to HTML for
+me, but putting in the header, title, date, etc still involved copying
+and pasting a bunch of stuff manually.</p>
+<p>What’s more, every time I write a new article, I need to insert it
+into the list on the <a href="/">home page</a> and <a href="/p/">post
+index page</a>. That, plus the <code>&lt;title&gt;</code> element and
+header in the article page, means that I need to paste the title of an
+article <em>four times</em>.</p>
+<p>I could migrate my blog to a static site generator. Or I could just
+do something to automate the bits I need.</p>
+<h2 id="yaml-frontmatter-and-pandoc-templates">YAML frontmatter and
+pandoc templates</h2>
+<h2 id="doing-multiple-things-easily-with-makefile">Doing multiple
+things easily with <code>Makefile</code></h2>
+<h2 id="each-index-item-is-also-a-template">Each index item is also a
+template</h2>
+<h2 id="bash-based-templates">Bash-based templates?</h2>
+<p>Behold, the templating language I came up in like 30 seconds:</p>
+<pre><code>while IFS= read -r line; do
+    if [[ &quot;$line&quot; == &#39;\&#39;* ]]; then
+        eval &quot;${line:1}&quot;
+    else
+        printf &quot;%s&quot; &quot;$line&quot;
+    fi
+done</code></pre>
+<h2 id="stubs-for-unmigrated-articles">Stubs for unmigrated
+articles</h2>
+<h2 id="future-work">Future work</h2>
+
+</article>
+
+</body>
+</html>

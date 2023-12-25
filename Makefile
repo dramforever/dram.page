@@ -14,7 +14,7 @@ targets-articles := $(patsubst %,p/%/index.html,$(hidden-articles) $(build-artic
 all: $(targets-articles) $(extra-pages)
 
 p/%/index.html: p/%/index.md
-	pandoc --data-dir . --template template/post.html -o $@ $<
+	pandoc --data-dir . -s --toc --template template/post.html --variable name:"$*" -o $@ $<
 
 %.html: %.html.in
 	templates/do_html.sh < $< > $@

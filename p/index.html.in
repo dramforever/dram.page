@@ -1,4 +1,4 @@
-\ do_template templates/site-header --variable it:"Index"
+\ do_template templates/site-header --variable title:"Index"
 
 <section>
   <header class="widget-header">Index</header>

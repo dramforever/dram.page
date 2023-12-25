@@ -1,4 +1,5 @@
 hidden-articles := \
+  makefile-migration \
 
 build-articles := \
   threaded-code \
