@@ -1,0 +1,69 @@
+* {
+    display: block;
+}
+
+rss {
+    max-width: 691px;
+    margin-top: 20px;
+    margin-right: auto;
+    margin-left: auto;
+    padding-bottom: 100px;
+}
+
+@media only screen and (max-width: 767px) {
+    rss {
+        width: 90%;
+    }
+}
+
+channel>title {
+    font-size: 200%;
+    border-bottom: 2px solid black;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+channel>title::before {
+    display: inline;
+    content: "RSS feed: ";
+}
+
+channel>link {
+    border-bottom: 2px solid black;
+    padding-bottom: 0.2rem;
+}
+
+channel>link::before {
+    display: inline;
+    content: "Link: ";
+}
+
+channel>description {
+    display: none;
+}
+
+channel>ttl {
+    display: none;
+}
+
+item {
+    padding: 0.5em;
+    border-bottom: 1px dashed gray;
+}
+
+item>title {
+    font-size: 120%;
+}
+
+item>guid {
+    text-decoration: underline;
+}
+
+item>description:not(:empty) {
+    margin-top: 1em;
+    margin-left: 1em;
+    display: block;
+    overflow: hidden;
+    max-height: 5lh;
+    overflow: hidden;
+}
