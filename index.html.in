@@ -1,9 +1,16 @@
-\ do_template templates/site-header --variable title:
+do_template templates/site-header --variable title:
 
+cat <<END
 <section>
   <header class="widget-header">Recent posts</header>
   <ul class="widget-list">
-\ do_fragment .entry.html "${articles[@]:0:5}"
+END
+
+limit_articles=("${articles[@]:0:5}")
+
+cat "${limit_articles[@]/*/p/&/.entry.html}"
+
+cat <<END
     <li>
       <a class="widget-item" href="p/">
         <span class="widget-item-full">More&hellip;</span>
@@ -41,5 +48,6 @@
   <ul id="github-activity" class="widget-list" data-state="loading"></ul>
   <script src="github-activity.js"></script>
 </section>
+END
 
-\ do_template templates/site-footer
+do_template templates/site-footer

@@ -23,7 +23,7 @@ p/%/index.html: p/%/index.md templates/variables.yaml templates/post.html
 
 %: %.in
 	@echo "    GEN" $@
-	$(Q)templates/do_html.sh < $< > $@
+	$(Q)templates/do_html.sh $< > $@
 
 p/%/.entry.html: p/%/index.md templates/variables.yaml templates/entry.html
 	@echo " PANDOC" $@

@@ -1,3 +1,3 @@
-\ do_template templates/rss-header.xml
-\ do_fragment .entry.xml "${articles[@]}"
-\ do_template templates/rss-footer.xml
+do_template templates/rss-header.xml
+cat "${articles[@]/*/p/&/.entry.xml}"
+do_template templates/rss-footer.xml

@@ -1,10 +1,16 @@
-\ do_template templates/site-header --variable title:"Index"
+do_template templates/site-header --variable title:"Index"
 
+cat <<END
 <section>
   <header class="widget-header">Index</header>
   <ul class="widget-list">
-\ do_fragment .entry.html "${articles[@]}"
+END
+
+cat "${articles[@]/*/p/&/.entry.html}"
+
+cat <<END
   </ul>
 </section>
+END
 
-\ do_template templates/site-footer
+do_template templates/site-footer
