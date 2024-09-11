@@ -2,8 +2,6 @@ MAKEFLAGS := -rR
 
 include build.mk
 
-.EXTRA_PREREQS += Makefile build.mk $(wildcard templates/*)
-
 articles := $(build-articles) $(extra-articles)
 
 export articles
@@ -16,8 +14,21 @@ all: $(targets-articles) $(extra-pages)
 .PHONY: index
 index: $(extra-pages)
 
-p/%/index.html: p/%/index.md
+p/%/index.html: p/%/index.md templates/variables.yaml templates/post.html
 	pandoc --data-dir . --defaults templates/variables.yaml --katex -s --toc --template templates/post.html --variable name:"$*" -o $@ $<
 
 %: %.in
 	templates/do_html.sh < $< > $@
+
+p/%/.entry.html: p/%/index.md templates/variables.yaml templates/entry.html
+	pandoc --data-dir . --defaults templates/variables.yaml --template templates/entry.html --variable name:"$*" -o $@ $<
+
+p/%/.entry.xml: p/%/index.md templates/variables.yaml templates/date.xml templates/rss-entry.xml
+	# Stolen from https://github.com/chambln/pandoc-rss/blob/52227544480facb729315ade500f77d6e5cc7657/bin/pandoc-rss#L74-L82
+	date="$$(pandoc --data-dir . --defaults templates/variables.yaml --template templates/date.xml $<)" ; \
+		date_std="$$(LANG=C TZ=UTC date --date "$$date" +'%a, %d %b %Y %T +0000')" ; \
+		pandoc --data-dir . --defaults templates/variables.yaml --template templates/rss-entry.xml --variable name:"$*" --variable date_std:"$$date_std" -t html -o $@ $<
+
+p/index.html: $(patsubst %,p/%/.entry.html,$(articles)) build.mk templates/variables.yaml templates/site-header.html templates/site-footer.html
+index.html: $(patsubst %,p/%/.entry.html,$(articles)) build.mk templates/variables.yaml templates/site-header.html templates/site-footer.html
+feed.xml: $(patsubst %,p/%/.entry.xml,$(articles)) build.mk templates/variables.yaml

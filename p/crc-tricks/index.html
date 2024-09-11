@@ -252,7 +252,8 @@ class="math inline">\mathtt{crc} = m x^N</span>.</p>
 \mathtt{tap}</span> is either added or not. This means <span
 class="math inline">\mathtt{crc}</span> and <span class="math inline">m
 x^N</span> are actually only equal modulo <span class="math inline">x^N
-+ \mathtt{tap}</span>. Also notice that <span
++
+\mathtt{tap}</span>. Also notice that <span
 class="math inline">\mathtt{crc}</span> has degree strictly smaller than
 <span class="math inline">N</span>. Therefore:</p>
 <p><span class="math display"> \mathtt{crc} = (m x^N) \bmod
@@ -443,15 +444,15 @@ etc. still of length <span class="math inline">L</span>, we have:</p>
 <p>Actually, it only matters that for each pair used in this adding, the
 messages have the same length. The pairs don’t have to be all <span
 class="math inline">L</span>. Let’s call <span
-class="math inline">d_{k,l} = (m_k x^N + r_k) + (m_l x^N +
-r_l)</span></p>
+class="math inline">d_{k,l} =
+(m_k x^N + r_k) + (m_l x^N + r_l)</span></p>
 <p>Since all the <span class="math inline">m_k x^N + r_k</span> directly
 correspond to the data we dumped, we actually know them <em>in
 full</em>, not just modulo something. So we know all <span
-class="math inline">d_{k, l}</span> in full. If <span
-class="math inline">m_k</span> and <span class="math inline">m_l</span>
-have the same length then for some unknown <span
-class="math inline">q_{k,l}</span>:</p>
+class="math inline">d_{k,
+l}</span> in full. If <span class="math inline">m_k</span> and <span
+class="math inline">m_l</span> have the same length then for some
+unknown <span class="math inline">q_{k,l}</span>:</p>
 <p><span class="math display"> d_{k, l} = P \cdot q_{k, l} </span></p>
 <p>We have several multiples of <span class="math inline">P</span>. How
 can we find <span class="math inline">P</span> itself? This sounds like
@@ -505,8 +506,8 @@ class="math inline">P</span> itself.</p>
 class="math inline">P</span> should have degree <span
 class="math inline">N = 16</span>, and this result does have degree
 <span class="math inline">16</span>. So that’s it, we found our
-polynomial <span class="math inline">P = x^{16} +
-\mathtt{tap}</span>.</p>
+polynomial <span class="math inline">P = x^{16}
++ \mathtt{tap}</span>.</p>
 <p>For use in code, <code>tap</code> should be the bit reversal of
 <code>0x6005</code>, i.e. <code>0xa006</code>.</p>
 <h2 id="messages-with-unequal-length">Messages with unequal length</h2>
@@ -548,7 +549,8 @@ space</em> over <span class="math inline">\mathrm{GF}(2)</span>. If we
 think in terms of vector spaces, the problem now is to figure out a
 linear combination of the base vectors <span class="math inline">x^k
 (x^{L_1} + x^{L_2}) \bmod P</span> that gives <span
-class="math inline">I (x^{L_1} + x^{L_2}) \bmod P</span>.</p>
+class="math inline">I (x^{L_1} + x^{L_2})
+\bmod P</span>.</p>
 <p>In other words, we need to solve a linear equation. That’s a job for
 our beloved Gauss-Jordan elimination. But this time we work in <span
 class="math inline">\mathrm{GF}(2)</span>, so adding rows just means

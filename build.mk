@@ -2,7 +2,6 @@ hidden-articles := \
   makefile-migration \
 
 build-articles := \
-  linux-in-spike \
   threaded-code \
   relative-relocs-explained \
   visionfive-jtag-1 \

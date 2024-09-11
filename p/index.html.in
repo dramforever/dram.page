@@ -3,7 +3,7 @@
 <section>
   <header class="widget-header">Index</header>
   <ul class="widget-list">
-\ do_index_all
+\ do_fragment .entry.html "${articles[@]}"
   </ul>
 </section>
 

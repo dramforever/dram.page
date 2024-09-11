@@ -3,7 +3,7 @@
 <section>
   <header class="widget-header">Recent posts</header>
   <ul class="widget-list">
-\ do_index_limit 5
+\ do_fragment .entry.html "${articles[@]:0:5}"
     <li>
       <a class="widget-item" href="p/">
         <span class="widget-item-full">More&hellip;</span>
