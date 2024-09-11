@@ -32,3 +32,7 @@ p/%/.entry.xml: p/%/index.md templates/variables.yaml templates/date.xml templat
 p/index.html: $(patsubst %,p/%/.entry.html,$(articles)) build.mk templates/variables.yaml templates/site-header.html templates/site-footer.html
 index.html: $(patsubst %,p/%/.entry.html,$(articles)) build.mk templates/variables.yaml templates/site-header.html templates/site-footer.html
 feed.xml: $(patsubst %,p/%/.entry.xml,$(articles)) build.mk templates/variables.yaml
+
+.PHONY: clean
+clean:
+	rm -f p/*/.entry.html p/*/.entry.xml $(targets-articles) $(extra-pages)
