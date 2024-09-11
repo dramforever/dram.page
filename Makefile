@@ -1,4 +1,7 @@
 MAKEFLAGS := -rR
+ifeq ($(V),)
+Q ?= @
+endif
 
 include build.mk
 
@@ -15,17 +18,21 @@ all: $(targets-articles) $(extra-pages)
 index: $(extra-pages)
 
 p/%/index.html: p/%/index.md templates/variables.yaml templates/post.html
-	pandoc --data-dir . --defaults templates/variables.yaml --katex -s --toc --template templates/post.html --variable name:"$*" -o $@ $<
+	@echo " PANDOC" $@
+	$(Q)pandoc --data-dir . --defaults templates/variables.yaml --katex -s --toc --template templates/post.html --variable name:"$*" -o $@ $<
 
 %: %.in
-	templates/do_html.sh < $< > $@
+	@echo "    GEN" $@
+	$(Q)templates/do_html.sh < $< > $@
 
 p/%/.entry.html: p/%/index.md templates/variables.yaml templates/entry.html
-	pandoc --data-dir . --defaults templates/variables.yaml --template templates/entry.html --variable name:"$*" -o $@ $<
+	@echo " PANDOC" $@
+	$(Q)pandoc --data-dir . --defaults templates/variables.yaml --template templates/entry.html --variable name:"$*" -o $@ $<
 
+# Stolen from https://github.com/chambln/pandoc-rss/blob/52227544480facb729315ade500f77d6e5cc7657/bin/pandoc-rss#L74-L82
 p/%/.entry.xml: p/%/index.md templates/variables.yaml templates/date.xml templates/rss-entry.xml
-	# Stolen from https://github.com/chambln/pandoc-rss/blob/52227544480facb729315ade500f77d6e5cc7657/bin/pandoc-rss#L74-L82
-	date="$$(pandoc --data-dir . --defaults templates/variables.yaml --template templates/date.xml $<)" ; \
+	@echo " PANDOC" $@
+	$(Q)date="$$(pandoc --data-dir . --defaults templates/variables.yaml --template templates/date.xml $<)" ; \
 		date_std="$$(LANG=C TZ=UTC date --date "$$date" +'%a, %d %b %Y %T +0000')" ; \
 		pandoc --data-dir . --defaults templates/variables.yaml --template templates/rss-entry.xml --variable name:"$*" --variable date_std:"$$date_std" -t html -o $@ $<
 
