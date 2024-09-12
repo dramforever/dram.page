@@ -40,14 +40,6 @@ cat <<END
   </ul>
 </section>
 
-<section>
-  <header class="widget-header">
-    GitHub Activity
-    (<a href="https://github.com/dramforever/">@dramforever</a>)
-  </header>
-  <ul id="github-activity" class="widget-list" data-state="loading"></ul>
-  <script src="github-activity.js"></script>
-</section>
 END
 
 do_template templates/site-footer
