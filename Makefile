@@ -17,7 +17,7 @@ all: $(targets-articles) $(extra-pages)
 .PHONY: index
 index: $(extra-pages)
 
-p/%/index.html: p/%/index.md templates/variables.yaml templates/post.html
+p/%/index.html: p/%/index.md templates/variables.yaml templates/post.html templates/site-header.html templates/site-footer.html
 	@echo " PANDOC" $@
 	$(Q)pandoc --data-dir . --defaults templates/variables.yaml --katex -s --toc --template templates/post.html --variable name:"$*" -o $@ $<
 
