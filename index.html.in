@@ -40,6 +40,22 @@ cat <<END
   </ul>
 </section>
 
+<section>
+  <header class="widget-header">Links</header>
+  <ul class="widget-list">
+    <li>
+      <a class="widget-item" href="https://github.com/dramforever">
+        <span class="widget-item-main">GitHub: @dramforever</span>
+      </a>
+    </li>
+    <li>
+      <a class="widget-item" href="https://mastodon.social/@dramforever">
+        <span class="widget-item-main">Mastodon: @dramforever@mastodon.social</span>
+      </a>
+    </li>
+  </ul>
+</section>
+
 END
 
 do_template templates/site-footer
