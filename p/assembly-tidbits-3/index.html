@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Assembly tidbits #3.5: Intermission: Where
+RISC-V? -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/assembly-tidbits-3">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Assembly tidbits #3.5: Intermission: Where RISC-V?">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
+
+    <script defer>
+        // For Pandoc-generated KaTeX elements
+        document.addEventListener("DOMContentLoaded", function () {
+            var mathElements = document.getElementsByClassName("math");
+            var macros = [];
+            for (var i = 0; i < mathElements.length; i++) {
+                var texText = mathElements[i].firstChild;
+                if (mathElements[i].tagName == "SPAN") {
+                    katex.render(texText.data, mathElements[i], {
+                        displayMode: mathElements[i].classList.contains('display'),
+                        throwOnError: false,
+                        macros: macros,
+                        fleqn: false
+                    });
+                }
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Assembly tidbits #3.5: Intermission: Where
+RISC-V?</h1>
+    <span id="post-title-sub">2024-03-27</span>
+</div>
+
+<p>Where can I try out RISC-V assembly?</p>
+<p>If all you want is seeing assembly code, Compiler Explorer aka
+“godbolt” is a good place to go: <a href="https://godbolt.org/"
+class="uri">https://godbolt.org/</a>. Recommended compiler options:
+<code>-O</code> for cleaner code.</p>
+<p>For running… There are a bunch of random RISC-V emulators out there
+but I do prefer a “real” environment.</p>
+<p>If you want a “zero-setup” environment, check out one of the RISC-V
+machines at JSLinux: <a href="https://bellard.org/jslinux/index.html"
+class="uri">https://bellard.org/jslinux/index.html</a>, which emulates a
+machine well enough to run Linux in your browser. They don’t have many
+of the newer extensions, but it’s good enough to get started
+immediately.</p>
+<p>If you’re okay with having a bunch of random stuff on your machine,
+read ahead:</p>
+<p>For building, I usually use the cross toolchain from Nixpkgs, but any
+will do. For running I pull out QEMU. On Linux, the user-mode emulation
+works well with Nix which frees me from dealing with containers or
+sysroots.</p>
+<p>I heard that you can get Docker to run riscv64 containers by setting
+up QEMU with binfmt, but I haven’t personally tried it enough to
+recommend or recommend against. You can check out some general
+instructions at:
+https://docs.docker.com/build/building/multi-platform/</p>
+
+</article>
+
+</body>
+
+</html>

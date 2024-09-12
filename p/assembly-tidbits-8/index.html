@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Assembly Tidbits #8: signed unsigned int, part
+1 -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/assembly-tidbits-8">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Assembly Tidbits #8: signed unsigned int, part 1">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
+
+    <script defer>
+        // For Pandoc-generated KaTeX elements
+        document.addEventListener("DOMContentLoaded", function () {
+            var mathElements = document.getElementsByClassName("math");
+            var macros = [];
+            for (var i = 0; i < mathElements.length; i++) {
+                var texText = mathElements[i].firstChild;
+                if (mathElements[i].tagName == "SPAN") {
+                    katex.render(texText.data, mathElements[i], {
+                        displayMode: mathElements[i].classList.contains('display'),
+                        throwOnError: false,
+                        macros: macros,
+                        fleqn: false
+                    });
+                }
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Assembly Tidbits #8: signed unsigned int,
+part 1</h1>
+    <span id="post-title-sub">2024-06-05</span>
+</div>
+
+<p><strong>(part 1)</strong> <a
+href="https://cohost.org/dram/post/6395668-assembly-tidbits-9">(part
+2)</a></p>
+<p><a
+href="https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-cc.adoc">The
+RISC-V calling convention</a> makes a curious remark about what to do
+when integers are passed in registers, and the integer type is smaller
+than the register width:</p>
+<blockquote>
+<p>[I]nteger scalars narrower than XLEN bits are widened according to
+the sign of their type up to 32 bits, then sign-extended to XLEN
+bits.</p>
+</blockquote>
+<p>In summary, say we’re on 64-bit RISC-V:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Width</th>
+<th>Signed (<code>intN_t</code>)</th>
+<th>Unsigned (<code>uintN_t</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>[u]int8_t</code></td>
+<td>sign-extended</td>
+<td>zero-extended</td>
+</tr>
+<tr class="even">
+<td><code>[u]int16_t</code></td>
+<td>sign-extended</td>
+<td>zero-extended</td>
+</tr>
+<tr class="odd">
+<td><code>[u]int32_t</code></td>
+<td>sign-extended</td>
+<td>sign-extended</td>
+</tr>
+<tr class="even">
+<td><code>[u]int64_t</code></td>
+<td>passed as-is</td>
+<td>passed as-is</td>
+</tr>
+</tbody>
+</table>
+<p>Well, obviously the curious one here is <code>uint32_t</code>. Why on
+earth is this particular one sign-extended? The wording is very much
+intentional, and…</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">unsigned</span> <span class="dt">int</span> test<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bn">0x80000001</span><span class="bu">u</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<pre><code>Breakpoint 1, 0x0000000000010602 in test ()
+(gdb) fin
+Run till exit from #0  0x0000000000010602 in test ()
+0x0000000000010614 in main ()
+(gdb) p/x $a0
+$2 = 0xffffffff80000001</code></pre>
+<p>Yeah! It’s really how it’s done! What’s going on?</p>
+<hr />
+<p>Designing data types to work this way serves one main purpose:
+minimizing the number of instructions added that would have to
+specifically handle 32-bit data.</p>
+<p>Some ground rules: When we say <em>sign-extended</em>, we mean that
+the high 32 bits are all the same and copies of bit 31. So for example,
+<code>0xffff_ffff_8000_0000</code> is <em>sign-extended</em>, since bit
+31 (with place value <code>2 ** 31</code>) is <code>1</code>, and all
+the high 32 bits are <code>1</code>. Same reason
+<code>0x0000_0000_4000_0000</code> is <em>sign-extended</em> as well.
+The actual information content as 32-bit values are all in the low 32
+bits. The high bits are completely determined by the low 32 bits (in
+fact, by a single one of them, bit 31) and provide no additional
+information.</p>
+<p>(I’m using <code>**</code> for exponentiation here.)</p>
+<h1 id="arithmetic-operations">Arithmetic operations</h1>
+<p>There’s no way <code>add</code> would work the same on 32-bit data,
+so we have to use two different instructions: <code>add</code> and
+<code>addw</code>. <code>w</code> means “word” and is 32-bit. No, Intel
+does not get to tell us that a word is 16 bits.</p>
+<pre><code>add rd, rs1, rs2 # rd = rs1 + rs2
+addw rd, rs1, rs2 # rd = sign_extend(rs1[31:0] + rs2[31:0])</code></pre>
+<p>The way <code>addw</code> works is that it disregards the high bits
+of the inputs, adds the two 32-bit values discarding carry, then sign
+extends the result. So for example, adding
+<code>0x0000_0000_4000_0000</code> (so, <code>2 ** 30</code>) with
+itself using <code>add</code> produces
+<code>0x0000_0000_8000_0000</code>, but using <code>addw</code> produces
+<code>0xffff_ffff_8000_0000</code></p>
+<p>Is <code>addw</code> for unsigned addition, or is it for twos’
+complement signed addition? As it turns out, both! Remember that the
+information content is all in the low 32 bits. The high bits in inputs
+are ignored, and the high bits in the output is completely determined by
+bit 31. Therefore, you only need to read the low 32-bits, which works
+the same way whether or not you’re working with signed or unsigned
+values.</p>
+<p>So for the value <code>0xffff_ffff_8000_0000</code> here, you only
+read <code>0x8000_0000</code>, and it “means” <code>2 ** 31</code> when
+interpreted as an unsigned value, and <code>- (2 ** 31)</code> when
+interpreted as a signed value. The unsigned addition has the “right”
+value, and the signed addition overflows as expected for a twos’
+complement.</p>
+<h1 id="bitwise-operations">Bitwise operations</h1>
+<p>Bitwise operations are even easier. If for both inputs the high bits
+are copies of bit 31, then after the same operation, the resulting high
+bits will also be copies of bit 31 from the result. Therefore, the same
+<code>and</code>, <code>or</code>, <code>xor</code> instructions can be
+used for all the data types.</p>
+<h1 id="comparisons">Comparisons</h1>
+<p>Comparisons are quire interesting. RISC-V provides <code>slt</code>
+and <code>sltu</code> for signed and unsigned comparisons respectively,
+and gives <code>1</code> if <code>rs1 &lt; rs2</code> and <code>0</code>
+if <code>rs1 &gt;= rs2</code>.</p>
+<pre><code>slt rd, rs1, rs2 # rd = (rs1 signed &lt; rs2) ? 1 : 0
+sltu rd, rs1, rs2 # rd = (rs1 unsigned &lt; rs2) ? 1 : 0</code></pre>
+<p>But … those compare full-register width values, so how do you compare
+two <code>uint32_t</code> if they are weirdly sign extended? Don’t you
+need a special instruction like, <code>bltuw</code>?</p>
+<p>As it turns out, no! You can just use <code>sltu</code>. If you
+interpret the sign-extended values as unsigned 64-bit integers… then
+sign-extension is actually monotonic, so the order works out. The values
+<code>0x0000_0000</code> through <code>0x7fff_ffff</code> get mapped to
+the same values, and values <code>0x8000_0000</code> through
+<code>0xffff_ffff</code> get a huge number added to them, but the
+important part is that the mapping is monotonic and therefore order
+preserving.</p>
+<figure>
+<img
+src="https://cohost.org/rc/attachment-redirect/4e7f4b38-ecd7-4e5f-bc76-015e35846027"
+alt="A diagram showing how the numbers have been monotonically mapped with a gap inserted between 0x7fff_ffff and 0x8000_0000" />
+<figcaption aria-hidden="true">A diagram showing how the numbers have
+been monotonically mapped with a gap inserted between 0x7fff_ffff and
+0x8000_0000</figcaption>
+</figure>
+<p>Same reasoning goes for the branch if less than <code>bltu</code>
+instruction, and the branch if greater than <code>bgeu</code>
+instruction.</p>
+<p>Nice! Everything works out just right. It would be a shame if a
+common coding pattern/habit using <code>unsigned int</code> comes and
+really wants to be zero-extended in a 64-bit register and ruins the
+day…</p>
+<hr />
+<p>RISC-V assembly operand glossary:</p>
+<ul>
+<li><code>rs1</code>, <code>rs2</code>: Source registers</li>
+<li><code>rd</code>: Destination register</li>
+</ul>
+
+</article>
+
+</body>
+
+</html>

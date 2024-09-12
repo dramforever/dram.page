@@ -9,10 +9,11 @@ articles := $(build-articles) $(extra-articles)
 
 export articles
 
-targets-articles := $(patsubst %,p/%/index.html,$(hidden-articles) $(build-articles))
+targets-articles := $(patsubst %,p/%/index.html,$(foreach s,$(series),$($(s)-articles)) $(hidden-articles) $(build-articles))
+series-pages := $(patsubst %,%/index.html,$(series))
 
 .PHONY: all
-all: $(targets-articles) $(extra-pages)
+all: $(targets-articles) $(extra-pages) $(series-pages)
 
 .PHONY: index
 index: $(extra-pages)
@@ -36,10 +37,14 @@ p/%/.entry.xml: p/%/index.md templates/variables.yaml templates/date.xml templat
 		date_std="$$(LANG=C TZ=UTC date --date "$$date" +'%a, %d %b %Y %T +0000')" ; \
 		pandoc --data-dir . --defaults templates/variables.yaml --template templates/rss-entry.xml --variable name:"$*" --variable date_std:"$$date_std" -t html -o $@ $<
 
+p/index.html index.html feed.xml: export articles := $(build-articles) $(extra-articles)
+assembly-tidbits/index.html: export articles = $(assembly-tidbits-articles)
+
 p/index.html: $(patsubst %,p/%/.entry.html,$(articles)) build.mk templates/variables.yaml templates/site-header.html templates/site-footer.html
 index.html: $(patsubst %,p/%/.entry.html,$(articles)) build.mk templates/variables.yaml templates/site-header.html templates/site-footer.html
 feed.xml: $(patsubst %,p/%/.entry.xml,$(articles)) build.mk templates/variables.yaml
+assembly-tidbits/index.html: $(patsubst %,p/%/.entry.html,$(assembly-tidbits-articles)) build.mk templates/variables.yaml templates/site-header.html templates/site-footer.html
 
 .PHONY: clean
 clean:
-	rm -f p/*/.entry.html p/*/.entry.xml $(targets-articles) $(extra-pages)
+	rm -f p/*/.entry.html p/*/.entry.xml $(targets-articles) $(extra-pages) $(series-pages)

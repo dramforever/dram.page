@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Assembly tidbits #1: Data link
+established -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/assembly-tidbits-1">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Assembly tidbits #1: Data link established">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
+
+    <script defer>
+        // For Pandoc-generated KaTeX elements
+        document.addEventListener("DOMContentLoaded", function () {
+            var mathElements = document.getElementsByClassName("math");
+            var macros = [];
+            for (var i = 0; i < mathElements.length; i++) {
+                var texText = mathElements[i].firstChild;
+                if (mathElements[i].tagName == "SPAN") {
+                    katex.render(texText.data, mathElements[i], {
+                        displayMode: mathElements[i].classList.contains('display'),
+                        throwOnError: false,
+                        macros: macros,
+                        fleqn: false
+                    });
+                }
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Assembly tidbits #1: Data link
+established</h1>
+    <span id="post-title-sub">2024-03-23</span>
+</div>
+
+<pre><code>void hello() {
+    puts(&quot;hello world&quot;);
+}</code></pre>
+<p>To implement this function according to the RISC-V calling
+convention, you would want to put the address of the string in
+<code>a0</code> and jump to (i.e. tail call) <code>puts</code>. How
+could you achieve this with just one instruction?</p>
+<pre><code>hello:
+    # TODO: One instruction here
+    .string &quot;hello world&quot;</code></pre>
+<p>(No, this is not normally how this is done. Also, you may assume that
+<code>puts</code> is within reach of one instruction.)</p>
+<details>
+<summary>
+Solution
+</summary>
+<pre><code>hello:
+    jal a0, puts
+    .string &quot;hello world&quot;</code></pre>
+<p><code>jal</code>, or jump-and-link, means to put address after the
+instruction in a register and jump to the encoded offset. The RISC-V
+<code>jal</code> instruction allows <em>any</em> general purpose
+register to be the destination to put the “return address” in.</p>
+<p>However, nothing says that the return address stored can only be used
+as a return address. It could also be, for example in this case, a
+pointer to some data right after the <code>jal</code> instruction.</p>
+<p>(This would work as long as the executable code is readable, and your
+program is not so big that <code>puts</code>/<code>puts@plt</code> goes
+out of range of one instruction.)</p>
+<p>Of course, this is not how you would normally do the equivalent of a
+C string literal. Something more reasonable would be:</p>
+<pre><code>    .section .text
+hello:
+    lla a0, .Lmsg
+    tail puts
+
+    .section .rodata
+.Lmsg:
+    .string &quot;hello world&quot;</code></pre>
+</details>
+
+</article>
+
+</body>
+
+</html>

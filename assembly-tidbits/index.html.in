@@ -1,0 +1,26 @@
+do_template templates/site-header --variable title:"Index"
+
+cat <<END
+<article>
+  <div id="post-title">
+    <h1 id="post-title-main">Assembly Tidbits</h1>
+  </div>
+
+  <p>Interesting, fun, and cursed assembly-level knowledge, one bit at a time. Mainly RISC-V.</p>
+
+  <p>Converted from original <a href="https://cohost.org/dram/tagged/assemblytidbits">Cohost tag</a></p>
+</article>
+
+<section>
+  <header class="widget-header">Index</header>
+  <ul class="widget-list">
+END
+
+cat "${articles[@]/*/p/&/.entry.html}"
+
+cat <<END
+  </ul>
+</section>
+END
+
+do_template templates/site-footer

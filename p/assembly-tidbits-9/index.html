@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Assembly Tidbits #9: signed unsigned int, part
+2 -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/assembly-tidbits-9">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Assembly Tidbits #9: signed unsigned int, part 2">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
+
+    <script defer>
+        // For Pandoc-generated KaTeX elements
+        document.addEventListener("DOMContentLoaded", function () {
+            var mathElements = document.getElementsByClassName("math");
+            var macros = [];
+            for (var i = 0; i < mathElements.length; i++) {
+                var texText = mathElements[i].firstChild;
+                if (mathElements[i].tagName == "SPAN") {
+                    katex.render(texText.data, mathElements[i], {
+                        displayMode: mathElements[i].classList.contains('display'),
+                        throwOnError: false,
+                        macros: macros,
+                        fleqn: false
+                    });
+                }
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Assembly Tidbits #9: signed unsigned int,
+part 2</h1>
+    <span id="post-title-sub">2024-06-12</span>
+</div>
+
+<p><a
+href="https://cohost.org/dram/post/6283552-assembly-tidbits-8">(part
+1)</a> <strong>(part 2)</strong></p>
+<p>Last time we saw how RISC-V could deal with unsigned 32-bit values
+that are sign extended just fine. In fact, it’s natively designed to do
+so: <code>uint32_t</code> <em>should be</em> sign extended in
+registers.</p>
+<p>Well of course, we need efficient 32-bit operations because there’s
+an entire world out there with C code processing <code>int</code>-sized
+data. And of course <code>int</code> is 32-bit because everyone is doing
+it like this<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>.</p>
+<p>Everything is fine and dandy. Until…</p>
+<pre><code>char memory_access(char *p, uint32_t i) {
+    return p[i];
+}</code></pre>
+<pre><code>memory_access:
+        slli    a1, a1, 32
+        srli    a1, a1, 32
+        add     a0, a0, a1
+        lbu     a0, 0(a0)
+        ret</code></pre>
+<p>Oh no. That’s a lot of instructions just to read one byte from
+memory. What went wrong?</p>
+<p>Essentially, to calculate <code>p + i</code>, you would need to
+promote <code>i</code> from an unsigned 32-bit value to an unsigned
+64-bit value. Since the 32-bit value is stored in a register
+sign-extended, this operations is not free! In fact, it was expected to
+be rare enough that you need two instructions to do it, doing a shifting
+dance <code>(a &lt;&lt; 32) &gt;&gt; 32</code> to zero out the high
+bits.</p>
+<p>Even worse, since the 32-bit arithmetic instructions give out their
+results sign-extended, you can’t just be smart about it and keep the
+value zero-extended – doing 32-bit arithmetic like <code>addw</code>,
+<code>slliw</code> etc destroys the zero-extension, and doing 64-bit
+arithmetic gives you the wrong result!</p>
+<p>The correct way of course is to add instructions to handle these
+cases. Indeed, the standard Zba extension and non-standard Xtheadba
+extension provides instructions like <code>add.uw</code> and
+<code>slli.uw</code> to handle promoting unsigned 32-bit values to
+64-bit. Compiling the code above with <code>-march=rv64gc_zba</code>
+gives this code:</p>
+<pre><code>memory_access:
+        add.uw  a0, a1, a0
+        lbu     a0, 0(a0)
+        ret</code></pre>
+<p>… which combines the zero-extension and addition in one instruction,
+a far more reasonable codegen.</p>
+<p>But what if you already have silicon that doesn’t have these new
+instructions <code>add.uw</code>? What if you do not care that you’re
+committing crimes against <code>uint32_t</code>?</p>
+<hr />
+<p>CoreMark is one of those standard benchmarks you run on your
+processor cores to tell people how good it is. You will cite your CM/GHz
+figures in your core documentation, and you will tweak the crap out of
+the compiler options to make it look good.</p>
+<p>On November of 2018, a patch to SiFive’s port of CoreMark simply
+titled <a
+href="https://github.com/sifive/benchmark-coremark/commit/287f632b3e1fa3d9ea87e03a30d33ed6c1184485">“Tweaks
+for the HiFive Unleashed”</a>, aside from some aforementioned compiler
+option tweaks, contains this horrifying change to
+<code>core_portme.h</code>:</p>
+<pre><code>-typedef unsigned int ee_u32;
++typedef signed int ee_u32;</code></pre>
+<p>Ain’t no rule saying <code>u32</code> can’t be signed.</p>
+<p>By now you should know the significance of
+<code>typedef int32_t uint32_t</code>. Every time there’s a memory
+access using an unsigned 32-bit index, doing this saves <em>at
+least</em> two instructions in it.</p>
+<p>Testing with this change shows significant improvement in the
+CoreMark benchmark score, while not affecting correctness (since it
+never actually overflows). See this forum post for someone who tried,
+but do note that the variables aren’t very well controlled:
+https://forums.sifive.com/t/coremark-benchmark-degradation-on-hifive-unmatched/5193</p>
+<p>In January of 2019, EEMBC <a
+href="https://github.com/eembc/coremark/commit/7663f78002d0aa55ea6a047c1dc4e11d43fbeb4f">issued
+a change to the rules</a> that:</p>
+<blockquote>
+<p>[…] signed and unsigned types <em>must</em> be observed in
+<code>core_portme.h</code>.</p>
+</blockquote>
+<p>Changing the original <code>typedef</code> rules:</p>
+<pre><code>* `ee_u8` is an 8 bits datatype.
+* `ee_s16` is a 16 bits datatype.
+* `ee_u16` is a 16 bits datatype.
+* `ee_s32` is a 32 bits datatype.
+* `ee_u32` is a 32 bits datatype.</code></pre>
+<p>Into:</p>
+<pre><code>* `ee_u8` is an unsigned 8-bit datatype.
+* `ee_s16` is a signed 16-bit datatype.
+* `ee_u16` is an unsigned 16-bit datatype.
+* `ee_s32` is a signed 32-bit datatype.
+* `ee_u32` is an unsigned 32-bit datatype.</code></pre>
+<p>Nowadays if you’re buying a new hot RISC-V thing now that has like
+roughly the new SiFive U7 or better (<a
+href="https://www.starfivetech.com/en/site/boards">VisionFive 2</a>, <a
+href="https://www.sifive.com/boards/hifive-premier-p550">HiFive Premier
+P550</a> (not yet out as of writing)), or T-Head C908 (Kendryte K230),
+or SpaceMit K1 (<a
+href="https://wiki.banana-pi.org/Banana_Pi_BPI-F3">Banana Pi
+BPI-F3</a>), it will have the <code>add.uw</code> instructions that will
+be there for when your code mixes <code>uint32_t</code> with
+addresses.</p>
+<p>And basically none of the distros will be using it since everyone
+targets <code>rv64gc</code> without <code>zba</code>.</p>
+<p>But you’ll know they aren’t running their Dhrystone and CoreMark with
+a signed unsigned int.</p>
+<hr />
+<p>References</p>
+<ul>
+<li><a
+href="https://github.com/riscv/riscv-isa-manual/blob/main/src/b-st-ext.adoc#zba-address-generation"
+class="uri">https://github.com/riscv/riscv-isa-manual/blob/main/src/b-st-ext.adoc#zba-address-generation</a></li>
+<li><a
+href="https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-cc.adoc"
+class="uri">https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-cc.adoc</a></li>
+<li><a
+href="https://github.com/XUANTIE-RV/thead-extension-spec/blob/master/xtheadba.adoc"
+class="uri">https://github.com/XUANTIE-RV/thead-extension-spec/blob/master/xtheadba.adoc</a></li>
+</ul>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>See
+https://en.cppreference.com/w/c/language/arithmetic_types#Data_models
+“Other models are very rare. For example, ILP64 (8/8/8: int, long, and
+pointer are 64-bit) only appeared in some early 64-bit Unix systems
+(e.g. Unicos on Cray)”. Also, see
+https://archive.opengroup.org/public/tech/aspen/lp64_wp.htm for
+arguments in favor of LP64.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</article>
+
+</body>
+
+</html>

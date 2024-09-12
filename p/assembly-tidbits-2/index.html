@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Assembly tidbits #2: Zero on five -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/assembly-tidbits-2">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Assembly tidbits #2: Zero on five">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
+
+    <script defer>
+        // For Pandoc-generated KaTeX elements
+        document.addEventListener("DOMContentLoaded", function () {
+            var mathElements = document.getElementsByClassName("math");
+            var macros = [];
+            for (var i = 0; i < mathElements.length; i++) {
+                var texText = mathElements[i].firstChild;
+                if (mathElements[i].tagName == "SPAN") {
+                    katex.render(texText.data, mathElements[i], {
+                        displayMode: mathElements[i].classList.contains('display'),
+                        throwOnError: false,
+                        macros: macros,
+                        fleqn: false
+                    });
+                }
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Assembly tidbits #2: Zero on five</h1>
+    <span id="post-title-sub">2024-03-24</span>
+</div>
+
+<p>On RISC-V, with the compressed extension (which is intended to be
+available for all but very specialized cases), the canonical way to set
+a register to zero is the two-byte:</p>
+<pre><code>c.li a0, 0    # Encoding: 0x4501</code></pre>
+<p><code>c.li</code> stands for “compressed load immediate” and works
+for any immediate <code>-32 &lt;= imm &lt;= 31</code>.</p>
+<p>One thing that just irks me a little is what some would write
+(<code>mv</code> for “move”):</p>
+<pre><code>mv a0, zero</code></pre>
+<p><code>zero</code> (equivalently, <code>x0</code>) is the
+hard-wired-to-zero register. However, the two-byte compressed encoding
+of it, namely <code>c.mv a0, zero</code> is disallowed since the it
+actually encodes <code>c.jr a0</code> (jump to address in register
+<code>a0</code>). So the assembler has to generate the four-byte
+form:</p>
+<pre><code>addi a0, zero, 0    # Encoding: 0x00000513</code></pre>
+<p>Binutils as of 2.40 does this, unnecessarily wasting two bytes and
+giving the processor frontend a harder job. <em>However again</em>, the
+LLVM integrated assembler nevertheless manage to recognize it and
+generates the two-byte <code>c.li</code> form.</p>
+<p>Weirdly, if you do write <code>addi a0, zero, 0</code> yourself,
+Binutils 2.40 <em>does</em> recognize that it could be assembled as
+<code>c.li a0, 0</code>. If we go back in time a bit to Binutils 2.30,
+it didn’t actually even do that.</p>
+<p>You can give other combinations of <code>mv</code>, <code>add</code>,
+<code>zero</code> a try… but enough about the missed assembler
+optimizations.</p>
+<p>Going back to the title, if you want to remember one thing from this…
+On RISC-V, to load a register with zero, the canonical way to <em>write
+it in assembly</em> is to use the <code>li</code> (“load immediate”)
+pseudoinstruction:</p>
+<pre><code>li a0, 0</code></pre>
+<p>The assembler will figure it out for you.</p>
+
+</article>
+
+</body>
+
+</html>

@@ -1,3 +1,18 @@
+assembly-tidbits-articles := \
+  assembly-tidbits-10 \
+  assembly-tidbits-9 \
+  assembly-tidbits-8 \
+  assembly-tidbits-7 \
+  assembly-tidbits-6 \
+  assembly-tidbits-5 \
+  assembly-tidbits-4 \
+  assembly-tidbits-3 \
+  assembly-tidbits-2 \
+  assembly-tidbits-1 \
+
+series := \
+  assembly-tidbits \
+
 hidden-articles := \
   makefile-migration \
 

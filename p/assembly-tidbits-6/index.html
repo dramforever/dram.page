@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Assembly Tidbits #6: Division troubles -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/assembly-tidbits-6">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Assembly Tidbits #6: Division troubles">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
+
+    <script defer>
+        // For Pandoc-generated KaTeX elements
+        document.addEventListener("DOMContentLoaded", function () {
+            var mathElements = document.getElementsByClassName("math");
+            var macros = [];
+            for (var i = 0; i < mathElements.length; i++) {
+                var texText = mathElements[i].firstChild;
+                if (mathElements[i].tagName == "SPAN") {
+                    katex.render(texText.data, mathElements[i], {
+                        displayMode: mathElements[i].classList.contains('display'),
+                        throwOnError: false,
+                        macros: macros,
+                        fleqn: false
+                    });
+                }
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Assembly Tidbits #6: Division troubles</h1>
+    <span id="post-title-sub">2024-04-06</span>
+</div>
+
+<p>What do you think division by zero should result in? Like an
+<code>unsigned long</code> division: <code>divu a0, a0, zero</code>.</p>
+<p>Have you seen how a electromechanical calculator divides by zero, or
+rather, divides at all?</p>
+<p>https://www.youtube.com/watch?v=7Kd3R_RlXgc</p>
+<p>We’ll ignore the decimal point for now, since it has no effect on the
+machine’s internal function. In the first phase, it first moves the
+divisor <code>d</code> to successively higher digits, each time
+subtracting it from the dividend <code>a</code> to see if the result
+overflows / goes negative, and undoes the subtraction. the first time
+the result does overflow, first phase end. This finds the smallest
+<code>n</code> such that <code>d * 10**n &gt; a</code>. This
+<code>n</code> is the number of digits in the quotient <code>q</code>.
+This has no relevance to our division instruction since the number of
+quotient digits is fixed (namely, fixed at the machine word length). (We
+<em>may</em> get back to this some other time.)</p>
+<p>The second phase finds the actual digits of the quotient. This
+process goes from highest to lowest digit. For the <code>10**i</code>
+place, it starts at <code>0</code> and counts up one by one, each time
+subtracting the dividend by <code>d * 10**i</code>, until the
+subtraction overflows, in which case it is undone and we move to the
+<code>10**(i - 1)</code> place.</p>
+<p>This is where the mechanical calculator attempting to divide by zero
+is caught in an infinite loop. Since subtracting by zero never
+overflows, the highest digit of the quotient just counts up and up
+without ever stopping.</p>
+<p>That’s in decimal. How about in binary? If we’re doing binary
+division, the digit can only be <code>0</code> or <code>1</code>. So
+there’s no need to loop through all the possible digits. Finding each
+quotient digit becomes simply:</p>
+<ul>
+<li>Subtract <code>d * 2**i</code></li>
+<li>If subtracting overflows, undo subtraction and set result digit to
+<code>0</code></li>
+<li>Otherwise, set result digit to <code>1</code>.</li>
+</ul>
+<p>In both bases after we determine the lowest digit, what’s remaining
+of the dividend is … the remainder.</p>
+<p>This means that in the binary case. If we use <code>0</code> as the
+divisor, since it never overflows, we end up with a quotient of all ones
+and remainder same as the dividend.</p>
+<p>And that’s what RISC-V specifies. Just don’t check for zero and
+divide through:</p>
+<pre><code>divu rd, rs1, rs2 # If rs2 = 0, then rd = -1
+remu rd, rs1, rs2 # If rs2 = 0, then rd = rs1</code></pre>
+<p>Making division by zero not raise an exception means that there is no
+arithmetic exception <em>anywhere</em> in RISC-V (floating point
+“exceptions” are more like, you know, flags). This frees up the
+programmer and/or the compiler to reorder division instructions freely,
+and makes the architecture simpler. The value specified here falls
+directly out of the most basic division algorithm (<a
+href="https://en.wikipedia.org/wiki/Division_algorithm#Restoring_division">“restoring
+division”</a> since there’s “undo” involved). It may also apply to other
+more sophisticated algorithms, depending on how exactly these go.</p>
+<hr />
+<p>RISC-V assembly operand glossary:</p>
+<ul>
+<li><code>rs1</code>, <code>rs2</code>: Source registers</li>
+<li><code>rd</code>: Destination register</li>
+</ul>
+
+</article>
+
+</body>
+
+</html>

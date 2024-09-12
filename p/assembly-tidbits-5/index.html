@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Assembly Tidbits #5: Preserving
+returns -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/assembly-tidbits-5">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Assembly Tidbits #5: Preserving returns">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
+
+    <script defer>
+        // For Pandoc-generated KaTeX elements
+        document.addEventListener("DOMContentLoaded", function () {
+            var mathElements = document.getElementsByClassName("math");
+            var macros = [];
+            for (var i = 0; i < mathElements.length; i++) {
+                var texText = mathElements[i].firstChild;
+                if (mathElements[i].tagName == "SPAN") {
+                    katex.render(texText.data, mathElements[i], {
+                        displayMode: mathElements[i].classList.contains('display'),
+                        throwOnError: false,
+                        macros: macros,
+                        fleqn: false
+                    });
+                }
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Assembly Tidbits #5: Preserving
+returns</h1>
+    <span id="post-title-sub">2024-04-04</span>
+</div>
+
+<p>When you call a function according to the RISC-V calling convention,
+you really just put the return address in
+<code>x1</code>/<code>ra</code> and jump to the start of the
+function.</p>
+<p>For each non-leaf function, the function prologue saves
+<code>ra</code> on the stack, and the epilogue restores it back before
+returning back (or perhaps doing a tail call):</p>
+<pre><code>foo:
+    addi sp, sp, -16
+    sd ra, (sp)
+    call bar            # Really: jal ra, bar (if in reach)
+    call bar
+    ...
+    ld ra, (sp)
+    addi sp, sp, 16
+    ret                 # Really: c.jr ra</code></pre>
+<p>Leaf functions, meanwhile, generally do not touch
+<code>ra</code>.</p>
+<pre><code>addone:
+    addi a0, a0, 1
+    ret</code></pre>
+<p>Does this mean <code>ra</code> is preserved across calls /
+“call-saved”? No. <code>ra</code> is not preserved across calls. See: <a
+href="https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-cc.adoc"
+class="uri">https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-cc.adoc</a>.</p>
+<p>One way to think about it is that <code>call bar</code> clobbers
+<code>ra</code>, so even if we require functions to restore
+<code>ra</code>, it’s going to be a not very useful value anyway.</p>
+<p>Another way to think about this is that <code>ra</code> is treated as
+an extra argument, a place to jump to. Argument registers are, as a
+rule, not call-saved.</p>
+<p>Does this matter? Does allowing <code>ra</code> to be clobbered
+enable anything? Does requiring <code>ra</code> to be preserved enable
+anything? I genuinely don’t know.</p>
+
+</article>
+
+</body>
+
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html prefix="og: https://ogp.me/ns#">
+
+<head>
+    <title>Assembly Tidbits #7: Exceptional jump -- dramforever</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:url" content="https://dram.page/p/assembly-tidbits-7">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Assembly Tidbits #7: Exceptional jump">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/styles/default.css">
+
+    <script defer>
+        // For Pandoc-generated KaTeX elements
+        document.addEventListener("DOMContentLoaded", function () {
+            var mathElements = document.getElementsByClassName("math");
+            var macros = [];
+            for (var i = 0; i < mathElements.length; i++) {
+                var texText = mathElements[i].firstChild;
+                if (mathElements[i].tagName == "SPAN") {
+                    katex.render(texText.data, mathElements[i], {
+                        displayMode: mathElements[i].classList.contains('display'),
+                        throwOnError: false,
+                        macros: macros,
+                        fleqn: false
+                    });
+                }
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div id="site-title">
+    <h1 id="site-title-main"><a href="/">
+        dramforever
+    </a></h1>
+    <div id="site-title-sub">a row of my life</div>
+</div>
+<article>
+<div id="post-title">
+    <h1 id="post-title-main">Assembly Tidbits #7: Exceptional jump</h1>
+    <span id="post-title-sub">2024-04-18</span>
+</div>
+
+<p>That feeling when you trip, fall, and jolt awake realizing it was a
+dream?</p>
+<p>Yeah that’s what happens when a RISC-V operating system kernel
+enables the MMU early in the boot process. It causes an exception that
+lands back at the correct address. At least this way is common for
+RISC-V. Other architectures probably have it different.</p>
+<hr />
+<p>A really common way to design a Unix-like kernel is to have all of
+the kernel code and data at some high/negative address. However usually
+physical memory is at a low-ish positive address. Usually on boot the
+MMU is disabled so we’re running in physical addresses. How does the
+jump between the two happen?</p>
+<p>I’m using the OpenBSD source as our example here since it’s pretty
+and clean. The file is <a
+href="https://github.com/openbsd/src/blob/be15e419c1b8f75543577619727d35a483ee7aec/sys/arch/riscv64/riscv64/locore.S#L108"><code>sys/arch/riscv64/riscv64/locore.S</code></a></p>
+<p>(You may want to know that there’s Linux’s version, which has more
+comments: <a
+href="https://elixir.bootlin.com/linux/v6.8/source/arch/riscv/kernel/head.S#L73"
+class="uri">https://elixir.bootlin.com/linux/v6.8/source/arch/riscv/kernel/head.S#L73</a>)</p>
+<pre><code>    /* s9 = physical address of start of kernel */
+
+    /* Setup supervisor trap vector */
+    lla t0, va
+    sub t0, t0, s9
+    li  t1, KERNBASE
+    add t0, t0, t1
+    csrw    stvec, t0
+
+    /* Set page tables base register */
+    lla s2, pagetable_l1
+    srli    s2, s2, PAGE_SHIFT
+    li  t0, SATP_MODE_SV39
+    or  s2, s2, t0
+    sfence.vma
+    csrw    satp, s2
+
+    .align 2
+va:
+
+    /* ... */</code></pre>
+<p>Let <code>phys_base</code> be the value in <code>s9</code>, the
+physical address at which the kernel is loaded. <code>KERNBASE</code>
+the virtual address that the kernel expects to be based at when it’s
+running “properly” with MMU enabled.</p>
+<p>At the start of this snippet, <code>pc</code> is the physical
+address, <code>satp.MODE</code> is <code>Bare</code>, so the MMU is off
+/ identity-mapped. <code>lla</code> is PC-relative load address, so it
+sets <code>t0</code> to the physical address of <code>va</code>. The
+first part of the code ends up setting <code>stvec</code>, the trap
+handler address, to
+<code>physical addr of va - phys_base + KERNBASE</code>, which is the
+virtual address of <code>va</code> after MMU is enabled.</p>
+<p>The second part of the code enables the MMU in Sv39 mode, with root
+of page table at <code>pagetable_l1</code>. The <code>sfence.vma</code>
+here ensures that after enabling the MMU it will see the page table
+contents that earlier code has written, and <code>csrw satp, s2</code>
+actually does the enabling.</p>
+<p>The page table at <code>pagetable_l1</code> maps the kernel region
+starting at virtual address <code>KERNBASE</code> to the physical
+address region starting at <code>phys_base</code>.</p>
+<p>What happens at this point?</p>
+<p>After enabling the MMU, the next thing to do is to fetch the
+instruction following the <code>csrw</code>. However, since
+<code>pc</code> is still pointing at the physical address of the code,
+it maps to nowhere. An <code>Instruction page fault</code> exception
+happens.</p>
+<p>… which causes a jump to <code>stvec</code>, the exception handler,
+which was pointing to the virtual address of <code>va</code>, which is
+where we want to be. We’re awake and the MMU is on.</p>
+<p>(<code>stvec</code> cannot hold an exception handler address that’s
+not aligned to 4 bytes, so the <code>.align 2</code> inserts a
+<code>nop</code> if needed.)</p>
+
+</article>
+
+</body>
+
+</html>
