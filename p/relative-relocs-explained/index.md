@@ -68,7 +68,7 @@ We'll ignore the relocatable file and focus on the static-pie.
 
 ## RELA and REL
 
-An instruction like "please fill in value of `(base + one_offset)` at `another_offset`" is called a *relocation*. The most obvious way to encode such a relocation is to just have a table of offsets. Like maybe an array of "RELA" entries:
+An instruction like "please fill in value of `(base + one_offset)` at `(base + another_offset)`" is called a *relocation*. The most obvious way to encode such a relocation is to just have a table of offsets. Like maybe an array of "RELA" entries:
 
 ```
 struct {
@@ -86,7 +86,7 @@ struct {
 
 (*Note*: The same structure is used for static relocations but the meanings of fields are not identical. That's irrelevant to this article.)
 
-To put everything together again, for each entry in the array, if `info == R_*_RELATIVE`, then it means "Please fill in the value of `(base + addend)` at `offset` from base of executable". The algorithm to run to apply these relocations is also pretty simple:
+To put everything together again, for each entry in the array, if `info == R_*_RELATIVE`, then it means "Please fill in the value of `(base + addend)` at `(base + offset)`". The algorithm to run to apply these relocations is also pretty simple:
 
 ```
 uintptr_t base = ...;
@@ -110,7 +110,7 @@ The `addend` field is gone from the table, and is just stashed into where `offse
 
 ```
 for (rel = ...) {
-    if (ELF*_R_TYPE(rela->info) == R_*_RELATIVE) {
+    if (ELF*_R_TYPE(rel->info) == R_*_RELATIVE) {
         *(uintptr_t *)(base + rel->offset) += base;
     } else ...
 }
@@ -118,7 +118,7 @@ for (rel = ...) {
 
 ## The `.rel[a].dyn` section, and `DT_REL[A]*`
 
-The linker synthesizes an array of tag-value pairs, and also synthesizes a symbol `_DYNAMIC` to point to the start of it:
+The linker synthesizes an array of tag-value pairs of dynamic linking information, and also synthesizes a symbol `_DYNAMIC` to point to the start of it:
 
 ```
 struct {
@@ -264,7 +264,7 @@ Since only dynamic relative relocations are represented in RELR, it does not rep
 
 ## A note on "base address"
 
-The base address mentioned above is not actually the start of the binary, but the address to which the address `0` is moved to. Since PIEs are usually linked to starting at `0` this checks out. If your linker script links everything starting at somewhere else, like:
+The base address mentioned above is not actually the start of the binary, but the offset of which the segments in a PIE (or shared library) has been moved, so `real_address - segment_address`. Since PIEs are usually linked to starting at `0` this checks out. If your linker script links everything starting at somewhere else, like:
 
 ```
 SECTIONS {
@@ -275,7 +275,7 @@ SECTIONS {
 }
 ```
 
-The base address is actually `__executable_start - 0x80000000`. No idea why you would do that though, since the whole point of PIE is to not have a fixed start address...
+The base address is actually `real __executable_start - 0x80000000`. No idea why you would do that though, since the whole point of PIE is to not have a fixed start address...
 
 ## References
 

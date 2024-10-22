@@ -427,10 +427,10 @@ relocations, and fills in the correct addresses:</p>
 <p>We’ll ignore the relocatable file and focus on the static-pie.</p>
 <h2 id="rela-and-rel">RELA and REL</h2>
 <p>An instruction like “please fill in value of
-<code>(base + one_offset)</code> at <code>another_offset</code>” is
-called a <em>relocation</em>. The most obvious way to encode such a
-relocation is to just have a table of offsets. Like maybe an array of
-“RELA” entries:</p>
+<code>(base + one_offset)</code> at
+<code>(base + another_offset)</code>” is called a <em>relocation</em>.
+The most obvious way to encode such a relocation is to just have a table
+of offsets. Like maybe an array of “RELA” entries:</p>
 <pre><code>struct {
     uintptr_t offset;
     uintptr_t info;
@@ -454,9 +454,9 @@ the meanings of fields are not identical. That’s irrelevant to this
 article.)</p>
 <p>To put everything together again, for each entry in the array, if
 <code>info == R_*_RELATIVE</code>, then it means “Please fill in the
-value of <code>(base + addend)</code> at <code>offset</code> from base
-of executable”. The algorithm to run to apply these relocations is also
-pretty simple:</p>
+value of <code>(base + addend)</code> at <code>(base + offset)</code>”.
+The algorithm to run to apply these relocations is also pretty
+simple:</p>
 <pre><code>uintptr_t base = ...;
 for (rela = ...) {
     if (ELF*_R_TYPE(rela-&gt;info) == R_*_RELATIVE) {
@@ -472,15 +472,15 @@ for (rela = ...) {
 stashed into where <code>offset</code> points. The meaning of entries is
 otherwise the same.</p>
 <pre><code>for (rel = ...) {
-    if (ELF*_R_TYPE(rela-&gt;info) == R_*_RELATIVE) {
+    if (ELF*_R_TYPE(rel-&gt;info) == R_*_RELATIVE) {
         *(uintptr_t *)(base + rel-&gt;offset) += base;
     } else ...
 }</code></pre>
 <h2 id="the-.rela.dyn-section-and-dt_rela">The <code>.rel[a].dyn</code>
 section, and <code>DT_REL[A]*</code></h2>
-<p>The linker synthesizes an array of tag-value pairs, and also
-synthesizes a symbol <code>_DYNAMIC</code> to point to the start of
-it:</p>
+<p>The linker synthesizes an array of tag-value pairs of dynamic linking
+information, and also synthesizes a symbol <code>_DYNAMIC</code> to
+point to the start of it:</p>
 <pre><code>struct {
     uintptr_t tag;
     uintptr_t value;
@@ -635,7 +635,8 @@ does not replace RELA/REL. The proposal states that dynamic RELR
 relocations should be processed before REL/RELA.</p>
 <h2 id="a-note-on-base-address">A note on “base address”</h2>
 <p>The base address mentioned above is not actually the start of the
-binary, but the address to which the address <code>0</code> is moved to.
+binary, but the offset of which the segments in a PIE (or shared
+library) has been moved, so <code>real_address - segment_address</code>.
 Since PIEs are usually linked to starting at <code>0</code> this checks
 out. If your linker script links everything starting at somewhere else,
 like:</p>
@@ -646,9 +647,9 @@ like:</p>
     // ...
 }</code></pre>
 <p>The base address is actually
-<code>__executable_start - 0x80000000</code>. No idea why you would do
-that though, since the whole point of PIE is to not have a fixed start
-address…</p>
+<code>real __executable_start - 0x80000000</code>. No idea why you would
+do that though, since the whole point of PIE is to not have a fixed
+start address…</p>
 <h2 id="references">References</h2>
 <ul>
 <li><a
