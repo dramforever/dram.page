@@ -17,6 +17,7 @@ hidden-articles := \
   makefile-migration \
 
 build-articles := \
+  slide-rule-vernier \
   threaded-code \
   relative-relocs-explained \
   visionfive-jtag-1 \
