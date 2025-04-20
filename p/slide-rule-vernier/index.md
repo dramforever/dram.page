@@ -9,13 +9,13 @@ date: 2025-04-19
 
 One problem with the slide rule I carry daily (a Faber-Castelle 62/82) is that it's rather small, about half a foot (around 15 centimeters) in length. (Presumably, the "6" in its name refers to its length of 6 inches.) This means there are fewer markings on it, and the precision of the numbers read from it is limited. I can only, for the most part, get 2 significant digits out of it.
 
-Today I discovered a trick published over 60 years ago that allows me to pretty consistently get to 3 significant digits on the same hardware, at the cost of some more manipulations. To me, it felt like a software upgrade to my slide rule. How does it work? Let's find out.
+Today I learned about a trick published over 60 years ago that allows me to pretty consistently get to 3 significant digits on the same hardware, at the cost of some more manipulations. To me, it felt like a software upgrade to my slide rule. How does it work? Let's find out.
 
 ## The method
 
 Here's a simplified representation of the two conventional scales C and D. The top scale here is C, and the bottom is D. They both go from 1 to 10, and the horizontal lengths are proportional to the logarithm of the numeric values.
 
-For convenience, we'll refer to the two scales as "top scale and "bottom scale".
+For convenience, we'll refer to the two scales as "top scale" and "bottom scale".
 
 ```{=html}
 <svg
@@ -123,12 +123,12 @@ Step 3: Starting at the hairline position, going in the positive direction.
 - On the bottom scale, count markings after the hairline, starting at 1.
 - On the top scale, count markings starting at the one at the hairline as 0.
 
-Find the pair of markings that line up best and note the number. Here, marking number 3 lines up best, as marked by the magenta dot.
+Find the pair of markings that line up best and note the number. Here, marking number 3 lines up best, as marked by the blue circle.
 
 ```{=html}
 <svg
     version="1.1"
-    viewBox="160 -2 120 48"
+    viewBox="175 4 65 30"
     xmlns:xlink="http://www.w3.org/1999/xlink"
     xmlns="http://www.w3.org/2000/svg">
     <use xlink:href="#slideup" x="1.45015" y="22" />
@@ -173,7 +173,7 @@ Find the pair of markings that line up best and note the number. Here, marking n
 
     </g>
 
-    <circle cx="200.62758" cy="22" r="1.7" stroke="none" fill="#ff00ff88"/>
+    <circle cx="200.68758" cy="22" r="1.7" stroke="none" fill="#ff00ff88"/>
 </svg>
 ```
 
