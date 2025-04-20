@@ -123,7 +123,7 @@ Step 3: Starting at the hairline position, going in the positive direction.
 - On the bottom scale, count markings after the hairline, starting at 1.
 - On the top scale, count markings starting at the one at the hairline as 0.
 
-Find the pair of markings that line up best and note the number. Here, marking number 3 lines up best, as marked by the blue circle.
+Find the pair of markings that line up best and note the number. Here, marking number 3 lines up best, as marked by the magenta dot.
 
 ```{=html}
 <svg
