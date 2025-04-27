@@ -70,6 +70,7 @@ body {
   padding: 8px 2px;
   position: relative;
   font-size: 18px;
+  gap: 1em;
 }
 
 .widget-item > .widget-item-main {
