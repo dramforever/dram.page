@@ -239,10 +239,17 @@ example, this is one relocation per every string:</p>
 more efficiently with bitmaps. From what I can tell it’s not really well
 documented, but support exists in e.g. glibc and musl. The linker LLD
 supports it fully. BFD ld supports it for x86 only.</p>
-<p>The closest to an official documentation is <a
+<p><del>The closest to an official documentation is <a
 href="https://groups.google.com/g/generic-abi/c/bX460iggiKg/m/YT2RrjpMAwAJ">one
 email on the general-abi mailing list</a> that is a proposal for the
-RELR format.</p>
+RELR format.</del></p>
+<p><strong>Update 2025-06-02</strong>: DannyNiu/NJF informed me that
+Xinuos Inc., the company that has been most recently maintaining the ELF
+gABI, has, after nearly a decade of silence, published a new draft
+version at <a href="https://gabi.xinuos.com"
+class="uri">https://gabi.xinuos.com</a>, which includes a section
+“Relative Relocation Table” describing RELR. This is the official
+specification of RELR.</p>
 <p>The idea originates from Google for their Android stuff, but the
 format eventually settled on is this:</p>
 <ul>

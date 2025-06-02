@@ -58,7 +58,7 @@ tutorial.</p>
 bring the attributes of the attrset <code>A</code> into scope as
 variables within the expression <code>E</code>. So instead of:</p>
 <div class="sourceCode" id="cb1"><pre
-class="sourceCode nix"><code class="sourceCode nix"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">[</span> pkgs.foo pkgs.bar pkgs.baz <span class="op">]</span></span></code></pre></div>
+class="sourceCode nix"><code class="sourceCode nix"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">[</span> pkgs<span class="op">.</span>foo pkgs<span class="op">.</span>bar pkgs<span class="op">.</span>baz <span class="op">]</span></span></code></pre></div>
 <p>You can write:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode nix"><code class="sourceCode nix"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">with</span> pkgs<span class="op">;</span> <span class="op">[</span> foo bar baz <span class="op">]</span></span></code></pre></div>
@@ -122,7 +122,7 @@ change the variable <code>v</code> into
 <li><p>Most common usage: Just let me type less stuff:</p>
 <div class="sourceCode" id="cb6"><pre
 class="sourceCode nix"><code class="sourceCode nix"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Before</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="op">[</span> pkgs.foo pkgs.bar pkgs.baz <span class="op">]</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="op">[</span> pkgs<span class="op">.</span>foo pkgs<span class="op">.</span>bar pkgs<span class="op">.</span>baz <span class="op">]</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># After</span></span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">with</span> pkgs<span class="op">;</span> <span class="op">[</span> foo bar baz <span class="op">]</span></span></code></pre></div></li>
@@ -134,7 +134,7 @@ class="sourceCode nix"><code class="sourceCode nix"><span id="cb7-1"><a href="#c
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># After</span></span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="va">a</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="kw">in</span> a <span class="op">+</span> <span class="op">({</span> <span class="va">a</span> <span class="op">=</span> <span class="dv">3</span><span class="op">;</span> <span class="va">b</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span> <span class="op">}</span>.b<span class="op">)</span> <span class="op">+</span> <span class="op">({</span> <span class="va">a</span> <span class="op">=</span> <span class="dv">3</span><span class="op">;</span> <span class="va">b</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span> <span class="op">}</span>.c<span class="op">)</span></span></code></pre></div></li>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="kw">in</span> a <span class="op">+</span> <span class="op">({</span> <span class="va">a</span> <span class="op">=</span> <span class="dv">3</span><span class="op">;</span> <span class="va">b</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span> <span class="op">}.</span>b<span class="op">)</span> <span class="op">+</span> <span class="op">({</span> <span class="va">a</span> <span class="op">=</span> <span class="dv">3</span><span class="op">;</span> <span class="va">b</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span> <span class="op">}.</span>c<span class="op">)</span></span></code></pre></div></li>
 </ul>
 <h1 id="well-technically">Well technically…</h1>
 <p>There’s a small mistake with the translation above. You can’t just
@@ -146,7 +146,7 @@ variable)</p>
 <div class="sourceCode" id="cb8"><pre
 class="sourceCode nix"><code class="sourceCode nix"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="va">a</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">in</span> <span class="kw">let</span> <span class="va">__with_1</span> <span class="op">=</span> <span class="op">{</span> <span class="va">a</span> <span class="op">=</span> <span class="dv">3</span><span class="op">;</span> <span class="va">b</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span> <span class="va">c</span> <span class="op">=</span> <span class="dv">5</span><span class="op">;</span> <span class="op">};</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">in</span> a <span class="op">+</span> __with_1.b <span class="op">+</span> __with_1.c</span></code></pre></div>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">in</span> a <span class="op">+</span> __with_1<span class="op">.</span>b <span class="op">+</span> __with_1<span class="op">.</span>c</span></code></pre></div>
 <p>Imagine that instead of <code>{ a = 3; b = 4; c = 5; }</code> there
 is a complicated computation. The naive translation would duplicate this
 computation, which is probably undesirable. This case occurs in the
@@ -162,7 +162,7 @@ modifies the behavior of unbound variables.</p>
 <code>with</code> in certain circumstances in which I’m familiar
 <em>with</em> the consequences, like:</p>
 <div class="sourceCode" id="cb10"><pre
-class="sourceCode nix"><code class="sourceCode nix"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>environment.systemPackages = <span class="kw">with</span> pkgs<span class="op">;</span> <span class="op">[</span> foo bar baz <span class="op">]</span>;</span>
+class="sourceCode nix"><code class="sourceCode nix"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>environment<span class="op">.</span>systemPackages = <span class="kw">with</span> pkgs<span class="op">;</span> <span class="op">[</span> foo bar baz <span class="op">]</span>;</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>meta = <span class="kw">with</span> lib<span class="op">;</span> <span class="op">{</span> <span class="co">/* ... */</span> <span class="op">}</span>;</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
