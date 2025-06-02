@@ -183,9 +183,11 @@ const char *string_table = {
 
 RELR is a new packed format to store dynamic relative relocations more efficiently with bitmaps. From what I can tell it's not really well documented, but support exists in e.g. glibc and musl. The linker LLD supports it fully. BFD ld supports it for x86 only.
 
-The closest to an official documentation is [one email on the general-abi mailing list][relr-proposal] that is a proposal for the RELR format.
+~~The closest to an official documentation is [one email on the general-abi mailing list][relr-proposal] that is a proposal for the RELR format.~~
 
 [relr-proposal]: https://groups.google.com/g/generic-abi/c/bX460iggiKg/m/YT2RrjpMAwAJ
+
+**Update 2025-06-02**: DannyNiu/NJF informed me that Xinuos Inc., the company that has been most recently maintaining the ELF gABI, has, after nearly a decade of silence, published a new draft version at <https://gabi.xinuos.com>, which includes a section "Relative Relocation Table" describing RELR. This is the official specification of RELR.
 
 The idea originates from Google for their Android stuff, but the format eventually settled on is this:
 
