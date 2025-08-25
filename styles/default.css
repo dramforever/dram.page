@@ -156,6 +156,11 @@ pre
     padding: 4px 10px;
 }
 
+code
+{
+    font-family: monospace, monospace;
+}
+
 figure * {
     display: block;
     margin-left: auto;
