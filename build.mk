@@ -15,6 +15,7 @@ series := \
 
 hidden-articles := \
   makefile-migration \
+  migration-to-grebedoc \
 
 build-articles := \
   slide-rule-vernier \
@@ -51,4 +52,3 @@ extra-pages := \
   p/index.html \
   index.html \
   feed.xml \
-
