@@ -49,11 +49,52 @@ grebedoc.dev</h1>
     <span id="post-title-sub">2025-09-19</span>
 </div>
 
-<p>That’s it. If you’re seeing this post, I’m on <a
-href="https://grebedoc.dev" class="uri">https://grebedoc.dev</a>
-now.</p>
-<p>Check it out if you want a way to serve a git repo over HTTPS on the
-public Internet.</p>
+<p>That’s it. If you’re seeing this post, your receiving this page from
+<a href="https://grebedoc.dev">grebedoc.dev</a>.</p>
+<p>Check it out if you want a way to serve the contents from a git repo
+over HTTP(S) on the public Internet.</p>
+<p>The backend server on grebedoc.dev is called git-pages. I’ll probably
+use the two names interchangably for the rest of this article.</p>
+<p>(However, I will use “<code>grebedoc.dev</code>” to specifically
+refer to the domain itself, and use grebedoc.dev to refer to the
+service.)</p>
+<h2 id="zero-downtime-migration">Zero downtime migration</h2>
+<p>I think I’ve managed to do a zero-downtime migration from Netlify.
+This is what I did:</p>
+<p>First, I moved everything to the <code>pages</code> branch. This is
+just easier.</p>
+<p>Then, I set up the “method 1” DNS record:</p>
+<pre><code>_git-pages-repository.dram.page.  600  IN  TXT  (
+    &quot;https://github.com/dramforever/dram.page.git&quot; )</code></pre>
+<p>Then, I triggered an initial clone using the <code>PUT</code>
+method.</p>
+<pre><code>$ curl -v -X PUT -H &#39;Host: dram.page&#39; \
+    &#39;https://grebedoc.dev&#39; \
+    --data &#39;https://github.com/dramforever/dram.page.git&#39;</code></pre>
+<p>This has two effects:</p>
+<ul>
+<li>It asks git-pages to start serving files for
+<code>Host: dram.page</code></li>
+<li>It registers <code>dram.page</code> as a known domain to git-pages,
+allowing it to immediately start receiving HTTPS requests. This lets me
+to completely avoid sending anything over unencrypted HTTP, including
+the webhook.</li>
+</ul>
+<p>Now I can see if it’s serving my pages correctly:</p>
+<pre><code>$ curl -v -H &#39;Host: dram.page&#39; &#39;https://grebedoc.dev&#39;</code></pre>
+<p>For me, that looked good, so I’m ready to do the switch, changing the
+actual DNS record to make my site point to the grebedoc.dev server:</p>
+<pre><code>dram.page.  600  IN  ALIAS  grebedoc.dev</code></pre>
+<p>… well, <code>ALIAS</code> is not a real DNS record. The effect is
+that the authoritative DNS server looks up the IPv4 and IPv6 address of
+the domain <code>grebedoc.dev</code> and serves them as A and AAAA
+records of <code>dram.page</code>. Fortunately my authoritative DNS
+service has this feature.</p>
+<p>And that’s it, I’m serving the latest site on grebedoc.dev.</p>
+<p>As for auto-updating, the webhook part works normally.</p>
+<h2 id="whats-wrong-with-netlify">What’s wrong with Netlify?</h2>
+<p>Nothing, really, but since I use zero complex features and just serve
+what’s in the git repo, this is just simpler.</p>
 
 </article>
 

@@ -15,9 +15,9 @@ series := \
 
 hidden-articles := \
   makefile-migration \
-  migration-to-grebedoc \
 
 build-articles := \
+  migration-to-grebedoc \
   slide-rule-vernier \
   threaded-code \
   relative-relocs-explained \
