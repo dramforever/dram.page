@@ -14,10 +14,10 @@
 13	Load page fault
 14	!
 15	Store/AMO page fault
-16	!
+16	Double trap
 17	!
-18	!
-19	!
+18	Software check
+19	Hardware error
 20	Instruction guest-page fault
 21	Load guest-page fault
 22	Virtual instruction
