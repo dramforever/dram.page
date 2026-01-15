@@ -3,9 +3,9 @@ title: "Cryptography 30 years apart: Ascon on an HP-16C"
 date: 2026-01-15
 ---
 
-Ascon ([NIST](https://csrc.nist.gov/pubs/sp/800/232/final), [Wikipedia](https://en.wikipedia.org/wiki/Ascon_(cipher))) is a set of lightweight cryptographic algorithms intended for resource constrained applications that nevertheless is intended to produce modern security. It was finalized as a standard in August of 2025 as NIST SP 800-232 "Ascon-Based Lightweight Cryptography Standards for Constrained Devices: Authenticated Encryption, Hash, and Extendable Output Functions".
+Ascon ([NIST](https://csrc.nist.gov/pubs/sp/800/232/final), [Wikipedia](https://en.wikipedia.org/wiki/Ascon_(cipher))) is a set of lightweight cryptographic algorithms intended for resource constrained applications that nevertheless is intended to produce modern security. It was originally developed in 2014, and was finalized as a standard in August of 2025 as NIST SP 800-232 "Ascon-Based Lightweight Cryptography Standards for Constrained Devices: Authenticated Encryption, Hash, and Extendable Output Functions".
 
-How resource constrained? How about an HP-16C ([Wikipedia][HP-16C]), a programmable programmer's calculator from over 30 years ago? ~200 bytes total of program and storage should be enough.
+How resource constrained? How about an HP-16C ([Wikipedia][HP-16C]), a programmable programmer's calculator from over 30 years earlier? ~200 bytes total of program and storage should be enough.
 
 [HP-16C]: https://en.wikipedia.org/wiki/HP-16C
 
