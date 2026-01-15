@@ -435,12 +435,12 @@ class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb18-1"><a href="#
 <span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>transport <span class="ot">select</span> jtag</span>
 <span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>jtag newtap e24 cpu<span class="ot"> -irlen</span> <span class="dv">5</span><span class="ot"> -expected</span>-<span class="ot">id</span> <span class="dv">0x200005fd</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>jtag newtap u74 cpu<span class="ot"> -irlen</span> <span class="dv">5</span><span class="ot"> -expected</span>-<span class="ot">id</span> <span class="dv">0x200003fd</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>jtag newtap e24 cpu -irlen <span class="dv">5</span> -expected-id <span class="dv">0x200005fd</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>jtag newtap u74 cpu -irlen <span class="dv">5</span> -expected-id <span class="dv">0x200003fd</span></span>
 <span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>target <span class="ot">create</span> e24.cpu0 riscv<span class="ot"> -chain</span>-position e24.cpu<span class="ot"> -coreid</span> <span class="dv">0</span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>target <span class="ot">create</span> u74.cpu0 riscv<span class="ot"> -chain</span>-position u74.cpu<span class="ot"> -coreid</span> <span class="dv">0</span><span class="ot"> -rtos</span> hwthread</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>target <span class="ot">create</span> u74.cpu1 riscv<span class="ot"> -chain</span>-position u74.cpu<span class="ot"> -coreid</span> <span class="dv">1</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>target <span class="ot">create</span> e24.cpu0 riscv -chain-position e24.cpu -coreid <span class="dv">0</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>target <span class="ot">create</span> u74.cpu0 riscv -chain-position u74.cpu -coreid <span class="dv">0</span> -rtos hwthread</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>target <span class="ot">create</span> u74.cpu1 riscv -chain-position u74.cpu -coreid <span class="dv">1</span></span>
 <span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>target smp u74.cpu0 u74.cpu1</span>
 <span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>init</span></code></pre></div>
