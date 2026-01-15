@@ -17,6 +17,7 @@ hidden-articles := \
   makefile-migration \
 
 build-articles := \
+  ascon-hp16c \
   migration-to-grebedoc \
   slide-rule-vernier \
   threaded-code \
