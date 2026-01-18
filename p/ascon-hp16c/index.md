@@ -29,11 +29,11 @@ First, pad the message with one `01` byte and as much zeros as needed to get to 
 
 (Note: Only `R0` is directly used to XOR the input onto and form the hash. Other registers participate in the round function but the bytes are not directly used for input and output.)
 
+## Program listing
+
 This program isn't specifically optimized --- it is just a straightforward translation of [one of the C reference implementations][ascon-c]. It takes 140 lines of program space. On a real 16C it takes about 20 seconds per round, so `Ascon-p[8]` (8 rounds) takes ~2.5min, and `Ascon-p[12]` (12 rounds) takes ~4min.
 
 [ascon-c]: https://github.com/ascon/ascon-c/blob/9057124473a4b9cbcc8a028b65a4abf6b4222b0f/src/opt64_lowsize/round.h
-
-## Program listing
 
 (In [JRPN 16C](https://jrpn.jovial.com/run/index.html) compatible format, so you can load it in directly via `(menu) > File > Import Program > Import from Clipboard`. Set `(menu) > Settings > Long Numbers` to `Grow LCD` and `(menu) > Settings > System Settings > ms/Program Instruction` to `0` for extra convenience.)
 
@@ -44,7 +44,7 @@ This program isn't specifically optimized --- it is just a straightforward trans
 # Assumed Mode: [HEX] 0 [f] [WSIZE] [f] [UNSGN] (hexadecimal, 64-bit, unsigned)
 #
 # Modifies state S0 through S4 stored in R0 through R4
-# Uses I, R5, R6 as scratch
+# Uses R5, R6 as scratch
 #
 #    Single round: <round constant> [GSB] [A]
 #            e.g.: b4 [GSB] [A]
@@ -52,6 +52,9 @@ This program isn't specifically optimized --- it is just a straightforward trans
 # Up to 12 rounds: <num rounds> [GSB] [0]
 #            e.g.: 8 [GSB] [0]    for Ascon-p[8]
 #            e.g.: C [GSB] [0]    for Ascon-p[12]
+#
+# 2025-01-18: Updated the multi-round subroutine to free up I register. Not
+#             enough for a key, but you could store the IV there.
 
    000 {          }
 # Single round
@@ -224,17 +227,20 @@ This program isn't specifically optimized --- it is just a straightforward trans
 
 # Multiple rounds
    127 { 43 22  0 } g LBL 0
-   128 {    44 32 } STO I
-   129 {        4 } 4
-   130 {       40 } +
-   131 {        F } F
-   132 {       20 } *
-   133 { 43 22  B } g LBL B
-   134 {    44  6 } STO 6
-   135 {    21  A } GSB A
-   136 {    45  6 } RCL 6
-   137 {        F } F
-   138 {       30 } -
-   139 {    43 23 } g DSZ
-   140 {    22  B } GTO B
+   128 {        4 } 4
+   129 {       40 } +
+   130 {        F } F
+   131 {       20 } *
+   132 { 43 22  B } g LBL B
+   133 {    44  6 } STO 6
+   134 {    21  A } GSB A
+   135 {    45  6 } RCL 6
+   136 {        4 } 4
+   137 {        B } B
+   138 {    43 49 } g x==y
+   139 {    43 21 } g RTN
+   140 {       33 } Rv
+   141 {        F } F
+   142 {       30 } -
+   143 {    22  B } GTO B
 ```
