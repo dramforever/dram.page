@@ -6,7 +6,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../../styles/default.css">
-    <script type="text/javascript" async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+        <script src="/static/katex.min.js" defer></script>
+    <script defer src="/static/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <link rel="stylesheet" href="/static/katex.min.css">
+
 </head>
 
 <body>
@@ -23,7 +26,7 @@
     <span id="post-title-sub">2017-03-18</span>
 </div>
 
-<p>本文使用 MathJax 渲染公式。如果过了好久以下这行还是不能正常显示那个优美而著名的公式的话，尝试进浏览器调试控制台 Network 栏看看咋回事吧</p>
+<p>本文使用 KaTeX 渲染公式。如果过了好久以下这行还是不能正常显示那个优美而著名的公式的话，尝试进浏览器调试控制台 Network 栏看看咋回事吧</p>
 
 \[\sum_{d|n} \mu(d) = [n = 1]\]
 
@@ -37,7 +40,7 @@
 
 <ul>
     <li> 因为我过敏
-    <li> 因为 MathJax 一点都不好写（你 <kbd>Ctrl-U</kbd> 打开源代码看一下就知道了啊）
+    <li> 因为 KaTeX 一点都不好写（你 <kbd>Ctrl-U</kbd> 打开源代码看一下就知道了啊）
 </ul>
 
 <h3>Möbius 函数</h3>
