@@ -44,22 +44,23 @@ hexadecimal, 64-bit, unsigned)</li>
 <li>Initial value:
 <code>[f] [CLEAR REG] 80100cc0002 [STO] [0]</code></li>
 <li>Initialization: <code>C [GSB] [0]</code> to apply the 12-round
-<code>Ascon-p[12]</code> permutation</li>
-<li>XOR message: <code>[RCL] [0] 1 [f] [XOR] [STO] [0]</code>, you
-should get <code>9b1e5494e934d680</code></li>
+<code>Ascon-p[12]</code> permutation. You should get
+<code>9b1e5494e934d681</code>, which is <code>S0</code></li>
+<li>XOR message: <code>1 [f] [XOR] [STO] [0]</code>, you should get
+<code>9b1e5494e934d680</code></li>
 <li>Process message: <code>C [GSB] [0]</code> to apply again</li>
-<li>Read hash: <code>[RCL] [0]</code>, you should get
-<code>986b2f0f85e53b0b</code>. Read bytes in little-endian, so the first
-8 bytes are <code>0b 3b e5 85 0f 2f 6b 98</code></li>
+<li>Read hash: you should get <code>986b2f0f85e53b0b</code>. Read bytes
+in little-endian, so the first 8 bytes are
+<code>0b 3b e5 85 0f 2f 6b 98</code></li>
 <li>Iterate once more and read further bytes of hash:
-<code>C [GSB] [0] [RCL] [0]</code>, you should get
-<code>649ba8de8f9ff2ca</code>, hence
-<code>ca f2 9f 8f de a8 9b 64</code></li>
+<code>C [GSB] [0]</code>, you should get <code>649ba8de8f9ff2ca</code>,
+hence <code>ca f2 9f 8f de a8 9b 64</code></li>
 <li>Repeat until all 64 bytes are produced</li>
 </ul>
 <p>(Note: Only <code>R0</code> is directly used to XOR the input onto
-and form the hash. Other registers participate in the round function but
-the bytes are not directly used for input and output.)</p>
+and form the hash. It is, as a convenience, recalled after every
+<code>[GSB] [0]</code>. Other registers participate in the round
+function but the bytes are not directly used for input and output.)</p>
 <h2 id="program-listing">Program listing</h2>
 <p>This program isn’t specifically optimized — it is just a
 straightforward translation of <a
@@ -90,196 +91,197 @@ to <code>0</code> for extra convenience.)</p>
 #            e.g.: 8 [GSB] [0]    for Ascon-p[8]
 #            e.g.: C [GSB] [0]    for Ascon-p[12]
 #
-# 2025-01-18: Updated the multi-round subroutine to free up I register. Not
+# 2026-01-18: Updated the multi-round subroutine to free up I register. Not
 #             enough for a key, but you could store the IV there.
+# 2026-02-23: Subroutine 0 performs RCL 0 at end for convenience
+#             Minor peephole optimization near the start of subroutine A
 
    000 {          }
 # Single round
    001 { 43 22  A } g LBL A
 
-# s2 ^= c
-   002 {    45  2 } RCL 2
-   003 {    42 10 } f XOR
-   004 {    44  2 } STO 2
+# s2 ^= s1 ^ c
+   002 {    45  1 } RCL 1
+   003 {    45  2 } RCL 2
+   004 {    42 10 } f XOR
+   005 {    42 10 } f XOR
+   006 {    44  2 } STO 2
 
 # s0 ^= s4
-   005 {    45  4 } RCL 4
-   006 {    45  0 } RCL 0
-   007 {    42 10 } f XOR
-   008 {    44  0 } STO 0
-
-# s2 ^= s1
-   009 {    45  1 } RCL 1
-   010 {    45  2 } RCL 2
-   011 {    42 10 } f XOR
-   012 {    44  2 } STO 2
+   007 {    45  4 } RCL 4
+   008 {    45  0 } RCL 0
+   009 {    42 10 } f XOR
+   010 {    44  0 } STO 0
 
 # s4 ^= s3
-   013 {    45  3 } RCL 3
-   014 {    45  4 } RCL 4
-   015 {    42 10 } f XOR
-   016 {    44  4 } STO 4
+   011 {    45  3 } RCL 3
+   012 {    45  4 } RCL 4
+   013 {    42 10 } f XOR
+   014 {    44  4 } STO 4
 
 # tmp = ~s4 &amp; s0
 # (s4 already conveniently on TOS)
-   017 {    42 30 } f NOT
-   018 {    45  0 } RCL 0
-   019 {    42 20 } f AND
-   020 {    44  5 } STO 5
+   015 {    42 30 } f NOT
+   016 {    45  0 } RCL 0
+   017 {    42 20 } f AND
+   018 {    44  5 } STO 5
 
 # s0 ^= ~s1 &amp; s2
-   021 {    45  1 } RCL 1
-   022 {    42 30 } f NOT
-   023 {    45  2 } RCL 2
-   024 {    42 20 } f AND
-   025 {    45  0 } RCL 0
-   026 {    42 10 } f XOR
-   027 {    44  0 } STO 0
+   019 {    45  1 } RCL 1
+   020 {    42 30 } f NOT
+   021 {    45  2 } RCL 2
+   022 {    42 20 } f AND
+   023 {    45  0 } RCL 0
+   024 {    42 10 } f XOR
+   025 {    44  0 } STO 0
 
 # s2 ^= ~s3 &amp; s4
-   028 {    45  3 } RCL 3
-   029 {    42 30 } f NOT
-   030 {    45  4 } RCL 4
-   031 {    42 20 } f AND
-   032 {    45  2 } RCL 2
-   033 {    42 10 } f XOR
-   034 {    44  2 } STO 2
+   026 {    45  3 } RCL 3
+   027 {    42 30 } f NOT
+   028 {    45  4 } RCL 4
+   029 {    42 20 } f AND
+   030 {    45  2 } RCL 2
+   031 {    42 10 } f XOR
+   032 {    44  2 } STO 2
 
 # s4 ^= ~s0 &amp; s1
-   035 {    45  0 } RCL 0
-   036 {    42 30 } f NOT
-   037 {    45  1 } RCL 1
-   038 {    42 20 } f AND
-   039 {    45  4 } RCL 4
-   040 {    42 10 } f XOR
-   041 {    44  4 } STO 4
+   033 {    45  0 } RCL 0
+   034 {    42 30 } f NOT
+   035 {    45  1 } RCL 1
+   036 {    42 20 } f AND
+   037 {    45  4 } RCL 4
+   038 {    42 10 } f XOR
+   039 {    44  4 } STO 4
 
 # s1 ^= ~s2 &amp; s3
-   042 {    45  2 } RCL 2
-   043 {    42 30 } f NOT
-   044 {    45  3 } RCL 3
-   045 {    42 20 } f AND
-   046 {    45  1 } RCL 1
-   047 {    42 10 } f XOR
-   048 {    44  1 } STO 1
+   040 {    45  2 } RCL 2
+   041 {    42 30 } f NOT
+   042 {    45  3 } RCL 3
+   043 {    42 20 } f AND
+   044 {    45  1 } RCL 1
+   045 {    42 10 } f XOR
+   046 {    44  1 } STO 1
 
 # s3 ^= tmp
-   049 {    45  5 } RCL 5
-   050 {    45  3 } RCL 3
-   051 {    42 10 } f XOR
-   052 {    44  3 } STO 3
+   047 {    45  5 } RCL 5
+   048 {    45  3 } RCL 3
+   049 {    42 10 } f XOR
+   050 {    44  3 } STO 3
 
 # s1 ^= s0
-   053 {    45  0 } RCL 0
-   054 {    45  1 } RCL 1
-   055 {    42 10 } f XOR
-   056 {    44  1 } STO 1
+   051 {    45  0 } RCL 0
+   052 {    45  1 } RCL 1
+   053 {    42 10 } f XOR
+   054 {    44  1 } STO 1
 
 # s3 ^= s2
-   057 {    45  2 } RCL 2
-   058 {    45  3 } RCL 3
-   059 {    42 10 } f XOR
-   060 {    44  3 } STO 3
+   055 {    45  2 } RCL 2
+   056 {    45  3 } RCL 3
+   057 {    42 10 } f XOR
+   058 {    44  3 } STO 3
 
 # s0 ^= s4
-   061 {    45  4 } RCL 4
-   062 {    45  0 } RCL 0
-   063 {    42 10 } f XOR
-   064 {    44  0 } STO 0
+   059 {    45  4 } RCL 4
+   060 {    45  0 } RCL 0
+   061 {    42 10 } f XOR
+   062 {    44  0 } STO 0
 
 # s0 = s0 ^ (s0 ror 19) ^ (s0 ror 28)
-   065 {    45  0 } RCL 0
+   063 {    45  0 } RCL 0
+   064 {       36 } ENTER
+   065 {       36 } ENTER
    066 {       36 } ENTER
-   067 {       36 } ENTER
-   068 {       36 } ENTER
-   069 {        9 } 9
-   070 {    42  F } f RRn
-   071 {    42 10 } f XOR
-   072 {        1 } 1
-   073 {        3 } 3
-   074 {    42  F } f RRn
-   075 {    42 10 } f XOR
-   076 {    44  0 } STO 0
+   067 {        9 } 9
+   068 {    42  F } f RRn
+   069 {    42 10 } f XOR
+   070 {        1 } 1
+   071 {        3 } 3
+   072 {    42  F } f RRn
+   073 {    42 10 } f XOR
+   074 {    44  0 } STO 0
 
 # s1 = s1 ^ (s1 ror 39) ^ (s1 ror 61)
-   077 {    45  1 } RCL 1
+   075 {    45  1 } RCL 1
+   076 {       36 } ENTER
+   077 {       36 } ENTER
    078 {       36 } ENTER
-   079 {       36 } ENTER
-   080 {       36 } ENTER
-   081 {        1 } 1
-   082 {        6 } 6
-   083 {    42  F } f RRn
-   084 {    42 10 } f XOR
-   085 {        2 } 2
-   086 {        7 } 7
-   087 {    42  F } f RRn
-   088 {    42 10 } f XOR
-   089 {    44  1 } STO 1
+   079 {        1 } 1
+   080 {        6 } 6
+   081 {    42  F } f RRn
+   082 {    42 10 } f XOR
+   083 {        2 } 2
+   084 {        7 } 7
+   085 {    42  F } f RRn
+   086 {    42 10 } f XOR
+   087 {    44  1 } STO 1
 
 # s2 = s2 ^ (s2 ror 1) ^ (s2 ror 6)
-   090 {    45  2 } RCL 2
+   088 {    45  2 } RCL 2
+   089 {       36 } ENTER
+   090 {       36 } ENTER
    091 {       36 } ENTER
-   092 {       36 } ENTER
-   093 {       36 } ENTER
-   094 {        5 } 5
-   095 {    42  F } f RRn
+   092 {        5 } 5
+   093 {    42  F } f RRn
+   094 {    42 10 } f XOR
+   095 {    42  D } f RR
    096 {    42 10 } f XOR
-   097 {    42  D } f RR
-   098 {    42 10 } f XOR
-   099 {    44  2 } STO 2
+   097 {    44  2 } STO 2
 
 # s3 = s3 ^ (s3 ror 10) ^ (s3 ror 17)
-   100 {    45  3 } RCL 3
+   098 {    45  3 } RCL 3
+   099 {       36 } ENTER
+   100 {       36 } ENTER
    101 {       36 } ENTER
-   102 {       36 } ENTER
-   103 {       36 } ENTER
-   104 {        7 } 7
-   105 {    42  F } f RRn
-   106 {    42 10 } f XOR
-   107 {        A } A
-   108 {    42  F } f RRn
-   109 {    42 10 } f XOR
-   110 {    44  3 } STO 3
+   102 {        7 } 7
+   103 {    42  F } f RRn
+   104 {    42 10 } f XOR
+   105 {        A } A
+   106 {    42  F } f RRn
+   107 {    42 10 } f XOR
+   108 {    44  3 } STO 3
 
 # s4 = s4 ^ (s4 ror 7) ^ (s4 ror 41)
-   111 {    45  4 } RCL 4
+   109 {    45  4 } RCL 4
+   110 {       36 } ENTER
+   111 {       36 } ENTER
    112 {       36 } ENTER
-   113 {       36 } ENTER
-   114 {       36 } ENTER
-   115 {        2 } 2
-   116 {        2 } 2
-   117 {    42  F } f RRn
-   118 {    42 10 } f XOR
-   119 {        7 } 7
-   120 {    42  F } f RRn
-   121 {    42 10 } f XOR
-   122 {    44  4 } STO 4
+   113 {        2 } 2
+   114 {        2 } 2
+   115 {    42  F } f RRn
+   116 {    42 10 } f XOR
+   117 {        7 } 7
+   118 {    42  F } f RRn
+   119 {    42 10 } f XOR
+   120 {    44  4 } STO 4
 
 # s2 = ~s2
-   123 {    45  2 } RCL 2
-   124 {    42 30 } f NOT
-   125 {    44  2 } STO 2
+   121 {    45  2 } RCL 2
+   122 {    42 30 } f NOT
+   123 {    44  2 } STO 2
 
-   126 {    43 21 } g RTN
+   124 {    43 21 } g RTN
 
 # Multiple rounds
-   127 { 43 22  0 } g LBL 0
-   128 {        4 } 4
-   129 {       40 } +
-   130 {        F } F
-   131 {       20 } *
-   132 { 43 22  B } g LBL B
-   133 {    44  6 } STO 6
-   134 {    21  A } GSB A
-   135 {    45  6 } RCL 6
-   136 {        4 } 4
-   137 {        B } B
-   138 {    43 49 } g x==y
-   139 {    43 21 } g RTN
-   140 {       33 } Rv
-   141 {        F } F
-   142 {       30 } -
-   143 {    22  B } GTO B</code></pre>]]></description>
+   125 { 43 22  0 } g LBL 0
+   126 {        4 } 4
+   127 {       40 } +
+   128 {        F } F
+   129 {       20 } *
+   130 { 43 22  B } g LBL B
+   131 {    44  6 } STO 6
+   132 {    21  A } GSB A
+   133 {    45  6 } RCL 6
+   134 {        4 } 4
+   135 {        B } B
+   136 {    43 49 } g x==y
+   137 {    22  C } GTO C
+   138 {       33 } Rv
+   139 {        F } F
+   140 {       30 } -
+   141 {    22  B } GTO B
+   142 { 43 22  C } g LBL C
+   143 {    45  0 } RCL 0
+   144 {    43 21 } g RTN</code></pre>]]></description>
     </item>
     <item>
         <title>dram.page is now served by grebedoc.dev</title>
