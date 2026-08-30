@@ -31,7 +31,7 @@ They had apparently believed that this counts as having written it themselves.
 
 I received a question with only a link to `https://gemini.google.com/share/[...]` and "What do you think about this network setup?", and no further information.
 Linked was a "discussion" on structuring a local network to encompass a range of different devices, with some security isolation.
-The participant asking the question did, in fact, expect everyone else to read the chat logs, instead of simply describing the requirements.
+The participant asking the question did, in fact, expect everyone else to read the "chat" logs, instead of simply describing the requirements.
 
 I received a question with only a link to `https://chatgpt.com/share/[...]` and "Folks, how do i fix this kind of errors?".
 Linked was a "discussion" of firstly the error message, and then tens of pages of back-and-forth on how to diagnose it (incorrectly, five times), a multi-step procedure, and the creation of a utility script that would help automate this process.
@@ -40,9 +40,9 @@ Furthermore, the linked page was long but anyone can just "ask an AI to summariz
 (The actual diagnosis process can be done with the single command line flag that was noted in the error message to print the full stack trace.
 A future version of the software defaults to collecting and displaying more helpful, hopefully, information by default.)
 
-I received a pull request to improve the a certain aspect of some code repository.
+I received a pull request to improve a certain aspect of some code repository.
 The 15 commits have messages written in [Conventional Commits], which was not used in the project.
-It contains a framework designed to replace a commonly used utility, built *atop the utility itself*.
+It contains a framework evidently designed to completely replace a commonly used utility, but it was built *atop the utility itself*.
 It also claims to simplify code by removing 10 separate scripts.
 In reality, there were only three scripts, and they were simply merged into one.
 It also claims backwards compatibility, but there was nothing to be backwards compatible with.
