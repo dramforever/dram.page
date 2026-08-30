@@ -14,6 +14,7 @@ series := \
   assembly-tidbits \
 
 hidden-articles := \
+  destruction-of-society \
   makefile-migration \
 
 build-articles := \
