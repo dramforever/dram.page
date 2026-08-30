@@ -50,7 +50,7 @@ It also claims backwards compatibility, but there was nothing to be backwards co
 [Conventional Commits]: https://www.conventionalcommits.org/
 
 I received a message claiming that people were "sick in the head" for opposing an `AGENTS.md` that essentially said contributors must follow `CONTRIBUTING.md`.
-I replied saying that contributors that will not read `CONTRIBUTING.md` should just leave.
+I replied saying that contributors that will not read `CONTRIBUTING.md` should just not come.
 It was already mentioned in the `README.md` file anyway.
 Supposedly intelligent software that needs this sort of trivial guidance should be fixed upstream, instead of requiring more work on all use sites.
 In response, I was accused of being "toxic" and "lacking in basic good faith".
