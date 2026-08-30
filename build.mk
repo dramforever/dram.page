@@ -14,10 +14,10 @@ series := \
   assembly-tidbits \
 
 hidden-articles := \
-  destruction-of-society \
   makefile-migration \
 
 build-articles := \
+  destruction-of-society \
   ascon-hp16c \
   migration-to-grebedoc \
   slide-rule-vernier \
