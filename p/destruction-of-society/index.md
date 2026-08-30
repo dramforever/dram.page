@@ -22,7 +22,7 @@ They included a ChatGPT response explaining various addressing modes, asking me 
 The ChatGPT response was almost entirely nonsensical.
 The architecture does not *have* "addressing modes", in the sense where operands to an instructions can be provided in multiple ways.
 
-I received a few comment replying to me in astonishingly information-sparse text.
+I received a few comments replying to me in astonishingly information-sparse text.
 I asked the author in private whether these were all written by themselves.
 In response, they said yes.
 Finding this highly unlikely, I asked further if one specific comment was written by themselves.
@@ -50,7 +50,8 @@ It also claims backwards compatibility, but there was nothing to be backwards co
 [Conventional Commits]: https://www.conventionalcommits.org/
 
 I received a message claiming that people were "sick in the head" for opposing an `AGENTS.md` that essentially said contributors must follow `CONTRIBUTING.md`.
-I replied saying that it was already mentioned in the `README.md` file.
+I replied saying that contributors that will not read `CONTRIBUTING.md` should just leave.
+It was already mentioned in the `README.md` file anyway.
 Supposedly intelligent software that needs this sort of trivial guidance should be fixed upstream, instead of requiring more work on all use sites.
 In response, I was accused of being "toxic" and "lacking in basic good faith".
 
