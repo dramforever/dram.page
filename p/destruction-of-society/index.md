@@ -20,7 +20,7 @@ I received a review on some text I provided on assembly programming on a certain
 The reviewer said that my text was missing information on addressing modes.
 They included a ChatGPT response explaining various addressing modes, asking me to add descriptions of them in.
 The ChatGPT response was almost entirely nonsensical.
-The architecture does not *have* "addressing modes", in the sense where operands to an instructions can be provided in multiple ways.
+The architecture does not *have* "addressing modes", in the sense where operands to an instruction can be provided in multiple ways.
 
 I received a few comments replying to me in astonishingly information-sparse text.
 I asked the author in private whether these were all written by themselves.
@@ -38,7 +38,7 @@ Linked was a "discussion" of firstly the error message, and then tens of pages o
 When asked about the reason for asking the question in this way, the participant noted they were simply providing the full context.
 Furthermore, the linked page was long but anyone can just "ask an AI to summarize it".
 (The actual diagnosis process can be done with the single command line flag that was noted in the error message to print the full stack trace.
-A future version of the software defaults to collecting and displaying more helpful, hopefully, information by default.)
+A future version of the software defaults to collecting and displaying more helpful information, hopefully.)
 
 I received a pull request to improve a certain aspect of some code repository.
 The 15 commits have messages written in [Conventional Commits], which was not used in the project.
@@ -59,7 +59,7 @@ I received a report from a user asking if a new version of a software has known 
 When asked for details, they only replied that that all connections to the local daemon were hanging.
 No further inquries for possible details like logs or core dump stack traces were responded to.
 Instead, the user spent the next 20 minutes ignoring requests for information and posted progress of "AI is debugging it too".
-Multiple completely irrelevant observations are noted as important, with only the appearance of being helpful diagnoses.
+Multiple completely irrelevant observations were noted as important, with only the appearance of being helpful diagnoses.
 There was "the smoking gun" (a SQLite WAL file, which is a result of normal operation), a "process handling bug" (intentional feature to preserve connections, like sshd), and a blame on another irrelevant software.
 In reality, there was an opt-in experiment under actively development that was simply incompatible when mixing versions.
 

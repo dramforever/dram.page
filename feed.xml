@@ -32,7 +32,7 @@ information on addressing modes. They included a ChatGPT response
 explaining various addressing modes, asking me to add descriptions of
 them in. The ChatGPT response was almost entirely nonsensical. The
 architecture does not <em>have</em> “addressing modes”, in the sense
-where operands to an instructions can be provided in multiple ways.</p>
+where operands to an instruction can be provided in multiple ways.</p>
 <p>I received a few comments replying to me in astonishingly
 information-sparse text. I asked the author in private whether these
 were all written by themselves. In response, they said yes. Finding this
@@ -59,7 +59,7 @@ page was long but anyone can just “ask an AI to summarize it”. (The
 actual diagnosis process can be done with the single command line flag
 that was noted in the error message to print the full stack trace. A
 future version of the software defaults to collecting and displaying
-more helpful, hopefully, information by default.)</p>
+more helpful information, hopefully.)</p>
 <p>I received a pull request to improve a certain aspect of some code
 repository. The 15 commits have messages written in <a
 href="https://www.conventionalcommits.org/">Conventional Commits</a>,
