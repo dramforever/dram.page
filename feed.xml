@@ -7,6 +7,112 @@
     <link>https://dram.page</link>
     <ttl>3600</ttl>
     <item>
+        <title>Legendary off-by-ones, bugs or not</title>
+        <pubDate>Sun, 13 Sep 2026 00:00:00 +0000</pubDate>
+        <guid isPermaLink="true">https://dram.page/p/off-by-one</guid>
+        <description><![CDATA[<h1 id="crc-32-k6">CRC-32
+<code>k6'</code></h1>
+<p>Using carryless multiplication (CLMUL) to efficiently compute a
+cyclic redundancy check (CRC) consists of two steps: folding and Barret
+reduction. For both, some pre-computed constants are used.</p>
+<p>The mathematics of CRC is described in detail elsewhere and will not
+be repeated here. See the Intel whitepaper linked below for a
+comprehensive explanation.</p>
+<p>This concerns only a specific variant of CRC known as the IEEE or
+Zlib CRC-32. It uses the polynomial <code>0x104c11db7</code>.</p>
+<p>In the computation, a constant used was known as as <code>k6'</code>.
+The Intel whitepaper by Gopal et al. gives the value of this constant
+as:</p>
+<pre><code>k6&#39; = 0x1db710640</code></pre>
+<p>However, as Kutenin described, some implementations use this value of
+<code>k6'</code> instead:</p>
+<pre><code>k6&#39; = 0x1db710641</code></pre>
+<p>This discrepancy was also noted in the wuffs library.</p>
+<p>A mathematical analysis reveals that the two constants are
+equivalent. In effect, the LSB of <code>k6'</code> is unused. You can
+think of this as the LSB of the multiplicand having no effect on the
+high-half of a carryless multiplication:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>a</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">(</mo><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>b</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>a</mi><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>b</mi><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>a</mi><mi>b</mi></mrow><annotation encoding="application/x-tex">
+(p(x) + a) (q(x) + b) = p(x)q(x) + a q(x) + b p(x) + a b
+</annotation></semantics></math></p>
+<p>The addition of the constant terms <code>a</code> and <code>b</code>
+results in a difference of degree no more than
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>max</mi><mo>&#8289;</mo></mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>deg</mi><mo>&#8289;</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mrow><mi>deg</mi><mo>&#8289;</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">\max\{\deg(p(x)), \deg(q(x))\}</annotation></semantics></math>.</p>
+<p>Therefore, this is not a bug.</p>
+<p>See also:</p>
+<ul>
+<li>Danila Kutenin, <a
+href="https://danlark.org/2021/03/08/how-a-bug-in-the-linux-crc-32-checksum-turned-out-not-to-be-a-bug/">How
+a Bug(?) in the Linux CRC-32 Checksum Turned out not to be a
+Bug</a></li>
+<li>Intel, <a
+href="https://web.archive.org/web/20230315165408if_/https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/fast-crc-computation-generic-polynomials-pclmulqdq-paper.pdf">Fast
+CRC Computation for Generic Polynomials Using PCLMULQDQ Instruction</a>
+(Link to the Internet Archive)</li>
+<li><a
+href="https://github.com/google/wuffs/blob/9e5817e45d6ef222e1c7919ae3b6565a7146bdc2/std/crc32/common_up_x86_sse42.wuffs#L138-L195"><code>common_up_x86_sse42.wuffs</code>
+from wuffs</a></li>
+</ul>
+<h1 id="swift-float.pi">Swift <code>Float.pi</code></h1>
+<p>The constant <code>Float.pi</code> in Swift is the IEEE 754 binary32
+approximation of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>.
+Its value is:</p>
+<pre><code>0x1.921fb4p+1 ≈ 3.14159250…</code></pre>
+<p>Most other language standard libraries provide this value
+instead:</p>
+<pre><code>0x1.921fb6p+1 ≈ 3.14159274…</code></pre>
+<p>The two differ in only the least significant bit of the significant.
+In other words, they differ by a single ULP.</p>
+<pre><code>                    s e        m
+0x1.921fb4p+1 = f32(0 10000000 10010010000111111011010)
+0x1.921fb6p+1 = f32(0 10000000 10010010000111111011011)</code></pre>
+<p>The latter larger value is closer to the true value of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>,
+<code>3.14159365…</code>. However, Swift’s value is chosen as rounding
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>
+towards zero, in order to nudge trigonometric functions into the
+expected quadrants more often.</p>
+<p>There is later consensus among the IEEE 754 working group that
+implementations should provide the closer-rounded value. Therefore,
+there is a proposal to “fix” the value of It is humorously referred to
+as the “Indiana π bill, take 2”, in reference to the 1897 legislative
+bill in Indiana, United States that would have incidentally legislated
+the value of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>
+as <code>3.2</code>.</p>
+<p>See: <a
+href="https://forums.swift.org/t/pitch-round-to-nearest/89497">[Pitch]
+round π to nearest</a> on the Swift Forums.</p>
+<p>This is not a bug, but it may be fixed anyway.</p>
+<h1 id="rockchip-calendar">Rockchip calendar</h1>
+<p>The RK808 PMIC had a real-time clock (RTC) that would count the time
+and date with very little power. However, there is a bug in that chip.
+It would be difficult to describe the off-by-one better than the patch
+message that added the corresponding workaround to Linux.</p>
+<blockquote>
+<p>rtc: rk808: Compensate for Rockchip calendar deviation on November
+31st</p>
+<p>In A.D. 1582 Pope Gregory XIII found that the existing Julian
+calendar insufficiently represented reality, and changed the rules about
+calculating leap years to account for this. Similarly, in A.D. 2013
+Rockchip hardware engineers found that the new Gregorian calendar still
+contained flaws, and that the month of November should be counted up to
+31 days instead. […]</p>
+</blockquote>
+<p>(See: <a
+href="https://git.kernel.org/torvalds/c/f076ef44a44d02ed91543f820c14c2c7dff53716"
+class="uri">https://git.kernel.org/torvalds/c/f076ef44a44d02ed91543f820c14c2c7dff53716</a>)</p>
+<p>The workaround eventually decided on was to arbitrarily consider
+<code>2016-01-01</code> the date at which the Rockchip and Gregorian
+calendars are synchronized. Then, dates are converted as needed.
+Unfortunately this does mean that firmware and dual-booted operating
+systems need the same synchronization convention, but it is probably
+fine.</p>
+<p>This is definitely a bug, but since it’s worked around in software,
+nobody has to see it.</p>]]></description>
+    </item>
+    <item>
         <title>Destruction of society</title>
         <pubDate>Sun, 30 Aug 2026 00:00:00 +0000</pubDate>
         <guid isPermaLink="true">https://dram.page/p/destruction-of-society</guid>
@@ -86,7 +192,7 @@ local daemon were hanging. No further inquries for possible details like
 logs or core dump stack traces were responded to. Instead, the user
 spent the next 20 minutes ignoring requests for information and posted
 progress of “AI is debugging it too”. Multiple completely irrelevant
-observations are noted as important, with only the appearance of being
+observations were noted as important, with only the appearance of being
 helpful diagnoses. There was “the smoking gun” (a SQLite WAL file, which
 is a result of normal operation), a “process handling bug” (intentional
 feature to preserve connections, like sshd), and a blame on another

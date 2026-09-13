@@ -17,6 +17,7 @@ hidden-articles := \
   makefile-migration \
 
 build-articles := \
+  off-by-one \
   destruction-of-society \
   ascon-hp16c \
   migration-to-grebedoc \
