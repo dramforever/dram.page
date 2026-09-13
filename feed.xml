@@ -75,10 +75,10 @@ towards zero, in order to nudge trigonometric functions into the
 expected quadrants more often.</p>
 <p>There is later consensus among the IEEE 754 working group that
 implementations should provide the closer-rounded value. Therefore,
-there is a proposal to “fix” the value of It is humorously referred to
-as the “Indiana π bill, take 2”, in reference to the 1897 legislative
-bill in Indiana, United States that would have incidentally legislated
-the value of
+there is a proposal to “fix” the value in Swift. It is humorously
+referred to as the “Indiana π bill, take 2”, in reference to the 1897
+legislative bill in Indiana, United States that would have incidentally
+legislated the value of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>
 as <code>3.2</code>.</p>
 <p>See: <a

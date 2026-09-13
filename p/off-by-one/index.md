@@ -75,7 +75,7 @@ The latter larger value is closer to the true value of $\pi$, `3.14159365…`.
 However, Swift's value is chosen as rounding $\pi$ towards zero, in order to nudge trigonometric functions into the expected quadrants more often.
 
 There is later consensus among the IEEE 754 working group that implementations should provide the closer-rounded value.
-Therefore, there is a proposal to "fix" the value of
+Therefore, there is a proposal to "fix" the value in Swift.
 It is humorously referred to as the "Indiana π bill, take 2", in reference to the 1897 legislative bill in Indiana, United States that would have incidentally legislated the value of $\pi$ as `3.2`.
 
 See: [\[Pitch\] round π to nearest](https://forums.swift.org/t/pitch-round-to-nearest/89497) on the Swift Forums.
