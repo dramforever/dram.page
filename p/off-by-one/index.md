@@ -104,3 +104,24 @@ Then, dates are converted as needed.
 Unfortunately this does mean that firmware and dual-booted operating systems need the same synchronization convention, but it is probably fine.
 
 This is definitely a bug, but since it's worked around in software, nobody has to see it.
+
+# The Pokémon 1/256 miss glitch
+
+In Pokémon Red, Blue and Yellow, and the Japanese version of Pokémon Stadium "Zero", moves with 100% "accuracy" can nevertheless miss.
+
+This is caused by a programming oversight. The random number generator `rng()` rolls an integer uniformly from the range `[0, 255]`, both inclusive.
+The accuracy `acc` is also a number in the range `[0, 255]`, where `255` is supposed to be 100%.
+The move is considered to succeed if `acc < rng()` and miss otherwise.
+As you can see, when `rng()` returns `255`, a "100%" accuracy move would still miss.
+
+International releases of Pokémon Stadium partially mitigates this by rerolling a random number if it is `255`.
+This reduces the probability for a 100% accuracy move to miss to $1/256^2 = 1/65536$, assuming a perfect RNG.
+Several future Generation II games instead have a special case for 100% accuracy moves for them to always succeed.
+While an analogous issue can still occur for non-100% accuracy moves, this merely makes their accuracy slightly imprecise.
+
+Later iterations of the game probably don't have this bug.
+
+See also:
+
+- [pret's annotated disassembly of Pokémon Red and Blue showing this bug](https://github.com/pret/pokered/blob/a1a22aaf84d1675bcdbaeb194592379d586d838e/engine/battle/core.asm#L5321-L5327)
+- [1 in 256 miss glitch](https://glitchcity.wiki/wiki/1_in_256_miss_glitch) on the Glitch City Wiki

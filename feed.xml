@@ -110,7 +110,35 @@ Unfortunately this does mean that firmware and dual-booted operating
 systems need the same synchronization convention, but it is probably
 fine.</p>
 <p>This is definitely a bug, but since it’s worked around in software,
-nobody has to see it.</p>]]></description>
+nobody has to see it.</p>
+<h1 id="the-pokémon-1256-miss-glitch">The Pokémon 1/256 miss glitch</h1>
+<p>In Pokémon Red, Blue and Yellow, and the Japanese version of Pokémon
+Stadium “Zero”, moves with 100% “accuracy” can nevertheless miss.</p>
+<p>This is caused by a programming oversight. The random number
+generator <code>rng()</code> rolls an integer uniformly from the range
+<code>[0, 255]</code>, both inclusive. The accuracy <code>acc</code> is
+also a number in the range <code>[0, 255]</code>, where <code>255</code>
+is supposed to be 100%. The move is considered to succeed if
+<code>acc &lt; rng()</code> and miss otherwise. As you can see, when
+<code>rng()</code> returns <code>255</code>, a “100%” accuracy move
+would still miss.</p>
+<p>International releases of Pokémon Stadium partially mitigates this by
+rerolling a random number if it is <code>255</code>. This reduces the
+probability for a 100% accuracy move to miss to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><msup><mn>256</mn><mn>2</mn></msup><mo>=</mo><mn>1</mn><mi>/</mi><mn>65536</mn></mrow><annotation encoding="application/x-tex">1/256^2 = 1/65536</annotation></semantics></math>,
+assuming a perfect RNG. Several future Generation II games instead have
+a special case for 100% accuracy moves for them to always succeed. While
+an analogous issue can still occur for non-100% accuracy moves, this
+merely makes their accuracy slightly imprecise.</p>
+<p>Later iterations of the game probably don’t have this bug.</p>
+<p>See also:</p>
+<ul>
+<li><a
+href="https://github.com/pret/pokered/blob/a1a22aaf84d1675bcdbaeb194592379d586d838e/engine/battle/core.asm#L5321-L5327">pret’s
+annotated disassembly of Pokémon Red and Blue showing this bug</a></li>
+<li><a href="https://glitchcity.wiki/wiki/1_in_256_miss_glitch">1 in 256
+miss glitch</a> on the Glitch City Wiki</li>
+</ul>]]></description>
     </item>
     <item>
         <title>Destruction of society</title>
