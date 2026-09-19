@@ -14,7 +14,7 @@ See the Intel whitepaper linked below for a comprehensive explanation.
 This concerns only a specific variant of CRC known as the IEEE or Zlib CRC-32.
 It uses the polynomial `0x104c11db7`.
 
-In the computation, a constant used was known as as `k6'`.
+In the computation, a constant used was known as `k6'`.
 The Intel whitepaper by Gopal et al. gives the value of this constant as:
 
 ```
